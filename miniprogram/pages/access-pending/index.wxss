@@ -1,0 +1,15 @@
+.pending-page {
+  display: flex;
+  align-items: center;
+}
+
+.title {
+  margin-bottom: 16rpx;
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.retry-button {
+  margin-top: 40rpx;
+  border-radius: 16rpx;
+}

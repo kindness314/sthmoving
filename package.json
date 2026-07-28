@@ -1,0 +1,29 @@
+{
+  "name": "sthmoving",
+  "version": "0.1.0",
+  "private": true,
+  "description": "单组织共享物品管理微信小程序",
+  "author": "kindness314",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck:miniprogram && npm run typecheck:cloud && npm run typecheck:test",
+    "typecheck:miniprogram": "tsc -p tsconfig.miniprogram.json --noEmit",
+    "typecheck:cloud": "tsc -p tsconfig.cloud.json --noEmit",
+    "typecheck:test": "tsc -p tsconfig.test.json --noEmit",
+    "test": "vitest run",
+    "check": "npm run lint && npm run typecheck && npm run test",
+    "build:cloud": "tsc -p cloudfunctions/api/tsconfig.json"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.1.2",
+    "eslint": "10.8.0",
+    "miniprogram-api-typings": "5.2.2",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.65.0",
+    "vitest": "4.1.10",
+    "wx-server-sdk": "4.0.2"
+  }
+}

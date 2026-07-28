@@ -1,0 +1,7 @@
+<view class="page pending-page">
+  <view class="card">
+    <view class="title">加入申请处理中</view>
+    <view class="muted">管理员审核通过后即可使用仓库。被拒绝后可重新申请。</view>
+    <button class="retry-button" bindtap="handleRetry">刷新状态</button>
+  </view>
+</view>

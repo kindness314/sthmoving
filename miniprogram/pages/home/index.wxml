@@ -1,0 +1,18 @@
+<view class="page">
+  <view class="heading">
+    <view class="title">仓库工作台</view>
+    <view class="muted">登记、查询和流转组织物品</view>
+  </view>
+  <view class="grid">
+    <view
+      wx:for="{{shortcuts}}"
+      wx:key="key"
+      class="card shortcut"
+      data-key="{{item.key}}"
+      bindtap="handleShortcut"
+    >
+      <view class="shortcut-title">{{item.title}}</view>
+      <view class="muted shortcut-description">{{item.description}}</view>
+    </view>
+  </view>
+</view>

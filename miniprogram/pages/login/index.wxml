@@ -1,0 +1,15 @@
+<view class="page login-page">
+  <view class="card">
+    <view class="title">共享仓库</view>
+    <view class="muted description">使用微信身份登录并申请加入组织</view>
+    <button
+      class="primary-button"
+      loading="{{loading}}"
+      disabled="{{loading}}"
+      bindtap="handleLogin"
+    >
+      微信登录
+    </button>
+    <view wx:if="{{errorMessage}}" class="error">{{errorMessage}}</view>
+  </view>
+</view>

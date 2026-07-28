@@ -1,0 +1,29 @@
+.heading {
+  margin-bottom: 40rpx;
+}
+
+.title {
+  margin-bottom: 8rpx;
+  font-size: 48rpx;
+  font-weight: 700;
+}
+
+.grid {
+  display: grid;
+  gap: 24rpx;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.shortcut {
+  min-height: 180rpx;
+}
+
+.shortcut-title {
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.shortcut-description {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+}
