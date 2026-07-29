@@ -1,7 +1,9 @@
+import { organizationName } from '../../config/env'
 import { login } from '../../services/auth'
 
 Page({
   data: {
+    organizationName,
     loading: false,
     errorMessage: '',
   },

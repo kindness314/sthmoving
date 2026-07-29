@@ -1,6 +1,6 @@
 <view class="page login-page">
   <view class="card">
-    <view class="title">共享仓库</view>
+    <view class="title">{{organizationName}}</view>
     <view class="muted description">使用微信身份登录并申请加入组织</view>
     <button
       class="primary-button"

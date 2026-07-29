@@ -5,7 +5,7 @@
     "pages/home/index"
   ],
   "window": {
-    "navigationBarTitleText": "仓库",
+    "navigationBarTitleText": "YUNA仓储",
     "navigationBarBackgroundColor": "#0f766e",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#f6f7f9"

@@ -13,11 +13,11 @@
 
 1. 安装依赖：`npm install`
 2. 复制并填写微信开发者工具的私有项目配置。
-3. 将 `miniprogram/config/env.ts` 中的 `YOUR_CLOUD_ENV_ID` 替换为云环境 ID。
+3. 确认 `miniprogram/config/env.ts` 中的云环境 ID 与当前微信云开发环境一致。
 4. 使用微信开发者工具打开项目根目录。
 5. 执行 `npm run check` 验证代码。
 
-`project.config.json` 当前使用 `touristappid`，接入云开发前必须替换为实际小程序 AppID。密钥不得写入小程序代码或提交到仓库。
+项目已配置实际小程序 AppID 和云环境 ID。它们是公开标识，不是密钥；AppSecret、访问令牌及云密钥不得写入小程序代码或提交到仓库。
 
 ## 当前框架范围
 
@@ -29,4 +29,3 @@
 - 权限、数量、提交梗概和打印任务校验
 
 硕方 SDK 尚未接入。取得 SDK 和设备后，只在 `miniprogram/services/printer/adapters/supvan-t50-pro/` 实现真实适配器。
-
