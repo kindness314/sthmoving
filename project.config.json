@@ -3,7 +3,7 @@
   "compileType": "miniprogram",
   "miniprogramRoot": "miniprogram/",
   "cloudfunctionRoot": "cloudfunctions/",
-  "appid": "wx94ebd424ae97a613",
+  "appid": "touristappid",
   "projectname": "sthmoving",
   "setting": {
     "es6": true,

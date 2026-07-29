@@ -12,12 +12,18 @@
 ## 本地准备
 
 1. 安装依赖：`npm install`
-2. 复制并填写微信开发者工具的私有项目配置。
+2. 将 `project.private.config.example.json` 复制为
+   `project.private.config.json`，并填写实际微信小程序 AppID。
 3. 确认 `miniprogram/config/env.ts` 中的云环境 ID 与当前微信云开发环境一致。
 4. 使用微信开发者工具打开项目根目录。
 5. 执行 `npm run check` 验证代码。
 
-项目已配置实际小程序 AppID 和云环境 ID。它们是公开标识，不是密钥；AppSecret、访问令牌及云密钥不得写入小程序代码或提交到仓库。
+仓库中的 `project.config.json` 使用游客 AppID；实际 AppID 只保存在被
+`.gitignore` 排除的 `project.private.config.json` 中。云环境 ID 是客户端运行所需的公开标识。
+AppSecret、访问令牌及云密钥不得写入小程序代码或提交到仓库。
+
+提交前执行 `npm run check`。该命令会先扫描仓库文件中的常见凭据模式，
+再运行 ESLint、TypeScript 类型检查和自动化测试；GitHub CI 会执行相同检查。
 
 ## 当前框架范围
 

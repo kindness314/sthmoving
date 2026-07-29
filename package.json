@@ -7,13 +7,14 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "check:secrets": "node scripts/check-secrets.mjs",
     "lint": "eslint .",
     "typecheck": "npm run typecheck:miniprogram && npm run typecheck:cloud && npm run typecheck:test",
     "typecheck:miniprogram": "tsc -p tsconfig.miniprogram.json --noEmit",
     "typecheck:cloud": "tsc -p tsconfig.cloud.json --noEmit",
     "typecheck:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run",
-    "check": "npm run lint && npm run typecheck && npm run test",
+    "check": "npm run check:secrets && npm run lint && npm run typecheck && npm run test",
     "build:cloud": "tsc -p cloudfunctions/api/tsconfig.json"
   },
   "devDependencies": {

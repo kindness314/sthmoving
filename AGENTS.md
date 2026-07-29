@@ -26,6 +26,7 @@
 - 大目录（node_modules 等）和没权限的目录，绕开别扫。
 
 ## 改完要做
+- 提交前先检查 `git diff --cached`，并执行 `npm run check:secrets`，不得提交 AppID、AppSecret、访问令牌、私钥或云密钥。
 - 跑 lint / 类型检查 / 测试，绿了再说完成。
 - 给 interface 加方法，记得把所有 mock / stub 一起补。
 
