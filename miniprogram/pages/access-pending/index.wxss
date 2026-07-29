@@ -13,3 +13,32 @@
   margin-top: 40rpx;
   border-radius: 16rpx;
 }
+
+.application-form {
+  margin-top: 40rpx;
+}
+
+.field-label {
+  margin-bottom: 12rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.text-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 24rpx;
+  border: 1rpx solid #d1d5db;
+  border-radius: 16rpx;
+  background: #ffffff;
+}
+
+.submit-button {
+  margin-top: 32rpx;
+}
+
+.error {
+  margin-top: 24rpx;
+  color: #b91c1c;
+  font-size: 26rpx;
+}

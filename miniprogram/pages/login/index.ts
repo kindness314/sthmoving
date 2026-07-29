@@ -11,10 +11,10 @@ Page({
   async handleLogin() {
     this.setData({ loading: true, errorMessage: '' })
     try {
-      const user = await login()
-      getApp<IAppOption>().globalData.currentUser = user
+      const session = await login()
+      getApp<IAppOption>().globalData.currentUser = session.user
       const target =
-        user.status === 'ACTIVE'
+        session.accessState === 'APPROVED'
           ? '/pages/home/index'
           : '/pages/access-pending/index'
       await wx.reLaunch({ url: target })

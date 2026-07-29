@@ -1,0 +1,47 @@
+<view class="page">
+  <view class="heading">
+    <view class="title">待审核成员</view>
+    <view class="muted">只显示当前尚未处理的加入申请</view>
+  </view>
+
+  <view wx:if="{{loading && !requests.length}}" class="muted empty">
+    正在加载…
+  </view>
+  <view wx:elif="{{!requests.length}}" class="card empty">
+    暂无待审核申请
+  </view>
+
+  <view
+    wx:for="{{requests}}"
+    wx:key="id"
+    class="card request-card"
+  >
+    <view class="request-name">{{item.displayName}}</view>
+    <view class="muted request-time">申请时间：{{item.createdAt}}</view>
+    <view class="actions">
+      <button
+        class="reject-button"
+        size="mini"
+        data-id="{{item.id}}"
+        data-decision="REJECT"
+        disabled="{{processingId}}"
+        bindtap="handleReview"
+      >
+        拒绝
+      </button>
+      <button
+        class="approve-button"
+        size="mini"
+        data-id="{{item.id}}"
+        data-decision="APPROVE"
+        loading="{{processingId === item.id}}"
+        disabled="{{processingId}}"
+        bindtap="handleReview"
+      >
+        通过
+      </button>
+    </view>
+  </view>
+
+  <view wx:if="{{errorMessage}}" class="error">{{errorMessage}}</view>
+</view>

@@ -1,6 +1,13 @@
 export type UserRole = 'OWNER' | 'ADMIN' | 'MEMBER'
 
-export type UserStatus = 'PENDING' | 'ACTIVE' | 'REJECTED' | 'DISABLED'
+export type UserStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'DISABLED'
+
+export type AccessState =
+  | 'UNAPPLIED'
+  | 'PENDING'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'DISABLED'
 
 export type QuantityMode = 'SINGLE' | 'MULTIPLE'
 
@@ -12,12 +19,24 @@ export type LabelStatus = 'UNBOUND' | 'BOUND' | 'VOID'
 
 export interface User {
   id: string
-  nickname: string
+  displayName: string
   avatarUrl?: string
   role: UserRole
   status: UserStatus
   createdAt: string
   updatedAt: string
+}
+
+export interface AuthSession {
+  user: User
+  accessState: AccessState
+}
+
+export interface PendingJoinRequest {
+  id: string
+  applicant: User
+  displayName: string
+  createdAt: string
 }
 
 export interface Category {

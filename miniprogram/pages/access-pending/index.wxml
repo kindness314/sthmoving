@@ -1,7 +1,34 @@
 <view class="page pending-page">
   <view class="card">
-    <view class="title">加入申请处理中</view>
-    <view class="muted">管理员审核通过后即可使用仓库。被拒绝后可重新申请。</view>
-    <button class="retry-button" bindtap="handleRetry">刷新状态</button>
+    <view class="title">{{title}}</view>
+    <view class="muted">{{description}}</view>
+    <view wx:if="{{canApply}}" class="application-form">
+      <view class="field-label">姓名或称呼</view>
+      <input
+        class="text-input"
+        maxlength="40"
+        value="{{displayName}}"
+        placeholder="便于管理员确认身份"
+        bindinput="handleDisplayNameInput"
+      />
+      <button
+        class="primary-button submit-button"
+        loading="{{submitting}}"
+        disabled="{{submitting || !displayName}}"
+        bindtap="handleSubmit"
+      >
+        提交加入申请
+      </button>
+    </view>
+    <button
+      wx:else
+      class="retry-button"
+      loading="{{loading}}"
+      disabled="{{loading}}"
+      bindtap="handleRetry"
+    >
+      刷新状态
+    </button>
+    <view wx:if="{{errorMessage}}" class="error">{{errorMessage}}</view>
   </view>
 </view>
