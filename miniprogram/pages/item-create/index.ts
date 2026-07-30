@@ -212,10 +212,11 @@ Page({
     }
 
     let uploadedFileIds: string[] = []
+    let createdItem: Awaited<ReturnType<typeof createItem>> | undefined
     this.setData({ submitting: true, errorMessage: '' })
     try {
       uploadedFileIds = await uploadItemImages(this.data.selectedImages)
-      const item = await createItem({
+      createdItem = await createItem({
         name: this.data.name,
         images: uploadedFileIds,
         description: this.data.description,
@@ -224,18 +225,27 @@ Page({
         categoryId: this.data.selectedCategoryId,
         commitSummary: this.data.commitSummary,
       })
+    } catch (error) {
+      await deleteUploadedItemImages(uploadedFileIds)
+      this.setData({ errorMessage: getErrorMessage(error, '登记物品失败') })
+      return
+    } finally {
+      this.setData({ submitting: false })
+    }
+
+    try {
       await wx.showModal({
         title: '登记成功',
-        content: `物品编码：${item.code}`,
+        content: `物品编码：${createdItem.code}`,
         showCancel: false,
         confirmText: '返回',
       })
       await wx.navigateBack()
     } catch (error) {
-      await deleteUploadedItemImages(uploadedFileIds)
-      this.setData({ errorMessage: getErrorMessage(error, '登记物品失败') })
-    } finally {
-      this.setData({ submitting: false })
+      this.setData({
+        errorMessage: '物品已经登记成功，请手动返回工作台',
+      })
+      console.error('登记成功后的页面操作失败', error)
     }
   },
 
