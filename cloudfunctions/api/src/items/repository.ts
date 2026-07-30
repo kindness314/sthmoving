@@ -1,4 +1,5 @@
 import type { CategoryRecord } from '../categories/types'
+import type { ItemLabelRecord } from '../labels/types'
 import type { UserRecord } from '../membership/types'
 import type {
   ItemListQuery,
@@ -14,6 +15,7 @@ export interface ItemUnitOfWork {
   ): Promise<CategoryRecord | null>
   setCategory(category: CategoryRecord): Promise<void>
   setItem(item: ItemRecord): Promise<void>
+  setLabel(label: ItemLabelRecord): Promise<void>
   setOperationLog(log: ItemOperationLogRecord): Promise<void>
 }
 

@@ -15,7 +15,7 @@ export type ItemStatus = 'ACTIVE' | 'OUTBOUND_PENDING' | 'OFF_SHELF'
 
 export type OutboundRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 
-export type LabelStatus = 'UNBOUND' | 'BOUND' | 'VOID'
+export type LabelStatus = 'PENDING' | 'READY' | 'FAILED'
 
 export interface User {
   id: string
@@ -105,6 +105,19 @@ export interface ItemListCursor {
 export interface ItemListResult {
   items: ItemSummary[]
   nextCursor?: ItemListCursor
+}
+
+export interface ItemLabel {
+  itemId: string
+  publicCode: string
+  page: 'pages/item-detail/index'
+  scene: string
+  status: LabelStatus
+  attemptCount: number
+  fileId?: string
+  errorMessage?: string
+  generatedAt?: string
+  updatedAt: string
 }
 
 export interface ItemOperationLog {

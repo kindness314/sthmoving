@@ -217,11 +217,15 @@ Page({
     try {
       await wx.showModal({
         title: '登记成功',
-        content: `物品编码：${createdItem.code}`,
+        content: `物品编码：${createdItem.code}，即将生成小程序码`,
         showCancel: false,
-        confirmText: '返回',
+        confirmText: '继续',
       })
-      await wx.navigateBack()
+      await wx.redirectTo({
+        url:
+          `/pages/label-preview/index?itemId=` +
+          encodeURIComponent(createdItem.id),
+      })
     } catch (error) {
       this.setData({
         errorMessage: '物品已经登记成功，请手动返回工作台',

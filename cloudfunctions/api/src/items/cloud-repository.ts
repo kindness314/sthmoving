@@ -1,6 +1,7 @@
 import cloud from 'wx-server-sdk'
 
 import type { CategoryRecord } from '../categories/types'
+import type { ItemLabelRecord } from '../labels/types'
 import type { UserRecord } from '../membership/types'
 import type {
   ItemRepository,
@@ -82,6 +83,14 @@ class CloudItemUnitOfWork implements ItemUnitOfWork {
   async setItem(item: ItemRecord): Promise<void> {
     const { _id, ...data } = item
     await this.database.collection('items').doc(_id).set({ data })
+  }
+
+  async setLabel(label: ItemLabelRecord): Promise<void> {
+    const { _id, ...data } = label
+    await this.database
+      .collection('item_labels')
+      .doc(_id)
+      .set({ data })
   }
 
   async setOperationLog(log: ItemOperationLogRecord): Promise<void> {

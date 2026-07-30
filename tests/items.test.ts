@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { CategoryRecord } from '../cloudfunctions/api/src/categories/types'
+import type { ItemLabelRecord } from '../cloudfunctions/api/src/labels/types'
 import type {
   ItemRepository,
   ItemUnitOfWork,
@@ -18,6 +19,7 @@ class InMemoryItemRepository implements ItemRepository {
   categories = new Map<string, CategoryRecord>()
   items = new Map<string, ItemRecord>()
   logs = new Map<string, ItemOperationLogRecord>()
+  labels = new Map<string, ItemLabelRecord>()
   users = new Map<string, UserRecord>()
   failOnLogWrite = false
 
@@ -99,18 +101,21 @@ class InMemoryItemRepository implements ItemRepository {
     const categories = cloneMap(this.categories)
     const items = cloneMap(this.items)
     const logs = cloneMap(this.logs)
+    const labels = cloneMap(this.labels)
     const result = await operation(
       new InMemoryItemUnitOfWork(
         this.users,
         categories,
         items,
         logs,
+        labels,
         this.failOnLogWrite,
       ),
     )
     this.categories = categories
     this.items = items
     this.logs = logs
+    this.labels = labels
     return result
   }
 }
@@ -121,6 +126,7 @@ class InMemoryItemUnitOfWork implements ItemUnitOfWork {
     private readonly categories: Map<string, CategoryRecord>,
     private readonly items: Map<string, ItemRecord>,
     private readonly logs: Map<string, ItemOperationLogRecord>,
+    private readonly labels: Map<string, ItemLabelRecord>,
     private readonly failOnLogWrite: boolean,
   ) {}
 
@@ -152,6 +158,11 @@ class InMemoryItemUnitOfWork implements ItemUnitOfWork {
 
   setItem(item: ItemRecord): Promise<void> {
     this.items.set(item._id, structuredClone(item))
+    return Promise.resolve()
+  }
+
+  setLabel(label: ItemLabelRecord): Promise<void> {
+    this.labels.set(label._id, structuredClone(label))
     return Promise.resolve()
   }
 
@@ -324,6 +335,17 @@ describe('物品登记服务', () => {
       version_after: 1,
       created_at: '2026-07-30T02:00:00.000Z',
     })
+    expect(repository.labels.get('item-label-item-1')).toEqual({
+      _id: 'item-label-item-1',
+      item_id: 'item-1',
+      public_code: 'A1B2C3D4E5F6',
+      page: 'pages/item-detail/index',
+      scene: 'i=A1B2C3D4E5F6',
+      status: 'PENDING',
+      attempt_count: 0,
+      created_at: '2026-07-30T02:00:00.000Z',
+      updated_at: '2026-07-30T02:00:00.000Z',
+    })
   })
 
   it('允许登记数量为正整数的多件物品和两张图片', async () => {
@@ -441,6 +463,7 @@ describe('物品登记服务', () => {
     )
     expect(repository.items.size).toBe(0)
     expect(repository.logs.size).toBe(0)
+    expect(repository.labels.size).toBe(0)
     expect(
       repository.categories.get('category-daily')?.item_reference_count,
     ).toBeUndefined()
@@ -485,6 +508,7 @@ describe('物品登记服务', () => {
     ).rejects.toThrow('模拟日志写入失败')
     expect(repository.items.size).toBe(0)
     expect(repository.logs.size).toBe(0)
+    expect(repository.labels.size).toBe(0)
     expect(
       repository.categories.has('category-new'),
     ).toBe(false)

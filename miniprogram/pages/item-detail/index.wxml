@@ -69,5 +69,9 @@
         <text>{{item.updatedAtText}}</text>
       </view>
     </view>
+
+    <button class="primary-button label-button" bindtap="handleViewLabel">
+      查看小程序码
+    </button>
   </block>
 </view>

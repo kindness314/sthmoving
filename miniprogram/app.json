@@ -6,6 +6,7 @@
     "pages/item-create/index",
     "pages/item-list/index",
     "pages/item-detail/index",
+    "pages/label-preview/index",
     "pages/member-review/index",
     "pages/category-manage/index"
   ],

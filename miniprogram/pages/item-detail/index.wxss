@@ -100,3 +100,7 @@
 .retry-button {
   margin-top: 20rpx;
 }
+
+.label-button {
+  margin-top: 32rpx;
+}

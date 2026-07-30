@@ -1,0 +1,84 @@
+.heading {
+  margin-bottom: 28rpx;
+}
+
+.title {
+  margin-bottom: 8rpx;
+  font-size: 44rpx;
+  font-weight: 700;
+}
+
+.label-card,
+.state {
+  text-align: center;
+}
+
+.code-image {
+  display: block;
+  width: 560rpx;
+  height: 560rpx;
+  margin: 0 auto;
+  background: #ffffff;
+}
+
+.ready-title,
+.failed-title {
+  margin-top: 24rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.failed-title {
+  color: #b91c1c;
+}
+
+.code-text,
+.hint,
+.state-description {
+  margin-top: 12rpx;
+  font-size: 25rpx;
+}
+
+.state {
+  padding: 64rpx 32rpx;
+}
+
+.generating-indicator {
+  width: 48rpx;
+  height: 48rpx;
+  margin: 0 auto 24rpx;
+  border: 5rpx solid #ccfbf1;
+  border-top-color: #0f766e;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+.error {
+  margin-top: 20rpx;
+  color: #b91c1c;
+  font-size: 26rpx;
+}
+
+.retry-button {
+  margin-top: 28rpx;
+}
+
+.page-error {
+  text-align: center;
+}
+
+.note-card {
+  margin-top: 28rpx;
+  line-height: 1.6;
+}
+
+.note-title {
+  margin-bottom: 12rpx;
+  font-weight: 600;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

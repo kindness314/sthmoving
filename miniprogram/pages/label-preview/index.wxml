@@ -1,0 +1,54 @@
+<view class="page">
+  <view class="heading">
+    <view class="title">物品小程序码</view>
+    <view class="muted">{{item ? item.name : '正在读取物品信息'}}</view>
+  </view>
+
+  <view wx:if="{{loading && !label}}" class="state muted">
+    正在加载小程序码…
+  </view>
+
+  <view wx:elif="{{generating}}" class="card state">
+    <view class="generating-indicator"></view>
+    <view>正在生成微信小程序码…</view>
+    <view class="muted state-description">物品已经登记，请稍候</view>
+  </view>
+
+  <view wx:elif="{{label && label.status === 'READY'}}" class="card label-card">
+    <image
+      class="code-image"
+      src="{{label.fileId}}"
+      mode="aspectFit"
+      bindtap="handlePreview"
+    />
+    <view class="ready-title">小程序码已生成</view>
+    <view class="muted code-text">物品编码：{{label.publicCode}}</view>
+    <view class="muted hint">点击图片可放大预览</view>
+  </view>
+
+  <view wx:elif="{{label && label.status === 'FAILED'}}" class="card state">
+    <view class="failed-title">小程序码生成失败</view>
+    <view class="error">
+      {{label.errorMessage || '微信接口暂未生成小程序码'}}
+    </view>
+    <button
+      class="primary-button retry-button"
+      loading="{{generating}}"
+      disabled="{{generating}}"
+      bindtap="handleRetry"
+    >
+      重新生成
+    </button>
+  </view>
+
+  <view wx:if="{{errorMessage}}" class="error page-error">
+    {{errorMessage}}
+  </view>
+
+  <view class="card note-card">
+    <view class="note-title">打印说明</view>
+    <view class="muted">
+      当前保存的是微信返回的原始 PNG。T50 Pro SDK 接入后，将在这里增加 30 × 30 mm 标签打印功能。
+    </view>
+  </view>
+</view>

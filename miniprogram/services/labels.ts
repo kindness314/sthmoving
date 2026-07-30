@@ -1,24 +1,30 @@
 import { callApi } from './cloud-api'
+import type { ItemLabel } from '../types/domain'
 
-export interface MiniProgramCodeRequest {
-  itemId: string
-  page: 'pages/item-detail/index'
-}
-
-export interface MiniProgramCodeResult {
-  fileId: string
-  labelCode: string
+export function getItemLabel(itemId: string): Promise<ItemLabel | null> {
+  return callApi<{ itemId: string }, ItemLabel | null>({
+    module: 'labels',
+    action: 'get',
+    payload: { itemId },
+  })
 }
 
 export function generateItemMiniProgramCode(
   itemId: string,
-): Promise<MiniProgramCodeResult> {
-  return callApi<MiniProgramCodeRequest, MiniProgramCodeResult>({
+): Promise<ItemLabel> {
+  return callApi<{ itemId: string }, ItemLabel>({
     module: 'labels',
     action: 'generateMiniProgramCode',
-    payload: {
-      itemId,
-      page: 'pages/item-detail/index',
-    },
+    payload: { itemId },
+  })
+}
+
+export function resolveItemLabel(
+  scene: string,
+): Promise<{ itemId: string }> {
+  return callApi<{ scene: string }, { itemId: string }>({
+    module: 'labels',
+    action: 'resolve',
+    payload: { scene },
   })
 }

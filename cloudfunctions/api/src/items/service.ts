@@ -6,6 +6,7 @@ import {
 } from '../categories/service'
 import type { CategoryRecord } from '../categories/types'
 import { ApiException } from '../errors'
+import { createPendingItemLabel } from '../labels/service'
 import type { UserRecord } from '../membership/types'
 import type {
   ItemRepository,
@@ -67,6 +68,9 @@ export class ItemService {
       }
 
       await unitOfWork.setItem(item)
+      await unitOfWork.setLabel(
+        createPendingItemLabel(item._id, item.code, now),
+      )
       await unitOfWork.setOperationLog({
         _id: this.createLogId(),
         item_id: item._id,
