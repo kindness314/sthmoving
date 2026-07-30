@@ -1,4 +1,7 @@
 import type {
+  ItemDetail,
+  ItemListCursor,
+  ItemListResult,
   ItemStatus,
   QuantityMode,
 } from '../types/domain'
@@ -37,5 +40,30 @@ export function createItem(input: CreateItemInput): Promise<CreatedItem> {
     module: 'items',
     action: 'create',
     payload: input,
+  })
+}
+
+export interface ListItemsInput {
+  keyword?: string
+  categoryId?: string
+  cursor?: ItemListCursor
+  limit?: number
+}
+
+export function listItems(
+  input: ListItemsInput,
+): Promise<ItemListResult> {
+  return callApi<ListItemsInput, ItemListResult>({
+    module: 'items',
+    action: 'list',
+    payload: input,
+  })
+}
+
+export function getItemDetail(itemId: string): Promise<ItemDetail> {
+  return callApi<{ itemId: string }, ItemDetail>({
+    module: 'items',
+    action: 'detail',
+    payload: { itemId },
   })
 }

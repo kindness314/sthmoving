@@ -66,6 +66,47 @@ export interface Item {
   updatedAt: string
 }
 
+export interface ItemCategorySummary {
+  id: string
+  name: string
+  status: 'ACTIVE' | 'DISABLED'
+}
+
+export interface ItemActor {
+  id: string
+  displayName: string
+}
+
+export interface ItemSummary {
+  id: string
+  code: string
+  name: string
+  images: string[]
+  description: string
+  quantityMode: QuantityMode
+  quantity: number
+  category: ItemCategorySummary
+  status: ItemStatus
+  updatedAt: string
+}
+
+export interface ItemDetail extends ItemSummary {
+  version: number
+  registeredBy: ItemActor
+  registeredAt: string
+  updatedBy: ItemActor
+}
+
+export interface ItemListCursor {
+  updatedAt: string
+  id: string
+}
+
+export interface ItemListResult {
+  items: ItemSummary[]
+  nextCursor?: ItemListCursor
+}
+
 export interface ItemOperationLog {
   id: string
   itemId: string

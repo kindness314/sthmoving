@@ -4,6 +4,8 @@
     "pages/access-pending/index",
     "pages/home/index",
     "pages/item-create/index",
+    "pages/item-list/index",
+    "pages/item-detail/index",
     "pages/member-review/index",
     "pages/category-manage/index"
   ],

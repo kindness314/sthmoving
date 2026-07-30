@@ -8,6 +8,7 @@ import type {
 import { ItemService } from '../cloudfunctions/api/src/items/service'
 import type {
   CreateItemInput,
+  ItemListQuery,
   ItemOperationLogRecord,
   ItemRecord,
 } from '../cloudfunctions/api/src/items/types'
@@ -19,6 +20,78 @@ class InMemoryItemRepository implements ItemRepository {
   logs = new Map<string, ItemOperationLogRecord>()
   users = new Map<string, UserRecord>()
   failOnLogWrite = false
+
+  getUserByOpenid(openid: string): Promise<UserRecord | null> {
+    return Promise.resolve(
+      [...this.users.values()].find((user) => user.openid === openid) ??
+        null,
+    )
+  }
+
+  getCategory(categoryId: string): Promise<CategoryRecord | null> {
+    return Promise.resolve(this.categories.get(categoryId) ?? null)
+  }
+
+  getCategoriesByIds(categoryIds: string[]): Promise<CategoryRecord[]> {
+    return Promise.resolve(
+      categoryIds
+        .map((id) => this.categories.get(id))
+        .filter((value): value is CategoryRecord => Boolean(value)),
+    )
+  }
+
+  getUsersByIds(userIds: string[]): Promise<UserRecord[]> {
+    return Promise.resolve(
+      userIds
+        .map((id) => this.users.get(id))
+        .filter((value): value is UserRecord => Boolean(value)),
+    )
+  }
+
+  getItem(itemId: string): Promise<ItemRecord | null> {
+    return Promise.resolve(this.items.get(itemId) ?? null)
+  }
+
+  listItems(query: ItemListQuery): Promise<ItemRecord[]> {
+    const keyword = query.keyword?.toLocaleLowerCase('zh-CN')
+    return Promise.resolve(
+      [...this.items.values()]
+        .filter(
+          (item) =>
+            item.status === 'ACTIVE' ||
+            item.status === 'OUTBOUND_PENDING',
+        )
+        .filter(
+          (item) =>
+            !query.categoryId ||
+            item.category_id === query.categoryId,
+        )
+        .filter((item) => {
+          if (!keyword) {
+            return true
+          }
+          return [item.name, item.description, item.code].some((value) =>
+            value.toLocaleLowerCase('zh-CN').includes(keyword),
+          )
+        })
+        .filter((item) => {
+          if (!query.cursor) {
+            return true
+          }
+          return (
+            item.updated_at < query.cursor.updatedAt ||
+            (item.updated_at === query.cursor.updatedAt &&
+              item._id < query.cursor.id)
+          )
+        })
+        .sort(
+          (left, right) =>
+            right.updated_at.localeCompare(left.updated_at) ||
+            right._id.localeCompare(left._id),
+        )
+        .slice(0, query.limit),
+    )
+  }
 
   async runTransaction<T>(
     operation: (unitOfWork: ItemUnitOfWork) => Promise<T>,
@@ -163,6 +236,29 @@ function createService(repository: InMemoryItemRepository): ItemService {
     () => 'A1B2C3D4E5F6',
     () => 'category-new',
   )
+}
+
+function createItemRecord(
+  id: string,
+  overrides: Partial<ItemRecord> = {},
+): ItemRecord {
+  return {
+    _id: id,
+    code: `CODE-${id}`,
+    name: `物品${id}`,
+    images: [],
+    description: '活动使用',
+    quantity_mode: 'SINGLE',
+    quantity: 1,
+    category_id: 'category-daily',
+    status: 'ACTIVE',
+    version: 1,
+    registered_by: 'user-member',
+    registered_at: '2026-07-30T01:00:00.000Z',
+    updated_by: 'user-member',
+    updated_at: '2026-07-30T01:00:00.000Z',
+    ...overrides,
+  }
 }
 
 function prepareRepository(): InMemoryItemRepository {
@@ -392,5 +488,146 @@ describe('物品登记服务', () => {
     expect(
       repository.categories.has('category-new'),
     ).toBe(false)
+  })
+})
+
+describe('物品查询服务', () => {
+  it('按更新时间和 ID 稳定分页，并排除已离库物品', async () => {
+    const repository = prepareRepository()
+    repository.items.set(
+      'item-c',
+      createItemRecord('item-c', {
+        updated_at: '2026-07-30T03:00:00.000Z',
+      }),
+    )
+    repository.items.set(
+      'item-b',
+      createItemRecord('item-b', {
+        updated_at: '2026-07-30T03:00:00.000Z',
+      }),
+    )
+    repository.items.set(
+      'item-a',
+      createItemRecord('item-a', {
+        updated_at: '2026-07-30T02:00:00.000Z',
+        status: 'OUTBOUND_PENDING',
+      }),
+    )
+    repository.items.set(
+      'item-off',
+      createItemRecord('item-off', { status: 'OFF_SHELF' }),
+    )
+    const service = createService(repository)
+
+    const first = await service.list('member-openid', { limit: 2 })
+    expect(first.items.map((item) => item.id)).toEqual([
+      'item-c',
+      'item-b',
+    ])
+    expect(first.nextCursor).toEqual({
+      updatedAt: '2026-07-30T03:00:00.000Z',
+      id: 'item-b',
+    })
+
+    expect(first.nextCursor).toBeDefined()
+    const second = await service.list('member-openid', {
+      limit: 2,
+      cursor: first.nextCursor!,
+    })
+    expect(second.items.map((item) => item.id)).toEqual(['item-a'])
+    expect(second.nextCursor).toBeUndefined()
+  })
+
+  it('按名称、详情、编码和启用分类查询物品', async () => {
+    const repository = prepareRepository()
+    repository.items.set(
+      'item-table',
+      createItemRecord('item-table', {
+        code: 'ABC123',
+        name: '折叠桌',
+        description: '招新活动使用',
+      }),
+    )
+    repository.items.set(
+      'item-cable',
+      createItemRecord('item-cable', {
+        code: 'XYZ789',
+        name: '网线',
+        description: '机房备用',
+      }),
+    )
+    const service = createService(repository)
+
+    await expect(
+      service.list('member-openid', {
+        keyword: '活动',
+        categoryId: 'category-daily',
+      }),
+    ).resolves.toMatchObject({
+      items: [{ id: 'item-table', category: { name: '日常用品' } }],
+    })
+    await expect(
+      service.list('member-openid', { keyword: 'xyz789' }),
+    ).resolves.toMatchObject({ items: [{ id: 'item-cable' }] })
+
+    repository.categories.set(
+      'category-daily',
+      createCategory('DISABLED'),
+    )
+    await expectApiCode(
+      service.list('member-openid', {
+        categoryId: 'category-daily',
+      }),
+      'CATEGORY_DISABLED',
+    )
+  })
+
+  it('详情包含分类、登记人、最后修改人和版本', async () => {
+    const repository = prepareRepository()
+    repository.items.set(
+      'item-table',
+      createItemRecord('item-table', {
+        images: ['cloud://env/items/table.jpg'],
+        version: 3,
+      }),
+    )
+    const service = createService(repository)
+
+    await expect(
+      service.detail('member-openid', 'item-table'),
+    ).resolves.toMatchObject({
+      id: 'item-table',
+      images: ['cloud://env/items/table.jpg'],
+      category: { id: 'category-daily', name: '日常用品' },
+      registeredBy: { id: 'user-member', displayName: '成员' },
+      updatedBy: { id: 'user-member', displayName: '成员' },
+      version: 3,
+    })
+    await expectApiCode(
+      service.detail('member-openid', 'missing'),
+      'ITEM_NOT_FOUND',
+    )
+  })
+
+  it('拒绝未审核账号和无效查询参数', async () => {
+    const repository = prepareRepository()
+    const service = createService(repository)
+
+    repository.users.set('user-member', createUser('PENDING'))
+    await expectApiCode(
+      service.list('member-openid', {}),
+      'ACCOUNT_NOT_ACTIVE',
+    )
+    repository.users.set('user-member', createUser())
+    await expectApiCode(
+      service.list('member-openid', { limit: 21 }),
+      'INVALID_PAGE_SIZE',
+    )
+    await expectApiCode(
+      service.list('member-openid', {
+        cursor: { id: '', updatedAt: 'not-a-date' },
+      }),
+      'INVALID_CURSOR',
+    )
   })
 })

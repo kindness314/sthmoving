@@ -1,0 +1,73 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="state muted">正在加载物品详情…</view>
+  <view wx:elif="{{errorMessage}}" class="card state">
+    <view class="error">{{errorMessage}}</view>
+    <button class="retry-button" size="mini" bindtap="handleRetry">
+      重新加载
+    </button>
+  </view>
+  <block wx:elif="{{item}}">
+    <view wx:if="{{item.images.length}}" class="images">
+      <image
+        wx:for="{{item.images}}"
+        wx:key="*this"
+        class="item-image"
+        src="{{item}}"
+        mode="aspectFill"
+        data-src="{{item}}"
+        bindtap="handlePreviewImage"
+      />
+    </view>
+
+    <view class="card summary-card">
+      <view class="summary-heading">
+        <view class="item-name">{{item.name}}</view>
+        <view class="status status-{{item.status}}">
+          {{item.statusText}}
+        </view>
+      </view>
+      <view class="code">物品编码：{{item.code}}</view>
+      <view class="description">
+        {{item.description || '暂无详情'}}
+      </view>
+    </view>
+
+    <view class="card info-card">
+      <view class="section-title">物品信息</view>
+      <view class="info-row">
+        <text class="label">数量</text>
+        <text>{{item.quantityText}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">分类</text>
+        <text>
+          {{item.category.name}}{{item.category.status === 'DISABLED' ? '（已停用）' : ''}}
+        </text>
+      </view>
+      <view class="info-row">
+        <text class="label">当前版本</text>
+        <text>v{{item.version}}</text>
+      </view>
+    </view>
+
+    <view class="card info-card">
+      <view class="section-title">登记与更新</view>
+      <view class="info-row">
+        <text class="label">登记人</text>
+        <text>{{item.registeredBy.displayName}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">登记时间</text>
+        <text>{{item.registeredAtText}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">最后修改人</text>
+        <text>{{item.updatedBy.displayName}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">最后更新时间</text>
+        <text>{{item.updatedAtText}}</text>
+      </view>
+    </view>
+  </block>
+</view>

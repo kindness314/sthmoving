@@ -40,6 +40,25 @@ export interface CreateItemInput {
   commitSummary: string
 }
 
+export interface ItemListCursor {
+  updatedAt: string
+  id: string
+}
+
+export interface ListItemsInput {
+  keyword?: string
+  categoryId?: string
+  cursor?: ItemListCursor
+  limit?: number
+}
+
+export interface ItemListQuery {
+  keyword?: string
+  categoryId?: string
+  cursor?: ItemListCursor
+  limit: number
+}
+
 export interface PublicItem {
   id: string
   code: string
@@ -55,4 +74,42 @@ export interface PublicItem {
   registeredAt: string
   updatedBy: string
   updatedAt: string
+}
+
+export interface PublicItemCategory {
+  id: string
+  name: string
+  status: CategoryRecordStatus
+}
+
+type CategoryRecordStatus = 'ACTIVE' | 'DISABLED'
+
+export interface PublicItemActor {
+  id: string
+  displayName: string
+}
+
+export interface PublicItemSummary {
+  id: string
+  code: string
+  name: string
+  images: string[]
+  description: string
+  quantityMode: QuantityMode
+  quantity: number
+  category: PublicItemCategory
+  status: ItemStatus
+  updatedAt: string
+}
+
+export interface PublicItemDetail extends PublicItemSummary {
+  version: number
+  registeredBy: PublicItemActor
+  registeredAt: string
+  updatedBy: PublicItemActor
+}
+
+export interface PublicItemList {
+  items: PublicItemSummary[]
+  nextCursor?: ItemListCursor
 }

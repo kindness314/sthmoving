@@ -15,11 +15,55 @@ interface CreateItemPayload {
   commitSummary?: unknown
 }
 
+interface ListItemsPayload {
+  keyword?: unknown
+  categoryId?: unknown
+  cursor?: unknown
+  limit?: unknown
+}
+
 function createService(): ItemService {
   return new ItemService(new CloudItemRepository())
 }
 
 export const itemHandlers: Readonly<Record<string, ApiHandler>> = {
+  list: async (payload, context) => {
+    const input = payload as ListItemsPayload | undefined
+    if (
+      (input?.keyword !== undefined &&
+        typeof input.keyword !== 'string') ||
+      (input?.categoryId !== undefined &&
+        typeof input.categoryId !== 'string') ||
+      (input?.limit !== undefined &&
+        typeof input.limit !== 'number') ||
+      (input?.cursor !== undefined && !isCursor(input.cursor))
+    ) {
+      throw new ApiException(
+        'INVALID_REQUEST',
+        '物品查询请求字段无效',
+      )
+    }
+    return createService().list(context.openid, {
+      ...(typeof input?.keyword === 'string'
+        ? { keyword: input.keyword }
+        : {}),
+      ...(typeof input?.categoryId === 'string'
+        ? { categoryId: input.categoryId }
+        : {}),
+      ...(typeof input?.limit === 'number' ? { limit: input.limit } : {}),
+      ...(isCursor(input?.cursor) ? { cursor: input.cursor } : {}),
+    })
+  },
+  detail: async (payload, context) => {
+    const itemId = (payload as { itemId?: unknown } | undefined)?.itemId
+    if (typeof itemId !== 'string') {
+      throw new ApiException(
+        'INVALID_REQUEST',
+        '物品详情请求字段无效',
+      )
+    }
+    return createService().detail(context.openid, itemId)
+  },
   create: async (payload, context) => {
     const input = payload as CreateItemPayload | undefined
     if (
@@ -65,6 +109,17 @@ export const itemHandlers: Readonly<Record<string, ApiHandler>> = {
       commitSummary: input.commitSummary,
     })
   },
+}
+
+function isCursor(
+  value: unknown,
+): value is { updatedAt: string; id: string } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { updatedAt?: unknown }).updatedAt === 'string' &&
+    typeof (value as { id?: unknown }).id === 'string'
+  )
 }
 
 function isQuantityMode(value: unknown): value is QuantityMode {

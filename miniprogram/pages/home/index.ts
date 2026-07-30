@@ -63,6 +63,10 @@ Page({
       void wx.navigateTo({ url: '/pages/item-create/index' })
       return
     }
+    if (key === 'search') {
+      void wx.navigateTo({ url: '/pages/item-list/index' })
+      return
+    }
     void wx.showToast({
       title: `${key ?? '功能'}模块待实现`,
       icon: 'none',
