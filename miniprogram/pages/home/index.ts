@@ -11,11 +11,6 @@ const memberShortcuts: Shortcut[] = [
   { key: 'scan', title: '扫码查询', description: '扫描物品上的小程序码' },
   { key: 'search', title: '文字搜索', description: '按名称或详情查找物品' },
   { key: 'create', title: '登记物品', description: '录入信息并绑定实体标签' },
-  {
-    key: 'categories',
-    title: '物品分类',
-    description: '查看预设分类或新建分类',
-  },
   { key: 'requests', title: '申请中心', description: '查看加入与离库申请' },
 ]
 
@@ -61,7 +56,7 @@ Page({
       return
     }
     if (key === 'categories') {
-      void wx.navigateTo({ url: '/pages/category-select/index' })
+      void wx.navigateTo({ url: '/pages/category-manage/index' })
       return
     }
     void wx.showToast({
@@ -79,6 +74,11 @@ function getShortcuts(user: User): Shortcut[] {
         key: 'member-review',
         title: '成员审核',
         description: '处理新的组织加入申请',
+      },
+      {
+        key: 'categories',
+        title: '分类管理',
+        description: '整理、重命名或停用自定义分类',
       },
     ]
   }

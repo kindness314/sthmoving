@@ -44,6 +44,16 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
     return Promise.resolve(this.categories.get(categoryId) ?? null)
   }
 
+  getCategoryByNormalizedName(
+    normalizedName: string,
+  ): Promise<CategoryRecord | null> {
+    return Promise.resolve(
+      [...this.categories.values()].find(
+        (category) => category.normalized_name === normalizedName,
+      ) ?? null,
+    )
+  }
+
   setCategory(category: CategoryRecord): Promise<void> {
     this.categories.set(category._id, structuredClone(category))
     return Promise.resolve()
@@ -55,6 +65,10 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
         (category) => category.status === 'ACTIVE',
       ),
     )
+  }
+
+  listAllCategories(): Promise<CategoryRecord[]> {
+    return Promise.resolve([...this.categories.values()])
   }
 }
 
@@ -70,12 +84,13 @@ function cloneMap<TValue>(source: Map<string, TValue>): Map<string, TValue> {
 function createUser(
   openid: string,
   status: UserRecord['status'] = 'APPROVED',
+  role: UserRecord['role'] = 'MEMBER',
 ): UserRecord {
   return {
     _id: `user-${openid}`,
     openid,
     display_name: openid,
-    role: 'MEMBER',
+    role,
     status,
     created_at: '2026-07-30T00:00:00.000Z',
     updated_at: '2026-07-30T00:00:00.000Z',
@@ -83,9 +98,11 @@ function createUser(
 }
 
 function createService(repository: InMemoryCategoryRepository) {
+  let categorySequence = 0
   return new CategoryService(
     repository,
     () => '2026-07-30T01:00:00.000Z',
+    () => `custom-category-${++categorySequence}`,
   )
 }
 
@@ -173,5 +190,87 @@ describe('分类服务', () => {
       'ACCOUNT_NOT_ACTIVE',
     )
     expect(repository.categories.size).toBe(0)
+  })
+
+  it('只有管理员和所有者可以查看、重命名和停用自定义分类', async () => {
+    const repository = new InMemoryCategoryRepository()
+    repository.users.set('member', createUser('member-openid'))
+    repository.users.set(
+      'admin',
+      createUser('admin-openid', 'APPROVED', 'ADMIN'),
+    )
+    const service = createService(repository)
+    const category = await service.create('member-openid', '活动器材')
+
+    await expectApiCode(
+      service.listManageable('member-openid'),
+      'FORBIDDEN',
+    )
+    await expectApiCode(
+      service.rename('member-openid', category.id, '体育器材'),
+      'FORBIDDEN',
+    )
+    await expectApiCode(
+      service.setStatus(
+        'member-openid',
+        category.id,
+        'DISABLED',
+      ),
+      'FORBIDDEN',
+    )
+
+    const renamed = await service.rename(
+      'admin-openid',
+      category.id,
+      '体育器材',
+    )
+    expect(renamed).toMatchObject({
+      id: category.id,
+      name: '体育器材',
+    })
+
+    const recreated = await service.create('member-openid', '活动器材')
+    expect(recreated.id).not.toBe(category.id)
+
+    await service.setStatus(
+      'admin-openid',
+      category.id,
+      'DISABLED',
+    )
+    const active = await service.list('member-openid')
+    expect(active.some((item) => item.id === category.id)).toBe(false)
+    const manageable = await service.listManageable('admin-openid')
+    expect(
+      manageable.find((item) => item.id === category.id)?.status,
+    ).toBe('DISABLED')
+
+    await service.setStatus('admin-openid', category.id, 'ACTIVE')
+    await expect(service.list('member-openid')).resolves.toContainEqual(
+      expect.objectContaining({ id: category.id, status: 'ACTIVE' }),
+    )
+  })
+
+  it('管理员不能重命名或停用预设分类', async () => {
+    const repository = new InMemoryCategoryRepository()
+    repository.users.set(
+      'owner',
+      createUser('owner-openid', 'APPROVED', 'OWNER'),
+    )
+    const service = createService(repository)
+    const [preset] = await service.listManageable('owner-openid')
+    expect(preset?.isPreset).toBe(true)
+
+    await expectApiCode(
+      service.rename('owner-openid', preset!.id, '新名称'),
+      'PRESET_CATEGORY_IMMUTABLE',
+    )
+    await expectApiCode(
+      service.setStatus(
+        'owner-openid',
+        preset!.id,
+        'DISABLED',
+      ),
+      'PRESET_CATEGORY_IMMUTABLE',
+    )
   })
 })

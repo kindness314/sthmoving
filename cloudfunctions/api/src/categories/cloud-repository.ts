@@ -44,6 +44,14 @@ class CloudCategoryUnitOfWork implements CategoryUnitOfWork {
     return this.getFirst<CategoryRecord>('categories', { _id: categoryId })
   }
 
+  getCategoryByNormalizedName(
+    normalizedName: string,
+  ): Promise<CategoryRecord | null> {
+    return this.getFirst<CategoryRecord>('categories', {
+      normalized_name: normalizedName,
+    })
+  }
+
   async setCategory(category: CategoryRecord): Promise<void> {
     const { _id, ...data } = category
     await this.database
@@ -53,14 +61,24 @@ class CloudCategoryUnitOfWork implements CategoryUnitOfWork {
   }
 
   async listActiveCategories(): Promise<CategoryRecord[]> {
+    return this.listCategories({ status: 'ACTIVE' })
+  }
+
+  async listAllCategories(): Promise<CategoryRecord[]> {
+    return this.listCategories()
+  }
+
+  private async listCategories(
+    condition?: object,
+  ): Promise<CategoryRecord[]> {
     const categories: CategoryRecord[] = []
     const pageSize = 100
     let offset = 0
 
     while (true) {
-      const result = await this.database
-        .collection('categories')
-        .where({ status: 'ACTIVE' })
+      const collection = this.database.collection('categories')
+      const query = condition ? collection.where(condition) : collection
+      const result = await query
         .skip(offset)
         .limit(pageSize)
         .get()

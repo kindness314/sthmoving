@@ -27,9 +27,11 @@
 .text-input {
   box-sizing: border-box;
   flex: 1;
-  padding: 20rpx 24rpx;
+  height: 80rpx;
+  padding: 0 24rpx;
   border: 1rpx solid #d1d5db;
   border-radius: 16rpx;
+  line-height: 80rpx;
 }
 
 .create-button {
@@ -43,7 +45,7 @@
   font-weight: 600;
 }
 
-.category-row {
+.category-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -52,11 +54,55 @@
   padding-bottom: 24rpx;
 }
 
+.category-main {
+  min-width: 0;
+}
+
+.category-name {
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+.badges {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+
 .preset-badge,
-.custom-badge {
+.custom-badge,
+.disabled-badge {
   padding: 6rpx 16rpx;
   border-radius: 999rpx;
   font-size: 22rpx;
+}
+
+.disabled-badge {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.disabled-category .category-name {
+  color: #9ca3af;
+}
+
+.category-actions {
+  display: flex;
+  flex: none;
+  gap: 12rpx;
+  margin-left: 20rpx;
+}
+
+.category-actions button {
+  margin: 0;
+}
+
+.disable-button {
+  color: #b45309 !important;
+}
+
+.enable-button {
+  color: #0f766e !important;
 }
 
 .preset-badge {

@@ -4,7 +4,7 @@
     "pages/access-pending/index",
     "pages/home/index",
     "pages/member-review/index",
-    "pages/category-select/index"
+    "pages/category-manage/index"
   ],
   "window": {
     "navigationBarTitleText": "YUNA仓储",
