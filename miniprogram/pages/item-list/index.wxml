@@ -23,7 +23,7 @@
     >
       <view class="category-picker">
         <text>{{categoryNames[categoryIndex]}}</text>
-        <text class="picker-arrow">⌄</text>
+        <view class="picker-arrow"></view>
       </view>
     </picker>
   </view>

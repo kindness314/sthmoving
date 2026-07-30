@@ -35,7 +35,12 @@
 }
 
 .picker-arrow {
-  color: #6b7280;
+  width: 14rpx;
+  height: 14rpx;
+  margin-right: 6rpx;
+  border-right: 3rpx solid #9ca3af;
+  border-bottom: 3rpx solid #9ca3af;
+  transform: translateY(-4rpx) rotate(45deg);
 }
 
 .item-card {
