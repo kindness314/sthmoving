@@ -1,5 +1,6 @@
 import { ApiException } from './errors'
 import { authHandlers } from './modules/auth'
+import { categoryHandlers } from './modules/categories'
 import { membershipHandlers } from './modules/membership'
 import { systemHandlers } from './modules/system'
 import type {
@@ -11,7 +12,6 @@ import type {
 
 const plannedModules = new Set([
   'items',
-  'categories',
   'outbound',
   'labels',
   'notifications',
@@ -19,6 +19,7 @@ const plannedModules = new Set([
 
 const handlers: Readonly<Record<string, Readonly<Record<string, ApiHandler>>>> = {
   auth: authHandlers,
+  categories: categoryHandlers,
   membership: membershipHandlers,
   system: systemHandlers,
 }

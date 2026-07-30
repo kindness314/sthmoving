@@ -11,6 +11,11 @@ const memberShortcuts: Shortcut[] = [
   { key: 'scan', title: '扫码查询', description: '扫描物品上的小程序码' },
   { key: 'search', title: '文字搜索', description: '按名称或详情查找物品' },
   { key: 'create', title: '登记物品', description: '录入信息并绑定实体标签' },
+  {
+    key: 'categories',
+    title: '物品分类',
+    description: '查看预设分类或新建分类',
+  },
   { key: 'requests', title: '申请中心', description: '查看加入与离库申请' },
 ]
 
@@ -53,6 +58,10 @@ Page({
     const key = event.currentTarget.dataset['key'] as string | undefined
     if (key === 'member-review') {
       void wx.navigateTo({ url: '/pages/member-review/index' })
+      return
+    }
+    if (key === 'categories') {
+      void wx.navigateTo({ url: '/pages/category-select/index' })
       return
     }
     void wx.showToast({

@@ -42,9 +42,11 @@ export interface PendingJoinRequest {
 export interface Category {
   id: string
   name: string
+  status: 'ACTIVE' | 'DISABLED'
   isPreset: boolean
   createdBy: string
   createdAt: string
+  updatedAt: string
 }
 
 export interface Item {
