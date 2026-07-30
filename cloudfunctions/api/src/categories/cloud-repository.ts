@@ -13,6 +13,7 @@ interface QueryResult {
 
 interface DocumentReference {
   set(options: { data: object }): Promise<unknown>
+  remove(): Promise<unknown>
 }
 
 interface Query {
@@ -52,12 +53,28 @@ class CloudCategoryUnitOfWork implements CategoryUnitOfWork {
     })
   }
 
+  async hasItemReference(categoryId: string): Promise<boolean> {
+    const result = await this.database
+      .collection('items')
+      .where({ category_id: categoryId })
+      .limit(1)
+      .get()
+    return result.data.length > 0
+  }
+
   async setCategory(category: CategoryRecord): Promise<void> {
     const { _id, ...data } = category
     await this.database
       .collection('categories')
       .doc(_id)
       .set({ data })
+  }
+
+  async removeCategory(categoryId: string): Promise<void> {
+    await this.database
+      .collection('categories')
+      .doc(categoryId)
+      .remove()
   }
 
   async listActiveCategories(): Promise<CategoryRecord[]> {

@@ -49,3 +49,13 @@ export function setCategoryStatus(
     payload: { categoryId, status },
   })
 }
+
+export function deleteCategory(
+  categoryId: string,
+): Promise<{ id: string }> {
+  return callApi<{ categoryId: string }, { id: string }>({
+    module: 'categories',
+    action: 'delete',
+    payload: { categoryId },
+  })
+}

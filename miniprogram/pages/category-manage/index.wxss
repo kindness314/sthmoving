@@ -89,8 +89,11 @@
 .category-actions {
   display: flex;
   flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 12rpx;
   margin-left: 20rpx;
+  max-width: 360rpx;
 }
 
 .category-actions button {
@@ -103,6 +106,10 @@
 
 .enable-button {
   color: #0f766e !important;
+}
+
+.delete-button {
+  color: #b91c1c !important;
 }
 
 .preset-badge {

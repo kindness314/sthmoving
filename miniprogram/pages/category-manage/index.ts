@@ -1,5 +1,6 @@
 import {
   createCategory,
+  deleteCategory,
   listManageableCategories,
   renameCategory,
   setCategoryStatus,
@@ -128,9 +129,38 @@ Page({
     )
   },
 
+  async handleDelete(event: WechatMiniprogram.BaseEvent) {
+    const categoryId = event.currentTarget.dataset['id'] as
+      | string
+      | undefined
+    const category = this.data.categories.find(
+      (item) => item.id === categoryId,
+    )
+    if (!category || category.isPreset || this.data.processingId) {
+      return
+    }
+
+    const result = await wx.showModal({
+      title: '删除分类',
+      content:
+        `确定永久删除“${category.name}”吗？` +
+        '已被物品使用的分类不能删除，只能停用。',
+      confirmText: '删除',
+      confirmColor: '#b91c1c',
+    })
+    if (!result.confirm) {
+      return
+    }
+    await this.runCategoryOperation(
+      category.id,
+      () => deleteCategory(category.id),
+      '分类已删除',
+    )
+  },
+
   async runCategoryOperation(
     categoryId: string,
-    operation: () => Promise<Category>,
+    operation: () => Promise<unknown>,
     successMessage: string,
   ) {
     this.setData({ processingId: categoryId, errorMessage: '' })

@@ -72,6 +72,15 @@
       >
         {{item.status === 'ACTIVE' ? '停用' : '启用'}}
       </button>
+      <button
+        class="delete-button"
+        size="mini"
+        data-id="{{item.id}}"
+        disabled="{{processingId}}"
+        bindtap="handleDelete"
+      >
+        删除
+      </button>
     </view>
   </view>
 

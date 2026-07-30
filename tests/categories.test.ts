@@ -13,6 +13,7 @@ import type { UserRecord } from '../cloudfunctions/api/src/membership/types'
 
 class InMemoryCategoryRepository implements CategoryRepository {
   categories = new Map<string, CategoryRecord>()
+  itemCategoryIds = new Set<string>()
   users = new Map<string, UserRecord>()
 
   async runTransaction<T>(
@@ -20,7 +21,11 @@ class InMemoryCategoryRepository implements CategoryRepository {
   ): Promise<T> {
     const categories = cloneMap(this.categories)
     const result = await operation(
-      new InMemoryCategoryUnitOfWork(this.users, categories),
+      new InMemoryCategoryUnitOfWork(
+        this.users,
+        categories,
+        this.itemCategoryIds,
+      ),
     )
     this.categories = categories
     return result
@@ -31,6 +36,7 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
   constructor(
     private readonly users: Map<string, UserRecord>,
     private readonly categories: Map<string, CategoryRecord>,
+    private readonly itemCategoryIds: Set<string>,
   ) {}
 
   getUserByOpenid(openid: string): Promise<UserRecord | null> {
@@ -54,8 +60,17 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
     )
   }
 
+  hasItemReference(categoryId: string): Promise<boolean> {
+    return Promise.resolve(this.itemCategoryIds.has(categoryId))
+  }
+
   setCategory(category: CategoryRecord): Promise<void> {
     this.categories.set(category._id, structuredClone(category))
+    return Promise.resolve()
+  }
+
+  removeCategory(categoryId: string): Promise<void> {
+    this.categories.delete(categoryId)
     return Promise.resolve()
   }
 
@@ -247,6 +262,43 @@ describe('分类服务', () => {
     await service.setStatus('admin-openid', category.id, 'ACTIVE')
     await expect(service.list('member-openid')).resolves.toContainEqual(
       expect.objectContaining({ id: category.id, status: 'ACTIVE' }),
+    )
+  })
+
+  it('管理员可删除未引用分类，但成员、预设分类和已引用分类不可删除', async () => {
+    const repository = new InMemoryCategoryRepository()
+    repository.users.set('member', createUser('member-openid'))
+    repository.users.set(
+      'admin',
+      createUser('admin-openid', 'APPROVED', 'ADMIN'),
+    )
+    const service = createService(repository)
+    const unused = await service.create('member-openid', '未使用分类')
+
+    await expectApiCode(
+      service.delete('member-openid', unused.id),
+      'FORBIDDEN',
+    )
+    await expect(
+      service.delete('admin-openid', unused.id),
+    ).resolves.toEqual({ id: unused.id })
+    expect(repository.categories.has(unused.id)).toBe(false)
+
+    const referenced = await service.create(
+      'member-openid',
+      '已使用分类',
+    )
+    repository.itemCategoryIds.add(referenced.id)
+    await expectApiCode(
+      service.delete('admin-openid', referenced.id),
+      'CATEGORY_IN_USE',
+    )
+    expect(repository.categories.has(referenced.id)).toBe(true)
+
+    const [preset] = await service.listManageable('admin-openid')
+    await expectApiCode(
+      service.delete('admin-openid', preset!.id),
+      'PRESET_CATEGORY_IMMUTABLE',
     )
   })
 

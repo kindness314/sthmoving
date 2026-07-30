@@ -145,6 +145,27 @@ export class CategoryService {
     })
   }
 
+  async delete(
+    openid: string,
+    categoryId: string,
+  ): Promise<{ id: string }> {
+    return this.repository.runTransaction(async (unitOfWork) => {
+      requireCategoryManager(
+        await unitOfWork.getUserByOpenid(openid),
+        openid,
+      )
+      await getMutableCategory(unitOfWork, categoryId)
+      if (await unitOfWork.hasItemReference(categoryId)) {
+        throw new ApiException(
+          'CATEGORY_IN_USE',
+          '该分类已被物品使用，只能停用',
+        )
+      }
+      await unitOfWork.removeCategory(categoryId)
+      return { id: categoryId }
+    })
+  }
+
   private async ensurePresetCategories(
     unitOfWork: CategoryUnitOfWork,
   ): Promise<void> {
@@ -206,7 +227,7 @@ async function getMutableCategory(
   if (category.is_preset) {
     throw new ApiException(
       'PRESET_CATEGORY_IMMUTABLE',
-      '预设分类不能修改或停用',
+      '预设分类不能修改、停用或删除',
     )
   }
   return category
