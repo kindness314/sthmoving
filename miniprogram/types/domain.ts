@@ -11,7 +11,7 @@ export type AccessState =
 
 export type QuantityMode = 'SINGLE' | 'MULTIPLE'
 
-export type ItemStatus = 'IN_STOCK' | 'OUTBOUND'
+export type ItemStatus = 'ACTIVE' | 'OUTBOUND_PENDING' | 'OFF_SHELF'
 
 export type OutboundRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 

@@ -1,0 +1,152 @@
+<view class="page">
+  <view class="heading">
+    <view class="title">登记物品</view>
+    <view class="muted">填写物品信息并上传最多两张照片</view>
+  </view>
+
+  <view class="card section">
+    <view class="field-label">物品照片（可选）</view>
+    <view class="muted field-help">
+      最多 2 张；原图单张不超过 10 MB，处理后不超过 2 MB
+    </view>
+    <view class="image-list">
+      <view
+        wx:for="{{selectedImages}}"
+        wx:key="tempFilePath"
+        class="image-item"
+      >
+        <image
+          class="preview-image"
+          src="{{item.tempFilePath}}"
+          mode="aspectFill"
+          data-index="{{index}}"
+          bindtap="handlePreviewImage"
+        />
+        <button
+          class="remove-image"
+          size="mini"
+          data-index="{{index}}"
+          disabled="{{submitting}}"
+          bindtap="handleRemoveImage"
+        >
+          移除
+        </button>
+      </view>
+      <button
+        wx:if="{{selectedImages.length < 2}}"
+        class="add-image"
+        loading="{{processingImages}}"
+        disabled="{{processingImages || submitting}}"
+        bindtap="handleChooseImages"
+      >
+        选择照片
+      </button>
+    </view>
+  </view>
+
+  <view class="card section">
+    <view class="field-label">物品名称</view>
+    <input
+      class="text-input"
+      maxlength="100"
+      value="{{name}}"
+      placeholder="例如：折叠桌"
+      bindinput="handleNameInput"
+    />
+
+    <view class="field-label spaced-label">物品详情（可选）</view>
+    <textarea
+      class="text-area"
+      maxlength="2000"
+      value="{{description}}"
+      placeholder="填写规格、用途或存放说明"
+      bindinput="handleDescriptionInput"
+    />
+  </view>
+
+  <view class="card section">
+    <view class="field-label">数量模式</view>
+    <radio-group
+      class="radio-group"
+      bindchange="handleQuantityModeChange"
+    >
+      <label class="radio-option">
+        <radio value="SINGLE" checked="{{quantityMode === 'SINGLE'}}" />
+        单件
+      </label>
+      <label class="radio-option">
+        <radio value="MULTIPLE" checked="{{quantityMode === 'MULTIPLE'}}" />
+        多件
+      </label>
+    </radio-group>
+
+    <view wx:if="{{quantityMode === 'MULTIPLE'}}">
+      <view class="field-label spaced-label">具体数量</view>
+      <input
+        class="text-input"
+        type="number"
+        value="{{quantityInput}}"
+        placeholder="请输入正整数"
+        bindinput="handleQuantityInput"
+      />
+    </view>
+  </view>
+
+  <view class="card section">
+    <view class="field-label">物品分类</view>
+    <picker
+      mode="selector"
+      range="{{categories}}"
+      range-key="name"
+      value="{{selectedCategoryIndex}}"
+      disabled="{{loadingCategories || submitting}}"
+      bindchange="handleCategoryChange"
+    >
+      <view class="picker-field">
+        {{selectedCategoryName || (loadingCategories ? '正在加载分类…' : '请选择分类')}}
+      </view>
+    </picker>
+
+    <view class="field-label spaced-label">现场新建分类</view>
+    <view class="category-create-row">
+      <input
+        class="text-input category-input"
+        maxlength="40"
+        value="{{newCategoryName}}"
+        placeholder="输入新的分类名称"
+        bindinput="handleNewCategoryInput"
+      />
+      <button
+        class="secondary-button category-button"
+        size="mini"
+        loading="{{creatingCategory}}"
+        disabled="{{creatingCategory || submitting || !newCategoryName}}"
+        bindtap="handleCreateCategory"
+      >
+        新建并选择
+      </button>
+    </view>
+  </view>
+
+  <view class="card section">
+    <view class="field-label">提交梗概</view>
+    <textarea
+      class="summary-area"
+      maxlength="100"
+      value="{{commitSummary}}"
+      placeholder="5～100 个字符"
+      bindinput="handleCommitSummaryInput"
+    />
+  </view>
+
+  <view wx:if="{{errorMessage}}" class="error">{{errorMessage}}</view>
+
+  <button
+    class="primary-button submit-button"
+    loading="{{submitting}}"
+    disabled="{{submitting || processingImages || creatingCategory}}"
+    bindtap="handleSubmit"
+  >
+    {{submitting ? '正在登记…' : '登记物品'}}
+  </button>
+</view>

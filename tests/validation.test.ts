@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 import {
   validateCommitSummary,
   validateImageCount,
+  validateItemDescription,
+  validateItemName,
   validateQuantity,
 } from '../miniprogram/domain/validation'
 
@@ -22,5 +24,13 @@ describe('物品输入校验', () => {
     expect(validateQuantity('SINGLE', 2)).not.toBeNull()
     expect(validateQuantity('MULTIPLE', 8)).toBeNull()
     expect(validateQuantity('MULTIPLE', 0)).not.toBeNull()
+  })
+
+  it('限制物品名称和详情长度', () => {
+    expect(validateItemName('折叠桌')).toBeNull()
+    expect(validateItemName('   ')).not.toBeNull()
+    expect(validateItemName('物'.repeat(101))).not.toBeNull()
+    expect(validateItemDescription('')).toBeNull()
+    expect(validateItemDescription('详情'.repeat(1001))).not.toBeNull()
   })
 })
