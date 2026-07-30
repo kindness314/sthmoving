@@ -7,6 +7,7 @@ export interface CategoryRecord {
   status: CategoryStatus
   is_preset: boolean
   sort_order: number
+  item_reference_count?: number
   created_by: string
   created_at: string
   updated_at: string

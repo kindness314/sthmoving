@@ -68,6 +68,7 @@ export class CategoryService {
         status: 'ACTIVE',
         is_preset: false,
         sort_order: 1000,
+        item_reference_count: 0,
         created_by: user._id,
         created_at: now,
         updated_at: now,
@@ -154,8 +155,11 @@ export class CategoryService {
         await unitOfWork.getUserByOpenid(openid),
         openid,
       )
-      await getMutableCategory(unitOfWork, categoryId)
-      if (await unitOfWork.hasItemReference(categoryId)) {
+      const category = await getMutableCategory(unitOfWork, categoryId)
+      if (
+        (category.item_reference_count ?? 0) > 0 ||
+        (await unitOfWork.hasItemReference(categoryId))
+      ) {
         throw new ApiException(
           'CATEGORY_IN_USE',
           '该分类已被物品使用，只能停用',
@@ -183,6 +187,7 @@ export class CategoryService {
         status: 'ACTIVE',
         is_preset: true,
         sort_order: index,
+        item_reference_count: 0,
         created_by: 'SYSTEM',
         created_at: now,
         updated_at: now,
