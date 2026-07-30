@@ -94,21 +94,39 @@
 
   <view class="card section">
     <view class="field-label">物品分类</view>
-    <picker
-      mode="selector"
-      range="{{categories}}"
-      range-key="name"
-      value="{{selectedCategoryIndex}}"
-      disabled="{{loadingCategories || submitting}}"
-      bindchange="handleCategoryChange"
+    <radio-group
+      class="category-mode"
+      bindchange="handleCategoryModeChange"
     >
-      <view class="picker-field">
-        {{selectedCategoryName || (loadingCategories ? '正在加载分类…' : '请选择分类')}}
-      </view>
-    </picker>
+      <label class="radio-option">
+        <radio
+          value="EXISTING"
+          checked="{{categoryMode === 'EXISTING'}}"
+        />
+        选择已有分类
+      </label>
+      <label class="radio-option">
+        <radio value="NEW" checked="{{categoryMode === 'NEW'}}" />
+        新建分类
+      </label>
+    </radio-group>
 
-    <view class="field-label spaced-label">现场新建分类</view>
-    <view class="category-create-row">
+    <view wx:if="{{categoryMode === 'EXISTING'}}" class="category-panel">
+      <picker
+        mode="selector"
+        range="{{categories}}"
+        range-key="name"
+        value="{{selectedCategoryIndex}}"
+        disabled="{{loadingCategories || submitting}}"
+        bindchange="handleCategoryChange"
+      >
+        <view class="picker-field">
+          {{selectedCategoryName || (loadingCategories ? '正在加载分类…' : '请选择分类')}}
+        </view>
+      </picker>
+    </view>
+
+    <view wx:else class="category-panel category-create-row">
       <input
         class="text-input category-input"
         maxlength="40"

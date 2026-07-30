@@ -30,6 +30,7 @@ Page({
     quantityInput: '1',
     commitSummary: '首次登记物品',
     categories: [] as Category[],
+    categoryMode: 'EXISTING' as 'EXISTING' | 'NEW',
     selectedCategoryIndex: -1,
     selectedCategoryId: '',
     selectedCategoryName: '',
@@ -111,6 +112,19 @@ Page({
     })
   },
 
+  handleCategoryModeChange(
+    event: WechatMiniprogram.RadioGroupChange,
+  ) {
+    const categoryMode = event.detail.value as 'EXISTING' | 'NEW'
+    this.setData({
+      categoryMode,
+      selectedCategoryIndex: -1,
+      selectedCategoryId: '',
+      selectedCategoryName: '',
+      errorMessage: '',
+    })
+  },
+
   handleNewCategoryInput(event: WechatMiniprogram.Input) {
     this.setData({
       newCategoryName: event.detail.value,
@@ -125,7 +139,10 @@ Page({
     this.setData({ creatingCategory: true, errorMessage: '' })
     try {
       const category = await createCategory(this.data.newCategoryName)
-      this.setData({ newCategoryName: '' })
+      this.setData({
+        categoryMode: 'EXISTING',
+        newCategoryName: '',
+      })
       await this.loadCategories(category.id)
       await wx.showToast({ title: '分类已新建并选中', icon: 'success' })
     } catch (error) {
@@ -211,7 +228,7 @@ Page({
         title: '登记成功',
         content: `物品编码：${item.code}`,
         showCancel: false,
-        confirmText: '返回工作台',
+        confirmText: '返回',
       })
       await wx.navigateBack()
     } catch (error) {

@@ -98,10 +98,20 @@
   gap: 48rpx;
 }
 
+.category-mode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24rpx 40rpx;
+}
+
 .radio-option {
   display: flex;
   align-items: center;
   gap: 10rpx;
+}
+
+.category-panel {
+  margin-top: 24rpx;
 }
 
 .category-create-row {
