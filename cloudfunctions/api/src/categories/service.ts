@@ -238,7 +238,7 @@ async function getMutableCategory(
   return category
 }
 
-function validateCategoryName(value: string): string {
+export function validateCategoryName(value: string): string {
   const name = value.trim()
   if (name.length < 1 || name.length > 40) {
     throw new ApiException(
@@ -249,7 +249,7 @@ function validateCategoryName(value: string): string {
   return name
 }
 
-function normalizeCategoryName(value: string): string {
+export function normalizeCategoryName(value: string): string {
   return value.trim().normalize('NFKC').toLocaleLowerCase('zh-CN')
 }
 

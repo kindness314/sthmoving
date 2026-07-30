@@ -1,15 +1,13 @@
 import {
   MAX_ITEM_IMAGES,
+  validateCategoryName,
   validateCommitSummary,
   validateImageCount,
   validateItemDescription,
   validateItemName,
   validateQuantity,
 } from '../../domain/validation'
-import {
-  createCategory,
-  listCategories,
-} from '../../services/categories'
+import { listCategories } from '../../services/categories'
 import {
   chooseAndPrepareItemImages,
   deleteUploadedItemImages,
@@ -37,7 +35,6 @@ Page({
     newCategoryName: '',
     selectedImages: [] as PreparedItemImage[],
     loadingCategories: true,
-    creatingCategory: false,
     processingImages: false,
     submitting: false,
     errorMessage: '',
@@ -132,26 +129,6 @@ Page({
     })
   },
 
-  async handleCreateCategory() {
-    if (this.data.creatingCategory || !this.data.newCategoryName.trim()) {
-      return
-    }
-    this.setData({ creatingCategory: true, errorMessage: '' })
-    try {
-      const category = await createCategory(this.data.newCategoryName)
-      this.setData({
-        categoryMode: 'EXISTING',
-        newCategoryName: '',
-      })
-      await this.loadCategories(category.id)
-      await wx.showToast({ title: '分类已新建并选中', icon: 'success' })
-    } catch (error) {
-      this.setData({ errorMessage: getErrorMessage(error, '新建分类失败') })
-    } finally {
-      this.setData({ creatingCategory: false })
-    }
-  },
-
   async handleChooseImages() {
     if (this.data.processingImages) {
       return
@@ -216,13 +193,17 @@ Page({
     this.setData({ submitting: true, errorMessage: '' })
     try {
       uploadedFileIds = await uploadItemImages(this.data.selectedImages)
+      const categorySelection =
+        this.data.categoryMode === 'EXISTING'
+          ? { categoryId: this.data.selectedCategoryId }
+          : { newCategoryName: this.data.newCategoryName }
       createdItem = await createItem({
         name: this.data.name,
         images: uploadedFileIds,
         description: this.data.description,
         quantityMode: this.data.quantityMode,
         quantity,
-        categoryId: this.data.selectedCategoryId,
+        ...categorySelection,
         commitSummary: this.data.commitSummary,
       })
     } catch (error) {
@@ -257,7 +238,11 @@ Page({
         this.data.selectedImages.map(({ tempFilePath }) => tempFilePath),
       ) ??
       validateQuantity(this.data.quantityMode, quantity) ??
-      (!this.data.selectedCategoryId ? '请选择物品分类' : null) ??
+      (this.data.categoryMode === 'EXISTING'
+        ? !this.data.selectedCategoryId
+          ? '请选择物品分类'
+          : null
+        : validateCategoryName(this.data.newCategoryName)) ??
       validateCommitSummary(this.data.commitSummary)
     )
   },

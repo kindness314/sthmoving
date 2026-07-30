@@ -134,15 +134,9 @@
         placeholder="输入新的分类名称"
         bindinput="handleNewCategoryInput"
       />
-      <button
-        class="secondary-button category-button"
-        size="mini"
-        loading="{{creatingCategory}}"
-        disabled="{{creatingCategory || submitting || !newCategoryName}}"
-        bindtap="handleCreateCategory"
-      >
-        新建并选择
-      </button>
+      <view class="muted category-help">
+        提交物品时创建，提交前可以随时修改名称
+      </view>
     </view>
   </view>
 
@@ -162,7 +156,7 @@
   <button
     class="primary-button submit-button"
     loading="{{submitting}}"
-    disabled="{{submitting || processingImages || creatingCategory}}"
+    disabled="{{submitting || processingImages}}"
     bindtap="handleSubmit"
   >
     {{submitting ? '正在登记…' : '登记物品'}}

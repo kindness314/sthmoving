@@ -38,4 +38,28 @@ describe('云函数 API 路由', () => {
       expect(response.error.code).toBe('INVALID_REQUEST')
     }
   })
+
+  it('物品登记接口拒绝同时提交已有分类和新分类', async () => {
+    const response = await route(
+      {
+        module: 'items',
+        action: 'create',
+        payload: {
+          name: '折叠桌',
+          images: [],
+          description: '',
+          quantityMode: 'SINGLE',
+          quantity: 1,
+          categoryId: 'category-existing',
+          newCategoryName: '活动器材',
+          commitSummary: '首次登记物品',
+        },
+      },
+      context,
+    )
+    expect(response.ok).toBe(false)
+    if (!response.ok) {
+      expect(response.error.code).toBe('INVALID_CATEGORY_SELECTION')
+    }
+  })
 })

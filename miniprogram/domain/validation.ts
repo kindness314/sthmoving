@@ -5,6 +5,7 @@ export const MIN_COMMIT_SUMMARY_LENGTH = 5
 export const MAX_COMMIT_SUMMARY_LENGTH = 100
 export const MAX_ITEM_NAME_LENGTH = 100
 export const MAX_ITEM_DESCRIPTION_LENGTH = 2000
+export const MAX_CATEGORY_NAME_LENGTH = 40
 
 export function validateItemName(name: string): string | null {
   const length = name.trim().length
@@ -19,6 +20,14 @@ export function validateItemDescription(
 ): string | null {
   if (description.trim().length > MAX_ITEM_DESCRIPTION_LENGTH) {
     return `物品详情不能超过 ${MAX_ITEM_DESCRIPTION_LENGTH} 个字符`
+  }
+  return null
+}
+
+export function validateCategoryName(name: string): string | null {
+  const length = name.trim().length
+  if (length < 1 || length > MAX_CATEGORY_NAME_LENGTH) {
+    return `分类名称需为 1-${MAX_CATEGORY_NAME_LENGTH} 个字符`
   }
   return null
 }

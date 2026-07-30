@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  validateCategoryName,
   validateCommitSummary,
   validateImageCount,
   validateItemDescription,
@@ -32,5 +33,11 @@ describe('物品输入校验', () => {
     expect(validateItemName('物'.repeat(101))).not.toBeNull()
     expect(validateItemDescription('')).toBeNull()
     expect(validateItemDescription('详情'.repeat(1001))).not.toBeNull()
+  })
+
+  it('限制新分类名称长度', () => {
+    expect(validateCategoryName('活动器材')).toBeNull()
+    expect(validateCategoryName('   ')).not.toBeNull()
+    expect(validateCategoryName('类'.repeat(41))).not.toBeNull()
   })
 })

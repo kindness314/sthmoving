@@ -115,20 +115,16 @@
 }
 
 .category-create-row {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
+  display: block;
 }
 
 .category-input {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
 }
 
-.category-button {
-  flex: none;
-  margin: 0;
-  color: #0f766e !important;
+.category-help {
+  margin-top: 12rpx;
+  font-size: 23rpx;
 }
 
 .error {

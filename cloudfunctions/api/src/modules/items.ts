@@ -11,6 +11,7 @@ interface CreateItemPayload {
   quantityMode?: unknown
   quantity?: unknown
   categoryId?: unknown
+  newCategoryName?: unknown
   commitSummary?: unknown
 }
 
@@ -28,7 +29,10 @@ export const itemHandlers: Readonly<Record<string, ApiHandler>> = {
         typeof input.description !== 'string') ||
       !isQuantityMode(input.quantityMode) ||
       typeof input.quantity !== 'number' ||
-      typeof input.categoryId !== 'string' ||
+      (input.categoryId !== undefined &&
+        typeof input.categoryId !== 'string') ||
+      (input.newCategoryName !== undefined &&
+        typeof input.newCategoryName !== 'string') ||
       typeof input.commitSummary !== 'string'
     ) {
       throw new ApiException(
@@ -37,13 +41,27 @@ export const itemHandlers: Readonly<Record<string, ApiHandler>> = {
       )
     }
 
+    const hasCategoryId = typeof input.categoryId === 'string'
+    const hasNewCategoryName =
+      typeof input.newCategoryName === 'string'
+    if (hasCategoryId === hasNewCategoryName) {
+      throw new ApiException(
+        'INVALID_CATEGORY_SELECTION',
+        '必须选择已有分类或填写一个新分类',
+      )
+    }
+
+    const categorySelection =
+      typeof input.categoryId === 'string'
+        ? { categoryId: input.categoryId }
+        : { newCategoryName: input.newCategoryName as string }
     return createService().create(context.openid, {
       name: input.name,
       images: input.images ?? [],
       description: input.description ?? '',
       quantityMode: input.quantityMode,
       quantity: input.quantity,
-      categoryId: input.categoryId,
+      ...categorySelection,
       commitSummary: input.commitSummary,
     })
   },

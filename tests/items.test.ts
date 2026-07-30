@@ -62,6 +62,16 @@ class InMemoryItemUnitOfWork implements ItemUnitOfWork {
     return Promise.resolve(this.categories.get(categoryId) ?? null)
   }
 
+  getCategoryByNormalizedName(
+    normalizedName: string,
+  ): Promise<CategoryRecord | null> {
+    return Promise.resolve(
+      [...this.categories.values()].find(
+        (category) => category.normalized_name === normalizedName,
+      ) ?? null,
+    )
+  }
+
   setCategory(category: CategoryRecord): Promise<void> {
     this.categories.set(category._id, structuredClone(category))
     return Promise.resolve()
@@ -135,6 +145,15 @@ function createInput(
   }
 }
 
+function createNewCategoryInput(name = '活动器材'): CreateItemInput {
+  const input = createInput()
+  delete input.categoryId
+  return {
+    ...input,
+    newCategoryName: name,
+  }
+}
+
 function createService(repository: InMemoryItemRepository): ItemService {
   return new ItemService(
     repository,
@@ -142,6 +161,7 @@ function createService(repository: InMemoryItemRepository): ItemService {
     () => 'item-1',
     () => 'item-log-1',
     () => 'A1B2C3D4E5F6',
+    () => 'category-new',
   )
 }
 
@@ -230,6 +250,36 @@ describe('物品登记服务', () => {
     })
   })
 
+  it('提交物品时在同一事务创建并引用新分类', async () => {
+    const repository = prepareRepository()
+    const service = createService(repository)
+
+    await expect(
+      service.create(
+        'member-openid',
+        createNewCategoryInput('  活动器材  '),
+      ),
+    ).resolves.toMatchObject({ categoryId: 'category-new' })
+    expect(repository.categories.get('category-new')).toMatchObject({
+      name: '活动器材',
+      normalized_name: '活动器材',
+      is_preset: false,
+      item_reference_count: 1,
+      created_by: 'user-member',
+    })
+    expect(repository.items.get('item-1')?.category_id).toBe(
+      'category-new',
+    )
+
+    await expectApiCode(
+      service.create(
+        'member-openid',
+        createNewCategoryInput(' 日常用品 '),
+      ),
+      'CATEGORY_NAME_EXISTS',
+    )
+  })
+
   it('拒绝无效字段、数量、图片和提交梗概', async () => {
     const repository = prepareRepository()
     const service = createService(repository)
@@ -280,6 +330,19 @@ describe('物品登记服务', () => {
       ),
       'INVALID_COMMIT_SUMMARY',
     )
+    await expectApiCode(
+      service.create(
+        'member-openid',
+        createInput({ newCategoryName: '活动器材' }),
+      ),
+      'INVALID_CATEGORY_SELECTION',
+    )
+    const noCategory = createInput()
+    delete noCategory.categoryId
+    await expectApiCode(
+      service.create('member-openid', noCategory),
+      'INVALID_CATEGORY_SELECTION',
+    )
     expect(repository.items.size).toBe(0)
     expect(repository.logs.size).toBe(0)
     expect(
@@ -322,12 +385,12 @@ describe('物品登记服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.create('member-openid', createInput()),
+      service.create('member-openid', createNewCategoryInput()),
     ).rejects.toThrow('模拟日志写入失败')
     expect(repository.items.size).toBe(0)
     expect(repository.logs.size).toBe(0)
     expect(
-      repository.categories.get('category-daily')?.item_reference_count,
-    ).toBeUndefined()
+      repository.categories.has('category-new'),
+    ).toBe(false)
   })
 })

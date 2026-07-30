@@ -1,8 +1,16 @@
 import { randomBytes, randomUUID } from 'node:crypto'
 
+import {
+  normalizeCategoryName,
+  validateCategoryName,
+} from '../categories/service'
+import type { CategoryRecord } from '../categories/types'
 import { ApiException } from '../errors'
 import type { UserRecord } from '../membership/types'
-import type { ItemRepository } from './repository'
+import type {
+  ItemRepository,
+  ItemUnitOfWork,
+} from './repository'
 import type {
   CreateItemInput,
   ItemRecord,
@@ -19,6 +27,8 @@ export class ItemService {
       `item-log-${randomUUID()}`,
     private readonly createPublicCode: () => string = () =>
       randomBytes(6).toString('hex').toUpperCase(),
+    private readonly createCategoryId: () => string = () =>
+      `category-${randomUUID()}`,
   ) {}
 
   async create(openid: string, input: CreateItemInput): Promise<PublicItem> {
@@ -28,24 +38,13 @@ export class ItemService {
       const user = await unitOfWork.getUserByOpenid(openid)
       requireApprovedUser(user, openid)
 
-      const category = await unitOfWork.getCategory(validated.categoryId)
-      if (!category) {
-        throw new ApiException('CATEGORY_NOT_FOUND', '分类不存在')
-      }
-      if (category.status !== 'ACTIVE') {
-        throw new ApiException(
-          'CATEGORY_DISABLED',
-          '该分类已停用，不能用于登记物品',
-        )
-      }
-
-      await unitOfWork.setCategory({
-        ...category,
-        item_reference_count:
-          (category.item_reference_count ?? 0) + 1,
-      })
-
       const now = this.now()
+      const category = await this.resolveCategory(
+        unitOfWork,
+        user,
+        validated,
+        now,
+      )
       const item: ItemRecord = {
         _id: this.createItemId(),
         code: this.createPublicCode(),
@@ -54,7 +53,7 @@ export class ItemService {
         description: validated.description,
         quantity_mode: validated.quantityMode,
         quantity: validated.quantity,
-        category_id: validated.categoryId,
+        category_id: category._id,
         status: 'ACTIVE',
         version: 1,
         registered_by: user._id,
@@ -76,6 +75,59 @@ export class ItemService {
       })
       return toPublicItem(item)
     })
+  }
+
+  private async resolveCategory(
+    unitOfWork: ItemUnitOfWork,
+    user: UserRecord,
+    input: CreateItemInput,
+    now: string,
+  ): Promise<CategoryRecord> {
+    if (input.categoryId) {
+      const category = await unitOfWork.getCategory(input.categoryId)
+      if (!category) {
+        throw new ApiException('CATEGORY_NOT_FOUND', '分类不存在')
+      }
+      if (category.status !== 'ACTIVE') {
+        throw new ApiException(
+          'CATEGORY_DISABLED',
+          '该分类已停用，不能用于登记物品',
+        )
+      }
+      const referenced = {
+        ...category,
+        item_reference_count:
+          (category.item_reference_count ?? 0) + 1,
+      }
+      await unitOfWork.setCategory(referenced)
+      return referenced
+    }
+
+    if (!input.newCategoryName) {
+      throw new ApiException(
+        'INVALID_CATEGORY_SELECTION',
+        '必须选择已有分类或填写一个新分类',
+      )
+    }
+    const name = validateCategoryName(input.newCategoryName)
+    const normalizedName = normalizeCategoryName(name)
+    if (await unitOfWork.getCategoryByNormalizedName(normalizedName)) {
+      throw new ApiException('CATEGORY_NAME_EXISTS', '已存在同名分类')
+    }
+    const category: CategoryRecord = {
+      _id: this.createCategoryId(),
+      name,
+      normalized_name: normalizedName,
+      status: 'ACTIVE',
+      is_preset: false,
+      sort_order: 1000,
+      item_reference_count: 1,
+      created_by: user._id,
+      created_at: now,
+      updated_at: now,
+    }
+    await unitOfWork.setCategory(category)
+    return category
   }
 }
 
@@ -142,9 +194,13 @@ function validateCreateInput(input: CreateItemInput): CreateItemInput {
     )
   }
 
-  const categoryId = input.categoryId.trim()
-  if (!categoryId) {
-    throw new ApiException('INVALID_CATEGORY_ID', '必须选择物品分类')
+  const categoryId = input.categoryId?.trim()
+  const newCategoryName = input.newCategoryName?.trim()
+  if (Boolean(categoryId) === Boolean(newCategoryName)) {
+    throw new ApiException(
+      'INVALID_CATEGORY_SELECTION',
+      '必须选择已有分类或填写一个新分类',
+    )
   }
 
   const commitSummary = input.commitSummary.trim()
@@ -155,15 +211,20 @@ function validateCreateInput(input: CreateItemInput): CreateItemInput {
     )
   }
 
-  return {
+  const validated: CreateItemInput = {
     name,
     images: input.images.map((fileId) => fileId.trim()),
     description,
     quantityMode: input.quantityMode,
     quantity: input.quantity,
-    categoryId,
     commitSummary,
   }
+  if (categoryId) {
+    validated.categoryId = categoryId
+  } else if (newCategoryName) {
+    validated.newCategoryName = newCategoryName
+  }
+  return validated
 }
 
 function toPublicItem(item: ItemRecord): PublicItem {

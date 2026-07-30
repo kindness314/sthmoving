@@ -10,7 +10,8 @@ export interface CreateItemInput {
   description: string
   quantityMode: QuantityMode
   quantity: number
-  categoryId: string
+  categoryId?: string
+  newCategoryName?: string
   commitSummary: string
 }
 

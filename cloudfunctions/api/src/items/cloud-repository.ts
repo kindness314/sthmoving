@@ -49,6 +49,14 @@ class CloudItemUnitOfWork implements ItemUnitOfWork {
     })
   }
 
+  getCategoryByNormalizedName(
+    normalizedName: string,
+  ): Promise<CategoryRecord | null> {
+    return this.getFirst<CategoryRecord>('categories', {
+      normalized_name: normalizedName,
+    })
+  }
+
   async setCategory(category: CategoryRecord): Promise<void> {
     const { _id, ...data } = category
     await this.database
