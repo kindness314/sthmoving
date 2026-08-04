@@ -22,6 +22,10 @@ import type {
   PublicItemSummary,
 } from './types'
 
+export type ItemFileUrlResolver = (
+  fileIds: string[],
+) => Promise<Map<string, string>>
+
 export class ItemService {
   constructor(
     private readonly repository: ItemRepository,
@@ -34,6 +38,7 @@ export class ItemService {
       randomBytes(6).toString('hex').toUpperCase(),
     private readonly createCategoryId: () => string = () =>
       `category-${randomUUID()}`,
+    private readonly resolveFileUrls: ItemFileUrlResolver = identityFileUrls,
   ) {}
 
   async create(openid: string, input: CreateItemInput): Promise<PublicItem> {
@@ -229,6 +234,9 @@ export class ItemService {
   private async toPublicSummaries(
     items: ItemRecord[],
   ): Promise<PublicItemSummary[]> {
+    const fileUrls = await this.resolveFileUrls(
+      items.flatMap((item) => item.images),
+    )
     const categories = await this.repository.getCategoriesByIds(
       items.map((item) => item.category_id),
     )
@@ -247,7 +255,9 @@ export class ItemService {
         id: item._id,
         code: item.code,
         name: item.name,
-        images: item.images,
+        images: item.images.map(
+          (fileId) => fileUrls.get(fileId) ?? fileId,
+        ),
         description: item.description,
         quantityMode: item.quantity_mode,
         quantity: item.quantity,
@@ -261,6 +271,12 @@ export class ItemService {
       }
     })
   }
+}
+
+async function identityFileUrls(
+  fileIds: string[],
+): Promise<Map<string, string>> {
+  return new Map(fileIds.map((fileId) => [fileId, fileId]))
 }
 
 function validateListInput(input: ListItemsInput) {

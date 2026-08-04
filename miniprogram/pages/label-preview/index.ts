@@ -2,7 +2,6 @@ import {
   generateItemMiniProgramCode,
   getItemLabel,
 } from '../../services/labels'
-import { resolveCloudFileUrls } from '../../services/cloud-files'
 import { getItemDetail } from '../../services/items'
 import type { ItemDetail, ItemLabel } from '../../types/domain'
 
@@ -59,7 +58,7 @@ Page({
       this.setData({
         item,
         label,
-        labelImageUrl: await resolveLabelImageUrl(label),
+        labelImageUrl: label?.fileUrl ?? '',
       })
       if (!label || label.status === 'PENDING') {
         await this.generateLabel()
@@ -83,7 +82,7 @@ Page({
       const label = await generateItemMiniProgramCode(this.data.itemId)
       this.setData({
         label,
-        labelImageUrl: await resolveLabelImageUrl(label),
+        labelImageUrl: label.fileUrl ?? '',
       })
     } catch (error) {
       this.setData({
@@ -96,15 +95,6 @@ Page({
   },
 })
 
-async function resolveLabelImageUrl(
-  label: ItemLabel | null,
-): Promise<string> {
-  if (label?.status !== 'READY' || !label.fileId) {
-    return ''
-  }
-  const urls = await resolveCloudFileUrls([label.fileId])
-  return urls.get(label.fileId)!
-}
 
 function safeDecode(value: string | undefined): string {
   if (!value) {

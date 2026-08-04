@@ -1,4 +1,5 @@
 import { ApiException } from '../errors'
+import { CloudStorageUrlResolver } from '../cloud-storage'
 import { CloudItemRepository } from '../items/cloud-repository'
 import { ItemService } from '../items/service'
 import type { QuantityMode } from '../items/types'
@@ -23,7 +24,16 @@ interface ListItemsPayload {
 }
 
 function createService(): ItemService {
-  return new ItemService(new CloudItemRepository())
+  const storage = new CloudStorageUrlResolver()
+  return new ItemService(
+    new CloudItemRepository(),
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    (fileIds) => storage.resolve(fileIds),
+  )
 }
 
 export const itemHandlers: Readonly<Record<string, ApiHandler>> = {

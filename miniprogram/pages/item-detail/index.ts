@@ -1,6 +1,5 @@
 import { getItemDetail } from '../../services/items'
 import { resolveItemLabel } from '../../services/labels'
-import { resolveCloudFileUrls } from '../../services/cloud-files'
 import type { ItemDetail } from '../../types/domain'
 
 interface ItemDetailView extends ItemDetail {
@@ -92,8 +91,7 @@ Page({
     this.setData({ loading: true, errorMessage: '' })
     try {
       const item = await getItemDetail(this.data.itemId)
-      const fileUrls = await resolveCloudFileUrls(item.images)
-      this.setData({ item: toItemDetailView(item, fileUrls) })
+      this.setData({ item: toItemDetailView(item) })
     } catch (error) {
       this.setData({
         item: null,
@@ -117,13 +115,10 @@ function safeDecode(value: string | undefined): string {
   }
 }
 
-function toItemDetailView(
-  item: ItemDetail,
-  fileUrls: Map<string, string>,
-): ItemDetailView {
+function toItemDetailView(item: ItemDetail): ItemDetailView {
   return {
     ...item,
-    displayImages: item.images.map((fileId) => fileUrls.get(fileId)!),
+    displayImages: item.images,
     quantityText:
       item.quantityMode === 'SINGLE' ? '单件（1 件）' : `${item.quantity} 件`,
     statusText:

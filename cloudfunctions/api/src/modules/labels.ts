@@ -1,4 +1,5 @@
 import { ApiException } from '../errors'
+import { CloudStorageUrlResolver } from '../cloud-storage'
 import { CloudLabelRepository } from '../labels/cloud-repository'
 import {
   CloudLabelFileStorage,
@@ -10,11 +11,15 @@ import type { ApiHandler } from '../types'
 const miniProgramCodeEnvironment = 'develop' as const
 
 function createService(): LabelService {
+  const storage = new CloudStorageUrlResolver()
   return new LabelService(
     new CloudLabelRepository(),
     new WeChatMiniProgramCodeGenerator(),
     new CloudLabelFileStorage(),
     miniProgramCodeEnvironment,
+    undefined,
+    undefined,
+    (fileId) => storage.resolveOne(fileId),
   )
 }
 

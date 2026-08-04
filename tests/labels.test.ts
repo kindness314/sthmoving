@@ -175,6 +175,20 @@ function prepare() {
   return { repository, generator, storage, service }
 }
 
+function prepareWithFileUrlResolver() {
+  const prepared = prepare()
+  const service = new LabelService(
+    prepared.repository,
+    prepared.generator,
+    prepared.storage,
+    'develop',
+    () => '2026-07-30T01:00:00.000Z',
+    () => 'generation-1',
+    (fileId) => Promise.resolve(`https://storage.example/${fileId}`),
+  )
+  return { ...prepared, service }
+}
+
 async function expectApiCode(
   operation: Promise<unknown>,
   code: string,
@@ -299,5 +313,18 @@ describe('物品小程序码服务', () => {
       service.generate('member-openid', 'item-1'),
       'ACCOUNT_NOT_ACTIVE',
     )
+  })
+
+  it('returns a temporary URL for the generated label file', async () => {
+    const { service } = prepareWithFileUrlResolver()
+
+    await expect(
+      service.generate('member-openid', 'item-1'),
+    ).resolves.toMatchObject({
+      status: 'READY',
+      fileId: 'cloud://env/labels/item-1/A1B2C3D4E5F6.png',
+      fileUrl:
+        'https://storage.example/cloud://env/labels/item-1/A1B2C3D4E5F6.png',
+    })
   })
 })

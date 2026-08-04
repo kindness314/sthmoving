@@ -6,7 +6,10 @@ import type {
   ItemRepository,
   ItemUnitOfWork,
 } from '../cloudfunctions/api/src/items/repository'
-import { ItemService } from '../cloudfunctions/api/src/items/service'
+import {
+  ItemService,
+  type ItemFileUrlResolver,
+} from '../cloudfunctions/api/src/items/service'
 import type {
   CreateItemInput,
   ItemListQuery,
@@ -238,7 +241,11 @@ function createNewCategoryInput(name = '活动器材'): CreateItemInput {
   }
 }
 
-function createService(repository: InMemoryItemRepository): ItemService {
+function createService(
+  repository: InMemoryItemRepository,
+  resolveFileUrls: ItemFileUrlResolver = async (fileIds) =>
+    new Map(fileIds.map((fileId) => [fileId, fileId])),
+): ItemService {
   return new ItemService(
     repository,
     () => '2026-07-30T02:00:00.000Z',
@@ -246,6 +253,7 @@ function createService(repository: InMemoryItemRepository): ItemService {
     () => 'item-log-1',
     () => 'A1B2C3D4E5F6',
     () => 'category-new',
+    resolveFileUrls,
   )
 }
 
@@ -512,6 +520,41 @@ describe('物品登记服务', () => {
     expect(
       repository.categories.has('category-new'),
     ).toBe(false)
+  })
+
+  it('resolves cloud storage file IDs to temporary URLs for list and detail', async () => {
+    const repository = prepareRepository()
+    repository.items.set(
+      'item-table',
+      createItemRecord('item-table', {
+        images: ['cloud://env/items/table.jpg'],
+      }),
+    )
+    const requested: string[][] = []
+    const service = createService(repository, async (fileIds) => {
+      requested.push(fileIds)
+      return new Map(
+        fileIds.map((fileId) => [
+          fileId,
+          `https://storage.example/${encodeURIComponent(fileId)}`,
+        ]),
+      )
+    })
+    const expectedUrl =
+      'https://storage.example/cloud%3A%2F%2Fenv%2Fitems%2Ftable.jpg'
+
+    await expect(
+      service.list('member-openid', {}),
+    ).resolves.toMatchObject({
+      items: [{ id: 'item-table', images: [expectedUrl] }],
+    })
+    await expect(
+      service.detail('member-openid', 'item-table'),
+    ).resolves.toMatchObject({ images: [expectedUrl] })
+    expect(requested).toEqual([
+      ['cloud://env/items/table.jpg'],
+      ['cloud://env/items/table.jpg'],
+    ])
   })
 })
 

@@ -115,6 +115,7 @@ export interface ItemLabel {
   status: LabelStatus
   attemptCount: number
   fileId?: string
+  fileUrl?: string
   errorMessage?: string
   generatedAt?: string
   updatedAt: string

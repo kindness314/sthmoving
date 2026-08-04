@@ -1,5 +1,4 @@
 import { listCategories } from '../../services/categories'
-import { resolveCloudFileUrls } from '../../services/cloud-files'
 import { listItems } from '../../services/items'
 import type {
   Category,
@@ -129,7 +128,7 @@ Page({
         return
       }
       this.setData({
-        items: await toItemListViews(result.items),
+        items: result.items.map(toItemListView),
         nextCursor: result.nextCursor ?? null,
       })
     } catch (error) {
@@ -168,7 +167,7 @@ Page({
       this.setData({
         items: [
           ...this.data.items,
-          ...(await toItemListViews(result.items)),
+          ...result.items.map(toItemListView),
         ],
         nextCursor: result.nextCursor ?? null,
       })
@@ -201,23 +200,11 @@ Page({
   },
 })
 
-async function toItemListViews(
-  items: ItemSummary[],
-): Promise<ItemListView[]> {
-  const fileUrls = await resolveCloudFileUrls(
-    items.flatMap((item) => item.images.slice(0, 1)),
-  )
-  return items.map((item) => toItemListView(item, fileUrls))
-}
-
-function toItemListView(
-  item: ItemSummary,
-  fileUrls: Map<string, string>,
-): ItemListView {
+function toItemListView(item: ItemSummary): ItemListView {
   const coverFileId = item.images[0]
   return {
     ...item,
-    coverImage: coverFileId ? (fileUrls.get(coverFileId) ?? '') : '',
+    coverImage: coverFileId ?? '',
     quantityText:
       item.quantityMode === 'SINGLE' ? '单件' : `${item.quantity} 件`,
     statusText:

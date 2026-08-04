@@ -26,14 +26,16 @@ export class LabelService {
     private readonly environment: MiniProgramEnvironment = 'develop',
     private readonly now: () => string = () => new Date().toISOString(),
     private readonly createGenerationToken: () => string = randomUUID,
+    private readonly resolveFileUrl: (fileId: string) => Promise<string> =
+      async (fileId) => fileId,
   ) {}
 
-  get(
+  async get(
     openid: string,
     itemIdInput: string,
   ): Promise<PublicItemLabel | null> {
     const itemId = validateItemId(itemIdInput)
-    return this.repository.runTransaction(async (unitOfWork) => {
+    const label = await this.repository.runTransaction(async (unitOfWork) => {
       requireApprovedUser(
         await unitOfWork.getUserByOpenid(openid),
         openid,
@@ -41,9 +43,9 @@ export class LabelService {
       if (!(await unitOfWork.getItem(itemId))) {
         throw new ApiException('ITEM_NOT_FOUND', '未找到物品')
       }
-      const label = await unitOfWork.getLabelByItemId(itemId)
-      return label ? toPublicItemLabel(label) : null
+      return unitOfWork.getLabelByItemId(itemId)
     })
+    return label ? this.toPublicItemLabel(label) : null
   }
 
   async generate(
@@ -90,7 +92,7 @@ export class LabelService {
     )
 
     if (label.status === 'READY') {
-      return toPublicItemLabel(label)
+      return this.toPublicItemLabel(label)
     }
 
     try {
@@ -142,12 +144,12 @@ export class LabelService {
     })
   }
 
-  private finishGeneration(
+  private async finishGeneration(
     itemId: string,
     generationToken: string,
     result: { fileId: string } | { error: unknown },
   ): Promise<PublicItemLabel> {
-    return this.repository.runTransaction(async (unitOfWork) => {
+    const label = await this.repository.runTransaction(async (unitOfWork) => {
       const label = await unitOfWork.getLabelByItemId(itemId)
       if (!label) {
         throw new ApiException(
@@ -156,7 +158,7 @@ export class LabelService {
         )
       }
       if (label.generation_token !== generationToken) {
-        return toPublicItemLabel(label)
+        return label
       }
 
       const now = this.now()
@@ -177,8 +179,22 @@ export class LabelService {
               updated_at: now,
             }
       await unitOfWork.setLabel(updated)
-      return toPublicItemLabel(updated)
+      return updated
     })
+    return this.toPublicItemLabel(label)
+  }
+
+  private async toPublicItemLabel(
+    label: ItemLabelRecord,
+  ): Promise<PublicItemLabel> {
+    const publicLabel = toPublicItemLabel(label)
+    if (!label.file_id) {
+      return publicLabel
+    }
+    return {
+      ...publicLabel,
+      fileUrl: await this.resolveFileUrl(label.file_id),
+    }
   }
 }
 
