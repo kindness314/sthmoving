@@ -17,7 +17,7 @@
   <view wx:elif="{{label && label.status === 'READY'}}" class="card label-card">
     <image
       class="code-image"
-      src="{{label.fileId}}"
+      src="{{labelImageUrl}}"
       mode="aspectFit"
       bindtap="handlePreview"
     />

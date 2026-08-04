@@ -7,9 +7,9 @@
     </button>
   </view>
   <block wx:elif="{{item}}">
-    <view wx:if="{{item.images.length}}" class="images">
+    <view wx:if="{{item.displayImages.length}}" class="images">
       <image
-        wx:for="{{item.images}}"
+        wx:for="{{item.displayImages}}"
         wx:key="*this"
         class="item-image"
         src="{{item}}"

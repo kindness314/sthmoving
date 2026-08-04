@@ -2,6 +2,7 @@ import {
   generateItemMiniProgramCode,
   getItemLabel,
 } from '../../services/labels'
+import { resolveCloudFileUrls } from '../../services/cloud-files'
 import { getItemDetail } from '../../services/items'
 import type { ItemDetail, ItemLabel } from '../../types/domain'
 
@@ -10,6 +11,7 @@ Page({
     itemId: '',
     item: null as ItemDetail | null,
     label: null as ItemLabel | null,
+    labelImageUrl: '',
     loading: true,
     generating: false,
     errorMessage: '',
@@ -30,13 +32,13 @@ Page({
   },
 
   handlePreview() {
-    const fileId = this.data.label?.fileId
-    if (!fileId) {
+    const imageUrl = this.data.labelImageUrl
+    if (!imageUrl) {
       return
     }
     void wx.previewImage({
-      current: fileId,
-      urls: [fileId],
+      current: imageUrl,
+      urls: [imageUrl],
     })
   },
 
@@ -54,7 +56,11 @@ Page({
         getItemDetail(this.data.itemId),
         getItemLabel(this.data.itemId),
       ])
-      this.setData({ item, label })
+      this.setData({
+        item,
+        label,
+        labelImageUrl: await resolveLabelImageUrl(label),
+      })
       if (!label || label.status === 'PENDING') {
         await this.generateLabel()
       }
@@ -75,7 +81,10 @@ Page({
     this.setData({ generating: true, errorMessage: '' })
     try {
       const label = await generateItemMiniProgramCode(this.data.itemId)
-      this.setData({ label })
+      this.setData({
+        label,
+        labelImageUrl: await resolveLabelImageUrl(label),
+      })
     } catch (error) {
       this.setData({
         errorMessage:
@@ -86,6 +95,16 @@ Page({
     }
   },
 })
+
+async function resolveLabelImageUrl(
+  label: ItemLabel | null,
+): Promise<string> {
+  if (label?.status !== 'READY' || !label.fileId) {
+    return ''
+  }
+  const urls = await resolveCloudFileUrls([label.fileId])
+  return urls.get(label.fileId)!
+}
 
 function safeDecode(value: string | undefined): string {
   if (!value) {

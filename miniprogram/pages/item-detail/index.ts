@@ -1,8 +1,10 @@
 import { getItemDetail } from '../../services/items'
 import { resolveItemLabel } from '../../services/labels'
+import { resolveCloudFileUrls } from '../../services/cloud-files'
 import type { ItemDetail } from '../../types/domain'
 
 interface ItemDetailView extends ItemDetail {
+  displayImages: string[]
   quantityText: string
   statusText: string
   registeredAtText: string
@@ -46,7 +48,7 @@ Page({
 
   handlePreviewImage(event: WechatMiniprogram.BaseEvent) {
     const current = event.currentTarget.dataset['src'] as string | undefined
-    const urls = this.data.item?.images ?? []
+    const urls = this.data.item?.displayImages ?? []
     if (!current || urls.length === 0) {
       return
     }
@@ -90,7 +92,8 @@ Page({
     this.setData({ loading: true, errorMessage: '' })
     try {
       const item = await getItemDetail(this.data.itemId)
-      this.setData({ item: toItemDetailView(item) })
+      const fileUrls = await resolveCloudFileUrls(item.images)
+      this.setData({ item: toItemDetailView(item, fileUrls) })
     } catch (error) {
       this.setData({
         item: null,
@@ -114,9 +117,13 @@ function safeDecode(value: string | undefined): string {
   }
 }
 
-function toItemDetailView(item: ItemDetail): ItemDetailView {
+function toItemDetailView(
+  item: ItemDetail,
+  fileUrls: Map<string, string>,
+): ItemDetailView {
   return {
     ...item,
+    displayImages: item.images.map((fileId) => fileUrls.get(fileId)!),
     quantityText:
       item.quantityMode === 'SINGLE' ? '单件（1 件）' : `${item.quantity} 件`,
     statusText:

@@ -5,6 +5,7 @@ import type {
   LabelFileStorage,
   MiniProgramCodeGenerator,
 } from '../cloudfunctions/api/src/labels/external'
+import { extractMiniProgramCodeBuffer } from '../cloudfunctions/api/src/labels/external'
 import type {
   LabelRepository,
   LabelUnitOfWork,
@@ -182,6 +183,21 @@ async function expectApiCode(
 }
 
 describe('物品小程序码服务', () => {
+  it('从 wx-server-sdk 云调用响应中提取图片 Buffer', () => {
+    const buffer = Buffer.from('png-content')
+    expect(
+      extractMiniProgramCodeBuffer({
+        contentType: 'image/png',
+        buffer,
+        errCode: 0,
+        errMsg: 'openapi.wxacode.getUnlimited:ok',
+      }),
+    ).toBe(buffer)
+    expect(() =>
+      extractMiniProgramCodeBuffer({ contentType: 'image/png' }),
+    ).toThrow('微信接口未返回小程序码图片')
+  })
+
   it('生成开发版原始 PNG、上传云存储并更新为 READY', async () => {
     const { repository, generator, storage, service } = prepare()
     repository.labels.set(

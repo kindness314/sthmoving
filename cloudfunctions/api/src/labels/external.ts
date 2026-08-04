@@ -34,11 +34,20 @@ export class WeChatMiniProgramCodeGenerator
       lineColor: { r: 0, g: 0, b: 0 },
       isHyaline: false,
     })
-    if (!Buffer.isBuffer(result)) {
-      throw new Error('微信接口未返回小程序码图片')
-    }
-    return result
+    return extractMiniProgramCodeBuffer(result)
   }
+}
+
+export function extractMiniProgramCodeBuffer(result: unknown): Buffer {
+  if (
+    typeof result !== 'object' ||
+    result === null ||
+    !('buffer' in result) ||
+    !Buffer.isBuffer(result.buffer)
+  ) {
+    throw new Error('微信接口未返回小程序码图片')
+  }
+  return result.buffer
 }
 
 export class CloudLabelFileStorage implements LabelFileStorage {
