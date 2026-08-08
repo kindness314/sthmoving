@@ -19,7 +19,9 @@ import type {
   PublicItem,
   PublicItemDetail,
   PublicItemList,
+  PublicItemOperationLog,
   PublicItemSummary,
+  UpdateItemInput,
 } from './types'
 
 export type ItemFileUrlResolver = (
@@ -90,14 +92,133 @@ export class ItemService {
     })
   }
 
+  async update(
+    openid: string,
+    input: UpdateItemInput,
+  ): Promise<PublicItem> {
+    const validated = validateUpdateInput(input)
+
+    return this.repository.runTransaction(async (unitOfWork) => {
+      const user = await unitOfWork.getUserByOpenid(openid)
+      requireApprovedUser(user, openid)
+
+      const item = await unitOfWork.getItem(validated.itemId)
+      if (!item) {
+        throw new ApiException('ITEM_NOT_FOUND', '未找到物品')
+      }
+      if (item.status === 'OFF_SHELF') {
+        throw new ApiException(
+          'ITEM_NOT_EDITABLE',
+          '已离库物品不能继续编辑',
+        )
+      }
+      if (item.version !== validated.expectedVersion) {
+        throw new ApiException(
+          'VERSION_CONFLICT',
+          '物品已被其他成员更新，请基于最新版本重新提交',
+          {
+            latestVersion: item.version,
+            latestItem: toPublicItem(item),
+          },
+        )
+      }
+
+      const quantityMode = validated.quantityMode ?? item.quantity_mode
+      const quantity = validated.quantity ?? item.quantity
+      validateQuantity(quantityMode, quantity)
+      let category = await unitOfWork.getCategory(item.category_id)
+      if (!category) {
+        throw new ApiException('ITEM_DATA_INVALID', '物品关联的分类不存在')
+      }
+      let categoryChanged = false
+      if (validated.categoryId !== undefined) {
+        requireCategoryManager(user)
+        const selectedCategory = await unitOfWork.getCategory(
+          validated.categoryId,
+        )
+        if (!selectedCategory) {
+          throw new ApiException('CATEGORY_NOT_FOUND', '分类不存在')
+        }
+        categoryChanged = selectedCategory._id !== item.category_id
+        if (categoryChanged && selectedCategory.status !== 'ACTIVE') {
+          throw new ApiException(
+            'CATEGORY_DISABLED',
+            '该分类已停用，不能用于更新物品分类',
+          )
+        }
+        category = selectedCategory
+      }
+      const hasEffectiveChange =
+        (validated.name !== undefined && validated.name !== item.name) ||
+        (validated.images !== undefined &&
+          !sameStringArray(validated.images, item.images)) ||
+        (validated.description !== undefined &&
+          validated.description !== item.description) ||
+        quantityMode !== item.quantity_mode ||
+        quantity !== item.quantity ||
+        categoryChanged
+      if (!hasEffectiveChange) {
+        throw new ApiException('NO_ITEM_CHANGES', '至少修改一个物品字段')
+      }
+
+      const now = this.now()
+      const updated: ItemRecord = {
+        ...item,
+        ...(validated.name !== undefined
+          ? { name: validated.name }
+          : {}),
+        ...(validated.images !== undefined
+          ? { images: validated.images }
+          : {}),
+        ...(validated.description !== undefined
+          ? { description: validated.description }
+          : {}),
+        quantity_mode: quantityMode,
+        quantity,
+        ...(categoryChanged ? { category_id: category._id } : {}),
+        version: item.version + 1,
+        updated_by: user._id,
+        updated_at: now,
+      }
+
+      if (categoryChanged) {
+        await unitOfWork.setCategory({
+          ...category,
+          item_reference_count: (category.item_reference_count ?? 0) + 1,
+        })
+      }
+      await unitOfWork.setItem(updated)
+      await unitOfWork.setOperationLog({
+        _id: this.createLogId(),
+        item_id: updated._id,
+        operator_id: user._id,
+        action_type: 'UPDATE',
+        commit_summary: validated.commitSummary,
+        version_before: item.version,
+        version_after: updated.version,
+        created_at: now,
+      })
+      return toPublicItem(updated)
+    })
+  }
+
   async list(
     openid: string,
     input: ListItemsInput,
   ): Promise<PublicItemList> {
-    requireApprovedUser(
-      await this.repository.getUserByOpenid(openid),
-      openid,
-    )
+    const user = await this.repository.getUserByOpenid(openid)
+    requireApprovedUser(user, openid)
+    if (
+      input.status === 'OFF_SHELF' &&
+      user.role !== 'ADMIN' &&
+      user.role !== 'MANAGER' &&
+      user.role !== 'OWNER'
+    ) {
+      throw new ApiException(
+        'FORBIDDEN',
+        '只有管理员或所有者可以查看已离库物品',
+      )
+    }
     const query = validateListInput(input)
     if (query.categoryId) {
       const category = await this.repository.getCategory(query.categoryId)
@@ -137,10 +258,8 @@ export class ItemService {
     openid: string,
     itemIdInput: string,
   ): Promise<PublicItemDetail> {
-    requireApprovedUser(
-      await this.repository.getUserByOpenid(openid),
-      openid,
-    )
+    const user = await this.repository.getUserByOpenid(openid)
+    requireApprovedUser(user, openid)
     const itemId = itemIdInput.trim()
     if (!itemId || itemId.length > 100) {
       throw new ApiException('INVALID_ITEM_ID', '物品 ID 无效')
@@ -148,6 +267,14 @@ export class ItemService {
     const item = await this.repository.getItem(itemId)
     if (!item) {
       throw new ApiException('ITEM_NOT_FOUND', '未找到物品')
+    }
+    if (
+      item.status === 'OFF_SHELF' &&
+      user.role !== 'ADMIN' &&
+      user.role !== 'MANAGER' &&
+      user.role !== 'OWNER'
+    ) {
+      throw new ApiException('ITEM_OFF_SHELF', '物品已离库，请在离库物品管理中查看')
     }
     const [summary] = await this.toPublicSummaries([item])
     const users = await this.repository.getUsersByIds([
@@ -165,6 +292,7 @@ export class ItemService {
     }
     return {
       ...summary,
+      imageFileIds: item.images,
       version: item.version,
       registeredBy: {
         id: registeredBy._id,
@@ -176,6 +304,56 @@ export class ItemService {
         displayName: updatedBy.display_name,
       },
     }
+  }
+
+  async logs(
+    openid: string,
+    itemIdInput: string,
+  ): Promise<PublicItemOperationLog[]> {
+    const user = await this.repository.getUserByOpenid(openid)
+    requireApprovedUser(user, openid)
+    const itemId = itemIdInput.trim()
+    if (!itemId || itemId.length > 100) {
+      throw new ApiException('INVALID_ITEM_ID', '物品 ID 无效')
+    }
+    const item = await this.repository.getItem(itemId)
+    if (!item) {
+      throw new ApiException('ITEM_NOT_FOUND', '未找到物品')
+    }
+    if (
+      item.status === 'OFF_SHELF' &&
+      user.role !== 'ADMIN' &&
+      user.role !== 'MANAGER' &&
+      user.role !== 'OWNER'
+    ) {
+      throw new ApiException('ITEM_OFF_SHELF', '物品已离库，请在离库物品管理中查看')
+    }
+    const records = await this.repository.listOperationLogs(itemId)
+    const users = await this.repository.getUsersByIds(
+      records.map((record) => record.operator_id),
+    )
+    const usersById = new Map(users.map((user) => [user._id, user]))
+    return records.map((record) => {
+      const operator = usersById.get(record.operator_id)
+      if (!operator) {
+        throw new ApiException(
+          'ITEM_DATA_INVALID',
+          '物品操作日志关联的用户不存在',
+        )
+      }
+      return {
+        id: record._id,
+        itemId: record.item_id,
+        action: record.action_type,
+        summary: record.commit_summary,
+        operator: {
+          id: operator._id,
+          displayName: operator.display_name,
+        },
+        operatedAt: record.created_at,
+        itemVersion: record.version_after,
+      }
+    })
   }
 
   private async resolveCategory(
@@ -267,6 +445,7 @@ export class ItemService {
           status: category.status,
         },
         status: item.status,
+        version: item.version,
         updatedAt: item.updated_at,
       }
     })
@@ -291,6 +470,14 @@ function validateListInput(input: ListItemsInput) {
   if (input.categoryId !== undefined && !categoryId) {
     throw new ApiException('INVALID_CATEGORY_ID', '分类 ID 无效')
   }
+  if (
+    input.status !== undefined &&
+    input.status !== 'ACTIVE' &&
+    input.status !== 'OUTBOUND_PENDING' &&
+    input.status !== 'OFF_SHELF'
+  ) {
+    throw new ApiException('INVALID_ITEM_STATUS', '物品状态筛选无效')
+  }
   const limit = input.limit ?? 10
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 20) {
     throw new ApiException(
@@ -310,6 +497,7 @@ function validateListInput(input: ListItemsInput) {
   return {
     ...(keyword ? { keyword } : {}),
     ...(categoryId ? { categoryId } : {}),
+    ...(input.status ? { status: input.status } : {}),
     ...(cursor
       ? {
           cursor: {
@@ -336,6 +524,19 @@ function requireApprovedUser(
   }
   if (user.status !== 'APPROVED') {
     throw new ApiException('ACCOUNT_NOT_ACTIVE', '当前账号尚未通过审核')
+  }
+}
+
+function requireCategoryManager(user: UserRecord): void {
+  if (
+    user.role !== 'ADMIN' &&
+    user.role !== 'MANAGER' &&
+    user.role !== 'OWNER'
+  ) {
+    throw new ApiException(
+      'FORBIDDEN',
+      '只有管理员或所有者可以调整物品分类',
+    )
   }
 }
 
@@ -400,10 +601,10 @@ function validateCreateInput(input: CreateItemInput): CreateItemInput {
   }
 
   const commitSummary = input.commitSummary.trim()
-  if (commitSummary.length < 5 || commitSummary.length > 100) {
+  if (commitSummary.length < 1 || commitSummary.length > 250) {
     throw new ApiException(
       'INVALID_COMMIT_SUMMARY',
-      '提交梗概长度应为 5 至 100 个字符',
+      '提交梗概不能为空且不能超过 250 个字符',
     )
   }
 
@@ -421,6 +622,138 @@ function validateCreateInput(input: CreateItemInput): CreateItemInput {
     validated.newCategoryName = newCategoryName
   }
   return validated
+}
+
+function validateUpdateInput(input: UpdateItemInput): UpdateItemInput {
+  const itemId = input.itemId.trim()
+  if (!itemId || itemId.length > 100) {
+    throw new ApiException('INVALID_ITEM_ID', '物品 ID 无效')
+  }
+  if (!Number.isSafeInteger(input.expectedVersion) || input.expectedVersion < 1) {
+    throw new ApiException('INVALID_VERSION', '物品版本无效')
+  }
+
+  const hasChanges =
+    input.name !== undefined ||
+    input.images !== undefined ||
+    input.description !== undefined ||
+    input.quantityMode !== undefined ||
+    input.quantity !== undefined ||
+    input.categoryId !== undefined
+  if (!hasChanges) {
+    throw new ApiException('NO_ITEM_CHANGES', '至少修改一个物品字段')
+  }
+
+  const validated: UpdateItemInput = {
+    itemId,
+    expectedVersion: input.expectedVersion,
+    commitSummary: validateCommitSummary(input.commitSummary),
+  }
+
+  if (input.name !== undefined) {
+    const name = input.name.trim()
+    if (name.length < 1 || name.length > 100) {
+      throw new ApiException(
+        'INVALID_ITEM_NAME',
+        '物品名称长度应为 1 至 100 个字符',
+      )
+    }
+    validated.name = name
+  }
+  if (input.images !== undefined) {
+    if (
+      input.images.length > 2 ||
+      input.images.some(
+        (fileId) =>
+          typeof fileId !== 'string' ||
+          !fileId.trim().startsWith('cloud://') ||
+          fileId.length > 1024,
+      )
+    ) {
+      throw new ApiException(
+        'INVALID_ITEM_IMAGES',
+        '物品图片必须是最多两个有效的云文件 ID',
+      )
+    }
+    validated.images = input.images.map((fileId) => fileId.trim())
+  }
+  if (input.description !== undefined) {
+    const description = input.description.trim()
+    if (description.length > 2000) {
+      throw new ApiException(
+        'INVALID_ITEM_DESCRIPTION',
+        '物品详情不能超过 2000 个字符',
+      )
+    }
+    validated.description = description
+  }
+  if (input.quantityMode !== undefined) {
+    if (!isQuantityMode(input.quantityMode)) {
+      throw new ApiException('INVALID_ITEM_QUANTITY', '物品数量模式无效')
+    }
+    validated.quantityMode = input.quantityMode
+  }
+  if (input.quantity !== undefined) {
+    if (typeof input.quantity !== 'number' || !Number.isFinite(input.quantity)) {
+      throw new ApiException('INVALID_ITEM_QUANTITY', '物品数量无效')
+    }
+    validated.quantity = input.quantity
+  }
+  if (input.categoryId !== undefined) {
+    const categoryId = input.categoryId.trim()
+    if (!categoryId || categoryId.length > 100) {
+      throw new ApiException('INVALID_CATEGORY_ID', '分类 ID 无效')
+    }
+    validated.categoryId = categoryId
+  }
+
+  return validated
+}
+
+function validateCommitSummary(value: string): string {
+  const summary = value.trim()
+  if (summary.length < 1 || summary.length > 250) {
+    throw new ApiException(
+      'INVALID_COMMIT_SUMMARY',
+      '提交梗概不能为空且不能超过 250 个字符',
+    )
+  }
+  return summary
+}
+
+function validateQuantity(
+  quantityMode: ItemRecord['quantity_mode'],
+  quantity: number,
+): void {
+  if (
+    quantityMode === 'SINGLE' &&
+    quantity !== 1
+  ) {
+    throw new ApiException(
+      'INVALID_ITEM_QUANTITY',
+      '单件物品的数量必须为 1',
+    )
+  }
+  if (
+    quantityMode === 'MULTIPLE' &&
+    (!Number.isSafeInteger(quantity) || quantity < 1)
+  ) {
+    throw new ApiException(
+      'INVALID_ITEM_QUANTITY',
+      '多件物品的数量必须是正整数',
+    )
+  }
+}
+
+function isQuantityMode(value: unknown): value is ItemRecord['quantity_mode'] {
+  return value === 'SINGLE' || value === 'MULTIPLE'
+}
+
+function sameStringArray(left: readonly string[], right: readonly string[]): boolean {
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  )
 }
 
 function toPublicItem(item: ItemRecord): PublicItem {

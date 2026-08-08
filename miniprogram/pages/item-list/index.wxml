@@ -28,7 +28,36 @@
     </picker>
   </view>
 
-  <view wx:if="{{loading}}" class="state muted">正在加载物品…</view>
+  <view wx:if="{{userRole === 'ADMIN' || userRole === 'MANAGER' || userRole === 'OWNER'}}" class="management-bar">
+    <button
+      class="management-button"
+      size="mini"
+      bindtap="handleToggleManagement"
+      loading="{{batchProcessing}}"
+    >
+      {{managementMode ? '退出批量离库' : '批量离库'}}
+    </button>
+    <text wx:if="{{managementMode}}" class="muted management-hint">
+      可选择在库物品进行批量离库
+    </text>
+  </view>
+
+  <view wx:if="{{managementMode && selectedIds.length}}" class="card batch-bar">
+    <text>已选 {{selectedIds.length}} 件</text>
+    <button
+      wx:if="{{selectionAction === 'DIRECT'}}"
+      class="danger-button"
+      disabled="{{batchProcessing}}"
+      bindtap="handleBatchOutbound"
+    >
+      批量离库
+    </button>
+  </view>
+
+  <view wx:if="{{loading && items.length}}" class="refreshing muted">
+    正在更新…
+  </view>
+  <view wx:if="{{loading && !items.length}}" class="state muted">正在加载物品…</view>
   <view
     wx:elif="{{errorMessage && !items.length}}"
     class="card state"
@@ -49,6 +78,15 @@
     data-id="{{item.id}}"
     bindtap="handleItemTap"
   >
+    <checkbox
+      wx:if="{{managementMode}}"
+      class="select-box"
+      value="{{item.id}}"
+      checked="{{item.selected}}"
+      disabled="{{item.status !== 'ACTIVE'}}"
+      data-id="{{item.id}}"
+      catchtap="handleSelectionToggle"
+    />
     <image
       wx:if="{{item.coverImage}}"
       class="cover"
@@ -60,7 +98,7 @@
       <view class="item-heading">
         <view class="item-name">{{item.name}}</view>
         <view
-          class="status {{item.status === 'OUTBOUND_PENDING' ? 'pending' : ''}}"
+          class="status {{item.statusClass}}"
         >
           {{item.statusText}}
         </view>
@@ -75,6 +113,8 @@
       <view class="updated muted">更新于 {{item.updatedAtText}}</view>
     </view>
   </view>
+
+  <text-entry-modal id="text-entry-modal" />
 
   <view wx:if="{{loadingMore}}" class="state muted">正在加载更多…</view>
   <view

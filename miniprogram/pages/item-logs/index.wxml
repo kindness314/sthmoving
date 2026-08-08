@@ -1,0 +1,33 @@
+<view class="page">
+  <view class="heading">
+    <view class="title">操作日志</view>
+    <view class="muted">只记录操作人、时间、动作和提交梗概</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="card state muted">
+    正在加载操作日志…
+  </view>
+  <view wx:elif="{{errorMessage}}" class="card state">
+    <view class="error">{{errorMessage}}</view>
+    <button class="retry-button" size="mini" bindtap="handleRetry">
+      重新加载
+    </button>
+  </view>
+  <view wx:elif="{{!logs.length}}" class="card state muted">
+    暂无操作日志
+  </view>
+  <block wx:else>
+    <view wx:for="{{logs}}" wx:key="id" class="card log-card">
+      <view class="log-heading">
+        <view class="log-action {{item.actionClass}}">
+          {{item.actionText}}
+        </view>
+        <view class="log-version">物品 v{{item.itemVersion}}</view>
+      </view>
+      <view class="log-meta">
+        {{item.operator.displayName}} · {{item.operatedAtText}}
+      </view>
+      <view class="log-summary">{{item.summary}}</view>
+    </view>
+  </block>
+</view>

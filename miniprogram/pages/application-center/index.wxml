@@ -1,0 +1,45 @@
+<view class="page">
+  <view class="heading">
+    <view class="title">申请中心</view>
+    <view class="muted">查看你提交的离库申请及处理结果</view>
+  </view>
+
+  <view wx:if="{{refreshing}}" class="refreshing muted">正在更新…</view>
+
+  <view wx:if="{{loading && !requests.length}}" class="muted empty">
+    正在加载…
+  </view>
+  <view wx:elif="{{errorMessage && !requests.length}}" class="card empty">
+    <view class="error">{{errorMessage}}</view>
+    <button class="retry-button" size="mini" bindtap="handleRetry">
+      重新加载
+    </button>
+  </view>
+  <view wx:elif="{{!requests.length}}" class="card empty">
+    暂无离库申请记录
+  </view>
+
+  <view wx:for="{{requests}}" wx:key="id" class="card request-card">
+    <view class="request-heading">
+      <view class="request-name">
+        {{item.item ? item.item.name : '物品已离库或记录已删除'}}
+      </view>
+      <view class="status status-{{item.status}}">{{item.statusText}}</view>
+    </view>
+    <view wx:if="{{item.item}}" class="muted item-code">
+      编码：{{item.item.code}}
+    </view>
+    <view class="reason">{{item.reason}}</view>
+    <view class="muted request-time">提交时间：{{item.createdAtText}}</view>
+    <view wx:if="{{item.reviewedAtText}}" class="muted request-time">
+      处理时间：{{item.reviewedAtText}}
+    </view>
+    <view wx:if="{{item.reviewComment}}" class="review-comment">
+      管理员意见：{{item.reviewComment}}
+    </view>
+  </view>
+
+  <view wx:if="{{errorMessage && requests.length}}" class="error">
+    {{errorMessage}}
+  </view>
+</view>

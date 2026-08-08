@@ -2,6 +2,7 @@ import type {
   ItemDetail,
   ItemListCursor,
   ItemListResult,
+  ItemOperationLog,
   ItemStatus,
   QuantityMode,
 } from '../types/domain'
@@ -48,6 +49,7 @@ export interface ListItemsInput {
   categoryId?: string
   cursor?: ItemListCursor
   limit?: number
+  status?: ItemStatus
 }
 
 export function listItems(
@@ -65,5 +67,44 @@ export function getItemDetail(itemId: string): Promise<ItemDetail> {
     module: 'items',
     action: 'detail',
     payload: { itemId },
+  })
+}
+
+export function listItemLogs(
+  itemId: string,
+): Promise<ItemOperationLog[]> {
+  return callApi<{ itemId: string }, ItemOperationLog[]>({
+    module: 'items',
+    action: 'logs',
+    payload: { itemId },
+  })
+}
+
+export interface UpdateItemInput {
+  itemId: string
+  expectedVersion: number
+  name?: string
+  images?: string[]
+  description?: string
+  quantityMode?: QuantityMode
+  quantity?: number
+  categoryId?: string
+  commitSummary: string
+}
+
+export function updateItemCategory(input: {
+  itemId: string
+  expectedVersion: number
+  categoryId: string
+  commitSummary: string
+}): Promise<CreatedItem> {
+  return updateItem(input)
+}
+
+export function updateItem(input: UpdateItemInput): Promise<CreatedItem> {
+  return callApi<UpdateItemInput, CreatedItem>({
+    module: 'items',
+    action: 'update',
+    payload: input,
   })
 }

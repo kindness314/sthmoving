@@ -1,4 +1,4 @@
-export type UserRole = 'OWNER' | 'ADMIN' | 'MEMBER'
+export type UserRole = 'OWNER' | 'MANAGER' | 'ADMIN' | 'MEMBER'
 
 export type UserStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'DISABLED'
 
@@ -15,7 +15,7 @@ export type ItemStatus = 'ACTIVE' | 'OUTBOUND_PENDING' | 'OFF_SHELF'
 
 export type OutboundRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 
-export type LabelStatus = 'PENDING' | 'READY' | 'FAILED'
+export type LabelStatus = 'PENDING' | 'READY' | 'FAILED' | 'VOID'
 
 export interface User {
   id: string
@@ -36,7 +36,14 @@ export interface PendingJoinRequest {
   id: string
   applicant: User
   displayName: string
+  requestedRole: 'ADMIN' | 'MEMBER'
+  approvedRole?: 'ADMIN' | 'MEMBER'
   createdAt: string
+}
+
+export interface PublicMember extends User {
+  reviewedBy?: string
+  reviewedAt?: string
 }
 
 export interface Category {
@@ -87,10 +94,12 @@ export interface ItemSummary {
   quantity: number
   category: ItemCategorySummary
   status: ItemStatus
+  version: number
   updatedAt: string
 }
 
 export interface ItemDetail extends ItemSummary {
+  imageFileIds: string[]
   version: number
   registeredBy: ItemActor
   registeredAt: string
@@ -124,9 +133,16 @@ export interface ItemLabel {
 export interface ItemOperationLog {
   id: string
   itemId: string
-  action: 'CREATE' | 'UPDATE' | 'OUTBOUND'
+  action:
+    | 'CREATE'
+    | 'UPDATE'
+    | 'OUTBOUND_REQUEST'
+    | 'OUTBOUND_APPROVE'
+    | 'OUTBOUND_REJECT'
+    | 'OUTBOUND'
+    | 'INBOUND'
   summary: string
-  operatorId: string
+  operator: ItemActor
   operatedAt: string
   itemVersion: number
 }
@@ -137,6 +153,15 @@ export interface OutboundRequest {
   applicantId: string
   reason: string
   status: OutboundRequestStatus
+  updatedAt: string
+  applicant?: ItemActor
+  item?: {
+    id: string
+    code: string
+    name: string
+    status: ItemStatus
+    version: number
+  }
   reviewerId?: string
   reviewComment?: string
   createdAt: string

@@ -37,6 +37,22 @@
   margin-top: 32rpx;
 }
 
+.role-label {
+  margin-top: 28rpx;
+}
+
+.role-options {
+  display: flex;
+  gap: 36rpx;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 28rpx;
+}
+
 .error {
   margin-top: 24rpx;
   color: #b91c1c;

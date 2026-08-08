@@ -1,13 +1,21 @@
 {
   "pages": [
+    "pages/home/index",
     "pages/login/index",
     "pages/access-pending/index",
-    "pages/home/index",
+    "pages/scan/index",
     "pages/item-create/index",
     "pages/item-list/index",
+    "pages/off-shelf-list/index",
     "pages/item-detail/index",
+    "pages/item-edit/index",
+    "pages/item-logs/index",
+    "pages/outbound-create/index",
+    "pages/outbound-list/index",
+    "pages/application-center/index",
     "pages/label-preview/index",
     "pages/member-review/index",
+    "pages/member-list/index",
     "pages/category-manage/index"
   ],
   "window": {
@@ -15,6 +23,14 @@
     "navigationBarBackgroundColor": "#0f766e",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#f6f7f9"
+  },
+  "permission": {
+    "scope.bluetooth": {
+      "desc": "用于搜索并连接硕方 T50 Pro 打印物品标签"
+    }
+  },
+  "usingComponents": {
+    "text-entry-modal": "/components/text-entry-modal/index"
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"

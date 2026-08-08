@@ -40,6 +40,7 @@ Page({
     title: '正在检查身份',
     description: '',
     displayName: '',
+    requestedRole: 'MEMBER' as 'ADMIN' | 'MEMBER',
     canApply: false,
     loading: true,
     submitting: false,
@@ -78,13 +79,23 @@ Page({
     this.setData({ displayName: event.detail.value })
   },
 
+  handleRequestedRoleChange(event: WechatMiniprogram.BaseEvent) {
+    const value = (event as unknown as { detail: { value: string } }).detail.value
+    if (value === 'ADMIN' || value === 'MEMBER') {
+      this.setData({ requestedRole: value })
+    }
+  },
+
   async handleSubmit() {
     if (this.data.submitting) {
       return
     }
     this.setData({ submitting: true, errorMessage: '' })
     try {
-      const session = await submitJoinRequest(this.data.displayName)
+      const session = await submitJoinRequest(
+        this.data.displayName,
+        this.data.requestedRole,
+      )
       getApp<IAppOption>().globalData.currentUser = session.user
       const content = stateContent[session.accessState]
       this.setData({ ...content })

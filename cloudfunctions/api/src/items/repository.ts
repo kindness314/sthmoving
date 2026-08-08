@@ -13,6 +13,7 @@ export interface ItemUnitOfWork {
   getCategoryByNormalizedName(
     normalizedName: string,
   ): Promise<CategoryRecord | null>
+  getItem(itemId: string): Promise<ItemRecord | null>
   setCategory(category: CategoryRecord): Promise<void>
   setItem(item: ItemRecord): Promise<void>
   setLabel(label: ItemLabelRecord): Promise<void>
@@ -25,6 +26,7 @@ export interface ItemRepository {
   getCategoriesByIds(categoryIds: string[]): Promise<CategoryRecord[]>
   getUsersByIds(userIds: string[]): Promise<UserRecord[]>
   getItem(itemId: string): Promise<ItemRecord | null>
+  listOperationLogs(itemId: string): Promise<ItemOperationLogRecord[]>
   listItems(query: ItemListQuery): Promise<ItemRecord[]>
   runTransaction<T>(
     operation: (unitOfWork: ItemUnitOfWork) => Promise<T>,

@@ -5,16 +5,35 @@
       {{userName ? userName + '，欢迎回来' : '正在确认身份'}}
     </view>
   </view>
-  <view class="grid">
-    <view
-      wx:for="{{shortcuts}}"
-      wx:key="key"
-      class="card shortcut"
-      data-key="{{item.key}}"
-      bindtap="handleShortcut"
-    >
-      <view class="shortcut-title">{{item.title}}</view>
-      <view class="muted shortcut-description">{{item.description}}</view>
+  <view
+    wx:for="{{shortcutGroups}}"
+    wx:key="key"
+    wx:for-item="group"
+    class="shortcut-group"
+  >
+    <view class="group-heading">
+      <view class="group-title">{{group.title}}</view>
+      <view class="group-divider"></view>
+    </view>
+    <view class="grid">
+      <view
+        wx:for="{{group.shortcuts}}"
+        wx:key="key"
+        wx:for-item="shortcut"
+        class="card shortcut"
+        data-key="{{shortcut.key}}"
+        bindtap="handleShortcut"
+      >
+        <view class="shortcut-title-row">
+          <view class="shortcut-title">{{shortcut.title}}</view>
+          <view wx:if="{{shortcut.badge}}" class="shortcut-badge">
+            {{shortcut.badge}}
+          </view>
+        </view>
+        <view class="muted shortcut-description">
+          {{shortcut.description}}
+        </view>
+      </view>
     </view>
   </view>
 </view>

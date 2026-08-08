@@ -36,12 +36,17 @@ export class LabelService {
   ): Promise<PublicItemLabel | null> {
     const itemId = validateItemId(itemIdInput)
     const label = await this.repository.runTransaction(async (unitOfWork) => {
-      requireApprovedUser(
-        await unitOfWork.getUserByOpenid(openid),
-        openid,
-      )
-      if (!(await unitOfWork.getItem(itemId))) {
+      const user = await unitOfWork.getUserByOpenid(openid)
+      requireApprovedUser(user, openid)
+      const item = await unitOfWork.getItem(itemId)
+      if (!item) {
         throw new ApiException('ITEM_NOT_FOUND', '未找到物品')
+      }
+      if (item.status === 'OFF_SHELF' && !canManageOffShelf(user)) {
+        throw new ApiException(
+          'ITEM_OFF_SHELF',
+          '已离库物品的小程序码只能由管理员查看',
+        )
       }
       return unitOfWork.getLabelByItemId(itemId)
     })
@@ -62,9 +67,21 @@ export class LabelService {
         if (!item) {
           throw new ApiException('ITEM_NOT_FOUND', '未找到物品')
         }
+        if (item.status === 'OFF_SHELF') {
+          throw new ApiException(
+            'LABEL_VOID',
+            '已离库物品的小程序码已作废，不能重新生成',
+          )
+        }
         const existing = await unitOfWork.getLabelByItemId(itemId)
         if (existing?.status === 'READY') {
           return existing
+        }
+        if (existing?.status === 'VOID') {
+          throw new ApiException(
+            'LABEL_VOID',
+            '该物品标签已作废，不能重新生成',
+          )
         }
         if (existing && existing.public_code !== item.code) {
           throw new ApiException(
@@ -127,17 +144,29 @@ export class LabelService {
       )
       const publicCode = parseScene(sceneInput)
       const label = await unitOfWork.getLabelByPublicCode(publicCode)
-      if (!label || label.status !== 'READY') {
+      if (!label || (label.status !== 'READY' && label.status !== 'VOID')) {
         throw new ApiException(
           'LABEL_NOT_FOUND',
           '无法识别该物品标签',
         )
       }
       const item = await unitOfWork.getItem(label.item_id)
-      if (!item || item.code !== label.public_code) {
+      if (!item) {
+        throw new ApiException(
+          'ITEM_DELETED',
+          '物品已删除，该标签已失效',
+        )
+      }
+      if (item.code !== label.public_code) {
         throw new ApiException(
           'LABEL_DATA_INVALID',
           '标签绑定的物品不存在',
+        )
+      }
+      if (item.status === 'OFF_SHELF') {
+        throw new ApiException(
+          'ITEM_OFF_SHELF',
+          '物品已离库，请在离库物品管理中查看',
         )
       }
       return { itemId: item._id }
@@ -256,6 +285,14 @@ function requireApprovedUser(
   if (user.status !== 'APPROVED') {
     throw new ApiException('ACCOUNT_NOT_ACTIVE', '当前账号尚未通过审核')
   }
+}
+
+function canManageOffShelf(user: UserRecord): boolean {
+  return (
+    user.role === 'ADMIN' ||
+    user.role === 'MANAGER' ||
+    user.role === 'OWNER'
+  )
 }
 
 function getErrorCode(error: unknown): string {

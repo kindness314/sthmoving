@@ -21,6 +21,19 @@ interface ListItemsPayload {
   categoryId?: unknown
   cursor?: unknown
   limit?: unknown
+  status?: unknown
+}
+
+interface UpdateItemPayload {
+  itemId?: unknown
+  expectedVersion?: unknown
+  name?: unknown
+  images?: unknown
+  description?: unknown
+  quantityMode?: unknown
+  quantity?: unknown
+  categoryId?: unknown
+  commitSummary?: unknown
 }
 
 function createService(): ItemService {
@@ -46,6 +59,10 @@ export const itemHandlers: Readonly<Record<string, ApiHandler>> = {
         typeof input.categoryId !== 'string') ||
       (input?.limit !== undefined &&
         typeof input.limit !== 'number') ||
+      (input?.status !== undefined &&
+        input.status !== 'ACTIVE' &&
+        input.status !== 'OUTBOUND_PENDING' &&
+        input.status !== 'OFF_SHELF') ||
       (input?.cursor !== undefined && !isCursor(input.cursor))
     ) {
       throw new ApiException(
@@ -61,6 +78,9 @@ export const itemHandlers: Readonly<Record<string, ApiHandler>> = {
         ? { categoryId: input.categoryId }
         : {}),
       ...(typeof input?.limit === 'number' ? { limit: input.limit } : {}),
+      ...(typeof input?.status === 'string'
+        ? { status: input.status as 'ACTIVE' | 'OUTBOUND_PENDING' | 'OFF_SHELF' }
+        : {}),
       ...(isCursor(input?.cursor) ? { cursor: input.cursor } : {}),
     })
   },
@@ -73,6 +93,53 @@ export const itemHandlers: Readonly<Record<string, ApiHandler>> = {
       )
     }
     return createService().detail(context.openid, itemId)
+  },
+  logs: async (payload, context) => {
+    const itemId = (payload as { itemId?: unknown } | undefined)?.itemId
+    if (typeof itemId !== 'string') {
+      throw new ApiException(
+        'INVALID_REQUEST',
+        '物品操作日志请求字段无效',
+      )
+    }
+    return createService().logs(context.openid, itemId)
+  },
+  update: async (payload, context) => {
+    const input = payload as UpdateItemPayload | undefined
+    if (
+      typeof input?.itemId !== 'string' ||
+      typeof input.expectedVersion !== 'number' ||
+      (input.name !== undefined && typeof input.name !== 'string') ||
+      (input.images !== undefined && !Array.isArray(input.images)) ||
+      (input.description !== undefined &&
+        typeof input.description !== 'string') ||
+      (input.quantityMode !== undefined &&
+        !isQuantityMode(input.quantityMode)) ||
+      (input.quantity !== undefined && typeof input.quantity !== 'number') ||
+      (input.categoryId !== undefined && typeof input.categoryId !== 'string') ||
+      typeof input.commitSummary !== 'string'
+    ) {
+      throw new ApiException(
+        'INVALID_REQUEST',
+        '物品更新请求字段无效',
+      )
+    }
+
+    return createService().update(context.openid, {
+      itemId: input.itemId,
+      expectedVersion: input.expectedVersion,
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.images !== undefined ? { images: input.images as string[] } : {}),
+      ...(input.description !== undefined
+        ? { description: input.description }
+        : {}),
+      ...(input.quantityMode !== undefined
+        ? { quantityMode: input.quantityMode }
+        : {}),
+      ...(input.quantity !== undefined ? { quantity: input.quantity } : {}),
+      ...(input.categoryId !== undefined ? { categoryId: input.categoryId } : {}),
+      commitSummary: input.commitSummary,
+    })
   },
   create: async (payload, context) => {
     const input = payload as CreateItemPayload | undefined

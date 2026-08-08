@@ -57,14 +57,26 @@ class InMemoryItemRepository implements ItemRepository {
     return Promise.resolve(this.items.get(itemId) ?? null)
   }
 
+  listOperationLogs(itemId: string): Promise<ItemOperationLogRecord[]> {
+    return Promise.resolve(
+      [...this.logs.values()]
+        .filter((log) => log.item_id === itemId)
+        .sort((left, right) =>
+          right.created_at.localeCompare(left.created_at),
+        ),
+    )
+  }
+
   listItems(query: ItemListQuery): Promise<ItemRecord[]> {
     const keyword = query.keyword?.toLocaleLowerCase('zh-CN')
     return Promise.resolve(
       [...this.items.values()]
         .filter(
           (item) =>
-            item.status === 'ACTIVE' ||
-            item.status === 'OUTBOUND_PENDING',
+            query.status
+              ? item.status === query.status
+              : item.status === 'ACTIVE' ||
+                item.status === 'OUTBOUND_PENDING',
         )
         .filter(
           (item) =>
@@ -152,6 +164,10 @@ class InMemoryItemUnitOfWork implements ItemUnitOfWork {
         (category) => category.normalized_name === normalizedName,
       ) ?? null,
     )
+  }
+
+  getItem(itemId: string): Promise<ItemRecord | null> {
+    return Promise.resolve(this.items.get(itemId) ?? null)
   }
 
   setCategory(category: CategoryRecord): Promise<void> {
@@ -452,7 +468,14 @@ describe('物品登记服务', () => {
     await expectApiCode(
       service.create(
         'member-openid',
-        createInput({ commitSummary: '太短' }),
+        createInput({ commitSummary: '   ' }),
+      ),
+      'INVALID_COMMIT_SUMMARY',
+    )
+    await expectApiCode(
+      service.create(
+        'member-openid',
+        createInput({ commitSummary: '字'.repeat(251) }),
       ),
       'INVALID_COMMIT_SUMMARY',
     )
@@ -522,6 +545,194 @@ describe('物品登记服务', () => {
     ).toBe(false)
   })
 
+  it('updates fields with optimistic version and writes UPDATE log', async () => {
+    const repository = prepareRepository()
+    repository.items.set('item-1', createItemRecord('item-1'))
+    const service = createService(repository)
+
+    await expect(
+      service.update('member-openid', {
+        itemId: 'item-1',
+        expectedVersion: 1,
+        name: 'Updated item',
+        images: ['cloud://env/items/new.jpg'],
+        description: 'Updated details',
+        quantityMode: 'MULTIPLE',
+        quantity: 3,
+        commitSummary: 'Update item details',
+      }),
+    ).resolves.toMatchObject({
+      id: 'item-1',
+      name: 'Updated item',
+      images: ['cloud://env/items/new.jpg'],
+      description: 'Updated details',
+      quantityMode: 'MULTIPLE',
+      quantity: 3,
+      version: 2,
+      updatedBy: 'user-member',
+      updatedAt: '2026-07-30T02:00:00.000Z',
+    })
+    expect(repository.items.get('item-1')).toMatchObject({
+      version: 2,
+      updated_by: 'user-member',
+      updated_at: '2026-07-30T02:00:00.000Z',
+    })
+    expect(repository.logs.get('item-log-1')).toMatchObject({
+      item_id: 'item-1',
+      operator_id: 'user-member',
+      action_type: 'UPDATE',
+      commit_summary: 'Update item details',
+      version_before: 1,
+      version_after: 2,
+    })
+  })
+
+  it('only allows administrators to adjust an item category', async () => {
+    const repository = prepareRepository()
+    repository.items.set('item-1', createItemRecord('item-1'))
+    repository.categories.set('category-tech', {
+      ...createCategory(),
+      _id: 'category-tech',
+      name: '技术设备',
+      normalized_name: '技术设备',
+      is_preset: false,
+    })
+    const service = createService(repository)
+
+    await expectApiCode(
+      service.update('member-openid', {
+        itemId: 'item-1',
+        expectedVersion: 1,
+        categoryId: 'category-tech',
+        commitSummary: '调整物品分类',
+      }),
+      'FORBIDDEN',
+    )
+
+    repository.users.set('user-admin', {
+      ...createUser(),
+      _id: 'user-admin',
+      openid: 'admin-openid',
+      role: 'ADMIN',
+    })
+    await expect(
+      service.update('admin-openid', {
+        itemId: 'item-1',
+        expectedVersion: 1,
+        categoryId: 'category-tech',
+        commitSummary: '调整物品分类',
+      }),
+    ).resolves.toMatchObject({
+      categoryId: 'category-tech',
+      version: 2,
+      updatedBy: 'user-admin',
+    })
+    expect(repository.items.get('item-1')?.category_id).toBe('category-tech')
+    expect(repository.categories.get('category-tech')?.item_reference_count).toBe(1)
+  })
+
+  it('returns latest item on version conflict without mutation', async () => {
+    const repository = prepareRepository()
+    repository.items.set(
+      'item-1',
+      createItemRecord('item-1', { version: 2, name: 'Latest item' }),
+    )
+    const service = createService(repository)
+
+    await expect(
+      service.update('member-openid', {
+        itemId: 'item-1',
+        expectedVersion: 1,
+        name: 'Local change',
+        commitSummary: 'Change item name',
+      }),
+    ).rejects.toMatchObject({
+      code: 'VERSION_CONFLICT',
+      details: {
+        latestVersion: 2,
+        latestItem: { id: 'item-1', name: 'Latest item' },
+      },
+    })
+    expect(repository.items.get('item-1')).toMatchObject({
+      version: 2,
+      name: 'Latest item',
+    })
+    expect(repository.logs.size).toBe(0)
+  })
+
+  it('rejects no changes, invalid quantity, and off-shelf updates', async () => {
+    const repository = prepareRepository()
+    repository.items.set('item-1', createItemRecord('item-1'))
+    const service = createService(repository)
+
+    await expectApiCode(
+      service.update('member-openid', {
+        itemId: 'item-1',
+        expectedVersion: 1,
+        commitSummary: 'No field changes',
+      }),
+      'NO_ITEM_CHANGES',
+    )
+    await expectApiCode(
+      service.update('member-openid', {
+        itemId: 'item-1',
+        expectedVersion: 1,
+        name: '物品item-1',
+        images: [],
+        description: '活动使用',
+        quantityMode: 'SINGLE',
+        quantity: 1,
+        commitSummary: 'Same field values',
+      }),
+      'NO_ITEM_CHANGES',
+    )
+    await expectApiCode(
+      service.update('member-openid', {
+        itemId: 'item-1',
+        expectedVersion: 1,
+        quantityMode: 'SINGLE',
+        quantity: 2,
+        commitSummary: 'Change quantity mode',
+      }),
+      'INVALID_ITEM_QUANTITY',
+    )
+
+    repository.items.set(
+      'item-1',
+      createItemRecord('item-1', { status: 'OFF_SHELF' }),
+    )
+    await expectApiCode(
+      service.update('member-openid', {
+        itemId: 'item-1',
+        expectedVersion: 1,
+        name: 'Archived item',
+        commitSummary: 'Try editing archived item',
+      }),
+      'ITEM_NOT_EDITABLE',
+    )
+  })
+
+  it('rolls back update when UPDATE log write fails', async () => {
+    const repository = prepareRepository()
+    repository.items.set('item-1', createItemRecord('item-1'))
+    repository.failOnLogWrite = true
+    const service = createService(repository)
+
+    await expect(
+      service.update('member-openid', {
+        itemId: 'item-1',
+        expectedVersion: 1,
+        name: 'Updated item',
+        commitSummary: 'Update item name',
+      }),
+    ).rejects.toThrow('模拟日志写入失败')
+    expect(repository.items.get('item-1')).toMatchObject({
+      version: 1,
+      name: '物品item-1',
+    })
+    expect(repository.logs.size).toBe(0)
+  })
+
   it('resolves cloud storage file IDs to temporary URLs for list and detail', async () => {
     const repository = prepareRepository()
     repository.items.set(
@@ -554,6 +765,36 @@ describe('物品登记服务', () => {
     expect(requested).toEqual([
       ['cloud://env/items/table.jpg'],
       ['cloud://env/items/table.jpg'],
+    ])
+  })
+
+  it('returns read-only operation logs with operator display names', async () => {
+    const repository = prepareRepository()
+    repository.items.set('item-1', createItemRecord('item-1'))
+    repository.logs.set('item-log-1', {
+      _id: 'item-log-1',
+      item_id: 'item-1',
+      operator_id: 'user-member',
+      action_type: 'CREATE',
+      commit_summary: 'Create item record',
+      version_before: 0,
+      version_after: 1,
+      created_at: '2026-07-30T01:00:00.000Z',
+    })
+    const service = createService(repository)
+
+    await expect(
+      service.logs('member-openid', 'item-1'),
+    ).resolves.toEqual([
+      {
+        id: 'item-log-1',
+        itemId: 'item-1',
+        action: 'CREATE',
+        summary: 'Create item record',
+        operator: { id: 'user-member', displayName: '成员' },
+        operatedAt: '2026-07-30T01:00:00.000Z',
+        itemVersion: 1,
+      },
     ])
   })
 })
@@ -649,6 +890,32 @@ describe('物品查询服务', () => {
     )
   })
 
+  it('只有管理员可以在管理查询中查看已离库物品', async () => {
+    const repository = prepareRepository()
+    repository.items.set(
+      'item-off-shelf',
+      createItemRecord('item-off-shelf', { status: 'OFF_SHELF' }),
+    )
+    const service = createService(repository)
+
+    await expectApiCode(
+      service.list('member-openid', { status: 'OFF_SHELF' }),
+      'FORBIDDEN',
+    )
+    repository.users.set('user-admin', {
+      ...createUser(),
+      _id: 'user-admin',
+      openid: 'admin-openid',
+      display_name: '管理员',
+      role: 'ADMIN',
+    })
+    await expect(
+      service.list('admin-openid', { status: 'OFF_SHELF' }),
+    ).resolves.toMatchObject({
+      items: [{ id: 'item-off-shelf', status: 'OFF_SHELF', version: 1 }],
+    })
+  })
+
   it('详情包含分类、登记人、最后修改人和版本', async () => {
     const repository = prepareRepository()
     repository.items.set(
@@ -665,6 +932,7 @@ describe('物品查询服务', () => {
     ).resolves.toMatchObject({
       id: 'item-table',
       images: ['cloud://env/items/table.jpg'],
+      imageFileIds: ['cloud://env/items/table.jpg'],
       category: { id: 'category-daily', name: '日常用品' },
       registeredBy: { id: 'user-member', displayName: '成员' },
       updatedBy: { id: 'user-member', displayName: '成员' },

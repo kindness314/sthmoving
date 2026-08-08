@@ -44,9 +44,11 @@
 .summary-area {
   box-sizing: border-box;
   width: 100%;
+  max-height: 360rpx;
   padding: 20rpx 24rpx;
   border: 1rpx solid #d1d5db;
   border-radius: 16rpx;
+  overflow-y: auto;
 }
 
 .text-area {

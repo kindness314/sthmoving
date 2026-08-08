@@ -58,6 +58,7 @@
     <textarea
       class="text-area"
       maxlength="2000"
+      auto-height="true"
       value="{{description}}"
       placeholder="填写规格、用途或存放说明"
       bindinput="handleDescriptionInput"
@@ -144,9 +145,10 @@
     <view class="field-label">提交梗概</view>
     <textarea
       class="summary-area"
-      maxlength="100"
+      maxlength="250"
+      auto-height="true"
       value="{{commitSummary}}"
-      placeholder="5～100 个字符"
+      placeholder="1～250 个字符"
       bindinput="handleCommitSummaryInput"
     />
   </view>

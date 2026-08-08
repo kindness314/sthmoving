@@ -5,6 +5,7 @@ import {
   renameCategory,
   setCategoryStatus,
 } from '../../services/categories'
+import type { TextEntryModalInstance } from '../../components/text-entry-modal/types'
 import type { Category } from '../../types/domain'
 
 Page({
@@ -77,20 +78,26 @@ Page({
       return
     }
 
-    const result = await wx.showModal({
+    const modal = this.selectComponent(
+      '#text-entry-modal',
+    ) as unknown as TextEntryModalInstance | null
+    if (!modal) {
+      return
+    }
+    const name = await modal.open({
       title: '重命名分类',
-      content: category.name,
-      editable: true,
-      placeholderText: '输入新的分类名称',
+      value: category.name,
+      placeholder: '输入新的分类名称',
       confirmText: '保存',
       confirmColor: '#0f766e',
+      maxLength: 40,
     })
-    if (!result.confirm || !result.content.trim()) {
+    if (name === null) {
       return
     }
     await this.runCategoryOperation(
       category.id,
-      () => renameCategory(category.id, result.content),
+      () => renameCategory(category.id, name),
       '分类已重命名',
     )
   },

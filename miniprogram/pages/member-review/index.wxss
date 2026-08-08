@@ -27,14 +27,27 @@
   font-size: 24rpx;
 }
 
+.request-role {
+  margin-top: 12rpx;
+  color: #0f766e;
+}
+
 .actions {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 20rpx;
   margin-top: 28rpx;
 }
 
 .actions button {
-  margin: 0 0 0 20rpx;
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  height: 76rpx;
+  margin: 0;
+  padding: 0 20rpx;
+  border-radius: 16rpx;
+  line-height: 76rpx;
 }
 
 .approve-button {

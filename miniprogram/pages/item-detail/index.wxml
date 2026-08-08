@@ -1,3 +1,23 @@
+<view
+  class="detail-navigation"
+  style="padding-top: {{statusBarHeight}}px;"
+>
+  <view class="detail-navigation-row">
+    <view class="nav-back-button" bindtap="handleGoBack">
+      <view class="nav-back-arrow"></view>
+    </view>
+    <view class="nav-home-button" bindtap="handleGoHome">
+      <view class="nav-home-icon">
+        <view class="nav-home-roof nav-home-roof-left"></view>
+        <view class="nav-home-roof nav-home-roof-right"></view>
+        <view class="nav-home-body"></view>
+        <view class="nav-home-door"></view>
+      </view>
+    </view>
+    <text class="nav-title">物品详情</text>
+  </view>
+</view>
+
 <view class="page">
   <view wx:if="{{loading}}" class="state muted">正在加载物品详情…</view>
   <view wx:elif="{{errorMessage}}" class="card state">
@@ -36,17 +56,34 @@
       <view class="section-title">物品信息</view>
       <view class="info-row">
         <text class="label">数量</text>
-        <text>{{item.quantityText}}</text>
+        <text class="info-value">{{item.quantityText}}</text>
       </view>
       <view class="info-row">
         <text class="label">分类</text>
-        <text>
-          {{item.category.name}}{{item.category.status === 'DISABLED' ? '（已停用）' : ''}}
-        </text>
+        <text class="info-value">{{item.category.name}}{{item.category.status === 'DISABLED' ? '（已停用）' : ''}}</text>
       </view>
       <view class="info-row">
         <text class="label">当前版本</text>
-        <text>v{{item.version}}</text>
+        <text class="info-value">v{{item.version}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{pendingOutbound}}" class="card review-card">
+      <view class="section-title">待处理离库申请</view>
+      <view class="muted">申请人：{{pendingOutbound.applicant.displayName}}</view>
+      <view class="muted">申请时间：{{pendingOutbound.createdAtText}}</view>
+      <view class="review-reason">{{pendingOutbound.reason}}</view>
+      <view class="actions review-actions">
+        <button
+          class="danger-button action-button"
+          size="mini"
+          bindtap="handleRejectOutbound"
+        >拒绝</button>
+        <button
+          class="primary-button action-button"
+          size="mini"
+          bindtap="handleApproveOutbound"
+        >同意</button>
       </view>
     </view>
 
@@ -54,24 +91,53 @@
       <view class="section-title">登记与更新</view>
       <view class="info-row">
         <text class="label">登记人</text>
-        <text>{{item.registeredBy.displayName}}</text>
+        <text class="info-value">{{item.registeredBy.displayName}}</text>
       </view>
       <view class="info-row">
         <text class="label">登记时间</text>
-        <text>{{item.registeredAtText}}</text>
+        <text class="info-value">{{item.registeredAtText}}</text>
       </view>
       <view class="info-row">
         <text class="label">最后修改人</text>
-        <text>{{item.updatedBy.displayName}}</text>
+        <text class="info-value">{{item.updatedBy.displayName}}</text>
       </view>
       <view class="info-row">
         <text class="label">最后更新时间</text>
-        <text>{{item.updatedAtText}}</text>
+        <text class="info-value">{{item.updatedAtText}}</text>
       </view>
     </view>
 
-    <button class="primary-button label-button" bindtap="handleViewLabel">
+    <button class="secondary-button logs-button" bindtap="handleViewLogs">
+      查看操作日志
+    </button>
+    <button
+      wx:if="{{item.status !== 'OFF_SHELF'}}"
+      class="secondary-button edit-button"
+      bindtap="handleEdit"
+    >
+      编辑物品
+    </button>
+    <button
+      wx:if="{{item.status === 'ACTIVE'}}"
+      class="secondary-button outbound-button"
+      bindtap="handleRequestOutbound"
+    >
+      申请离库
+    </button>
+    <button
+      wx:if="{{item.status === 'ACTIVE' && (userRole === 'ADMIN' || userRole === 'MANAGER' || userRole === 'OWNER')}}"
+      class="danger-button outbound-button"
+      bindtap="handleDirectOutbound"
+    >
+      直接离库
+    </button>
+    <view wx:if="{{item.status === 'OFF_SHELF' && (userRole === 'ADMIN' || userRole === 'MANAGER' || userRole === 'OWNER')}}" class="off-shelf-actions">
+      <button class="secondary-button action-button" bindtap="handleRestoreInbound">重新入库</button>
+      <button class="danger-button action-button" bindtap="handleDeleteOffShelf">删除物品</button>
+    </view>
+    <button wx:if="{{item.status !== 'OFF_SHELF'}}" class="primary-button label-button" bindtap="handleViewLabel">
       查看小程序码
     </button>
   </block>
+  <text-entry-modal id="text-entry-modal" />
 </view>

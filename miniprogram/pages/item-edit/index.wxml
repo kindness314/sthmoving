@@ -1,0 +1,174 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="card state muted">正在加载物品…</view>
+  <view wx:elif="{{!item}}" class="card state">
+    <view class="error">{{errorMessage || '物品不存在'}}</view>
+    <button class="retry-button" size="mini" bindtap="loadItem">
+      重新加载
+    </button>
+  </view>
+  <block wx:elif="{{item}}">
+    <view class="heading">
+      <view class="title">编辑物品</view>
+      <view class="muted">当前版本 v{{baseVersion}}，标签不能在此修改</view>
+    </view>
+
+    <view wx:if="{{item.status === 'OFF_SHELF'}}" class="card state">
+      <view class="error">已离库物品不能继续编辑</view>
+    </view>
+
+    <view class="card section">
+      <view class="field-label">物品照片（可选）</view>
+      <view class="muted field-help">最多 2 张；移除图片会在保存成功后删除旧文件</view>
+      <view class="image-list">
+        <view wx:for="{{selectedImages}}" wx:key="tempFilePath" class="image-item">
+          <image
+            class="preview-image"
+            src="{{item.tempFilePath}}"
+            mode="aspectFill"
+            data-index="{{index}}"
+            bindtap="handlePreviewImage"
+          />
+          <button
+            class="remove-image"
+            size="mini"
+            data-index="{{index}}"
+            disabled="{{submitting}}"
+            bindtap="handleRemoveImage"
+          >
+            移除
+          </button>
+        </view>
+        <button
+          wx:if="{{selectedImages.length < 2}}"
+          class="add-image"
+          loading="{{processingImages}}"
+          disabled="{{processingImages || submitting || item.status === 'OFF_SHELF'}}"
+          bindtap="handleChooseImages"
+        >
+          选择照片
+        </button>
+      </view>
+    </view>
+
+    <view class="card section">
+      <view class="field-label">物品名称</view>
+      <input
+        class="text-input"
+        maxlength="100"
+        value="{{name}}"
+        disabled="{{submitting || item.status === 'OFF_SHELF'}}"
+        bindinput="handleNameInput"
+      />
+      <view class="field-label spaced-label">物品详情（可选）</view>
+      <textarea
+        class="text-area"
+        maxlength="2000"
+        auto-height="true"
+        value="{{description}}"
+        disabled="{{submitting || item.status === 'OFF_SHELF'}}"
+        bindinput="handleDescriptionInput"
+      />
+    </view>
+
+    <view wx:if="{{canEditCategory}}" class="card section">
+      <view class="field-label">物品分类</view>
+      <picker
+        mode="selector"
+        range="{{categoryNames}}"
+        value="{{categoryIndex}}"
+        disabled="{{submitting || loadingCategories || item.status === 'OFF_SHELF'}}"
+        bindchange="handleCategoryChange"
+      >
+        <view class="picker-input">
+          {{categoryIndex >= 0 ? categoryNames[categoryIndex] : '请选择分类'}}
+        </view>
+      </picker>
+    </view>
+
+    <view class="card section">
+      <view class="field-label">数量模式</view>
+      <radio-group class="radio-group" bindchange="handleQuantityModeChange">
+        <label class="radio-option">
+          <radio value="SINGLE" checked="{{quantityMode === 'SINGLE'}}" />
+          单件
+        </label>
+        <label class="radio-option">
+          <radio value="MULTIPLE" checked="{{quantityMode === 'MULTIPLE'}}" />
+          多件
+        </label>
+      </radio-group>
+      <view wx:if="{{quantityMode === 'MULTIPLE'}}">
+        <view class="field-label spaced-label">具体数量</view>
+        <input
+          class="text-input"
+          type="number"
+          value="{{quantityInput}}"
+          disabled="{{submitting || item.status === 'OFF_SHELF'}}"
+          bindinput="handleQuantityInput"
+        />
+      </view>
+    </view>
+
+    <view class="card section">
+      <view class="field-label">提交梗概</view>
+      <textarea
+        class="summary-area"
+        maxlength="250"
+        auto-height="true"
+        value="{{commitSummary}}"
+        placeholder="1～250 个字符"
+        disabled="{{submitting || item.status === 'OFF_SHELF'}}"
+        bindinput="handleCommitSummaryInput"
+      />
+    </view>
+
+    <view wx:if="{{conflict}}" class="card conflict-card">
+      <view class="conflict-title">检测到版本冲突</view>
+      <view class="muted conflict-help">
+        服务器上的最新版为 v{{conflict.latest.version}}。请选择每个字段保留本地草稿还是使用最新版，系统不会自动覆盖。
+      </view>
+      <view wx:for="{{conflict.fields}}" wx:key="key" class="conflict-field">
+        <view class="field-label">{{item.label}}</view>
+        <view class="diff-row {{item.localChanged ? 'diff-changed' : ''}}">
+          <text class="diff-label">本地草稿</text>
+          <text class="diff-value">{{item.localText}}</text>
+        </view>
+        <view class="diff-row {{item.latestChanged ? 'diff-changed' : ''}}">
+          <text class="diff-label">最新版</text>
+          <text class="diff-value">{{item.latestText}}</text>
+        </view>
+        <view class="choice-row">
+          <button
+            class="choice-button {{item.choice === 'LOCAL' ? 'choice-selected' : ''}}"
+            data-field="{{item.key}}"
+            data-choice="LOCAL"
+            bindtap="handleConflictChoice"
+          >
+            保留本地
+          </button>
+          <button
+            class="choice-button {{item.choice === 'LATEST' ? 'choice-selected' : ''}}"
+            data-field="{{item.key}}"
+            data-choice="LATEST"
+            bindtap="handleConflictChoice"
+          >
+            使用最新版
+          </button>
+        </view>
+      </view>
+      <button class="primary-button continue-button" bindtap="handleAcceptConflict">
+        以当前选择继续编辑
+      </button>
+    </view>
+
+    <view wx:if="{{errorMessage}}" class="error">{{errorMessage}}</view>
+    <button
+      class="primary-button submit-button"
+      loading="{{submitting}}"
+      disabled="{{submitting || processingImages || item.status === 'OFF_SHELF'}}"
+      bindtap="handleSubmit"
+    >
+      {{submitting ? '正在保存…' : '保存修改'}}
+    </button>
+  </block>
+</view>

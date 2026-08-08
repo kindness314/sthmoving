@@ -1,13 +1,18 @@
 import type {
   BitmapPrintJob,
   PrinterDevice,
+  PrinterRenderContext,
   PrinterStatus,
 } from './types'
 
-export interface PrinterAdapter {
-  discover(): Promise<PrinterDevice[]>
+export interface PrinterAdapter<TPrintJob = BitmapPrintJob> {
+  bindRenderContext(context: PrinterRenderContext): void
+  discover(onDevices: (devices: PrinterDevice[]) => void): Promise<void>
+  stopDiscovery(): Promise<void>
   connect(deviceId: string): Promise<void>
   disconnect(): Promise<void>
   getStatus(): PrinterStatus
-  print(job: BitmapPrintJob): Promise<void>
+  getConnectedDevice(): PrinterDevice | null
+  print(job: TPrintJob): Promise<void>
+  stopPrint(): Promise<void>
 }

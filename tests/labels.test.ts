@@ -292,13 +292,42 @@ describe('物品小程序码服务', () => {
     })
   })
 
-  it('只解析 READY 标签，并拒绝无效 scene 和未审核账号', async () => {
+  it('解析 READY 或 VOID 标签，并拒绝无效 scene 和未审核账号', async () => {
     const { repository, service } = prepare()
     await service.generate('member-openid', 'item-1')
 
     await expect(
       service.resolve('member-openid', 'i=A1B2C3D4E5F6'),
     ).resolves.toEqual({ itemId: 'item-1' })
+    const label = repository.labels.get('item-label-item-1')
+    if (!label) {
+      throw new Error('测试标签缺失')
+    }
+    repository.labels.set('item-label-item-1', {
+      ...label,
+      status: 'VOID',
+    })
+    repository.items.set('item-1', {
+      ...repository.items.get('item-1')!,
+      status: 'OFF_SHELF',
+    })
+    await expectApiCode(
+      service.resolve('member-openid', 'i=A1B2C3D4E5F6'),
+      'ITEM_OFF_SHELF',
+    )
+    await expectApiCode(
+      service.get('member-openid', 'item-1'),
+      'ITEM_OFF_SHELF',
+    )
+    await expectApiCode(
+      service.generate('member-openid', 'item-1'),
+      'LABEL_VOID',
+    )
+    repository.items.delete('item-1')
+    await expectApiCode(
+      service.resolve('member-openid', 'i=A1B2C3D4E5F6'),
+      'ITEM_DELETED',
+    )
     await expectApiCode(
       service.resolve('member-openid', 'item-1'),
       'INVALID_LABEL_SCENE',

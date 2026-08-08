@@ -6,6 +6,15 @@ Page({
     organizationName,
     loading: false,
     errorMessage: '',
+    autoAttempted: false,
+  },
+
+  onShow() {
+    if (this.data.autoAttempted || this.data.loading) {
+      return
+    }
+    this.setData({ autoAttempted: true })
+    void this.handleLogin()
   },
 
   async handleLogin() {

@@ -14,6 +14,30 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.shortcut-group + .shortcut-group {
+  margin-top: 48rpx;
+}
+
+.group-heading {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.group-title {
+  flex: none;
+  color: #374151;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.group-divider {
+  flex: 1;
+  height: 2rpx;
+  background: #dbe3e8;
+}
+
 .shortcut {
   min-height: 180rpx;
 }
@@ -21,6 +45,24 @@
 .shortcut-title {
   font-size: 32rpx;
   font-weight: 600;
+}
+
+.shortcut-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.shortcut-badge {
+  min-width: 34rpx;
+  padding: 2rpx 8rpx;
+  border-radius: 999rpx;
+  background: #b91c1c;
+  color: #ffffff;
+  font-size: 22rpx;
+  line-height: 30rpx;
+  text-align: center;
 }
 
 .shortcut-description {

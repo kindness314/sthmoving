@@ -72,6 +72,10 @@ class CloudItemUnitOfWork implements ItemUnitOfWork {
     })
   }
 
+  getItem(itemId: string): Promise<ItemRecord | null> {
+    return this.getFirst<ItemRecord>('items', { _id: itemId })
+  }
+
   async setCategory(category: CategoryRecord): Promise<void> {
     const { _id, ...data } = category
     await this.database
@@ -139,10 +143,30 @@ export class CloudItemRepository implements ItemRepository {
     return this.getFirst<ItemRecord>('items', { _id: itemId })
   }
 
+  async listOperationLogs(
+    itemId: string,
+  ): Promise<ItemOperationLogRecord[]> {
+    const result = await this.database
+      .collection('item_operation_logs')
+      .where({ item_id: itemId })
+      .limit(100)
+      .get()
+    return (result.data as ItemOperationLogRecord[]).sort(
+      (left, right) =>
+        right.created_at.localeCompare(left.created_at) ||
+        right._id.localeCompare(left._id),
+    )
+  }
+
   async listItems(query: ItemListQuery): Promise<ItemRecord[]> {
     const command = this.database.command
+    const statuses = query.status
+      ? [query.status]
+      : ['ACTIVE', 'OUTBOUND_PENDING']
     const conditions: object[] = [
-      { status: command.in(['ACTIVE', 'OUTBOUND_PENDING']) },
+      {
+        status: command.in(statuses),
+      },
     ]
     if (query.categoryId) {
       conditions.push({ category_id: query.categoryId })

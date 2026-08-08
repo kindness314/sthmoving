@@ -17,11 +17,13 @@
     class="card request-card"
   >
     <view class="request-name">{{item.displayName}}</view>
+    <view class="muted request-role">
+      申请角色：{{item.requestedRole === 'ADMIN' ? '管理员' : '普通成员'}}
+    </view>
     <view class="muted request-time">申请时间：{{item.createdAt}}</view>
     <view class="actions">
       <button
         class="reject-button"
-        size="mini"
         data-id="{{item.id}}"
         data-decision="REJECT"
         disabled="{{processingId}}"
@@ -31,7 +33,6 @@
       </button>
       <button
         class="approve-button"
-        size="mini"
         data-id="{{item.id}}"
         data-decision="APPROVE"
         loading="{{processingId === item.id}}"
@@ -44,4 +45,5 @@
   </view>
 
   <view wx:if="{{errorMessage}}" class="error">{{errorMessage}}</view>
+  <text-entry-modal id="text-entry-modal" />
 </view>

@@ -4,6 +4,8 @@ import { categoryHandlers } from './modules/categories'
 import { itemHandlers } from './modules/items'
 import { labelHandlers } from './modules/labels'
 import { membershipHandlers } from './modules/membership'
+import { notificationHandlers } from './modules/notifications'
+import { outboundHandlers } from './modules/outbound'
 import { systemHandlers } from './modules/system'
 import type {
   ApiEvent,
@@ -23,6 +25,8 @@ const handlers: Readonly<Record<string, Readonly<Record<string, ApiHandler>>>> =
   items: itemHandlers,
   labels: labelHandlers,
   membership: membershipHandlers,
+  notifications: notificationHandlers,
+  outbound: outboundHandlers,
   system: systemHandlers,
 }
 

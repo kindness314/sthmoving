@@ -1,0 +1,60 @@
+.heading {
+  margin-bottom: 28rpx;
+}
+
+.title {
+  margin-bottom: 8rpx;
+  font-size: 44rpx;
+  font-weight: 700;
+}
+
+.log-card {
+  margin-bottom: 20rpx;
+}
+
+.log-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.log-action {
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.log-action.rejected {
+  color: #b91c1c;
+}
+
+.log-version {
+  color: #0f766e;
+  font-size: 24rpx;
+}
+
+.log-meta {
+  margin-top: 12rpx;
+  color: #6b7280;
+  font-size: 25rpx;
+}
+
+.log-summary {
+  margin-top: 20rpx;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.state {
+  padding: 64rpx 24rpx;
+  text-align: center;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+.retry-button {
+  margin-top: 20rpx;
+}

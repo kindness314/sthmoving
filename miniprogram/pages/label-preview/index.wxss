@@ -72,6 +72,129 @@
   line-height: 1.6;
 }
 
+.printer-card {
+  margin-top: 28rpx;
+}
+
+.printer-header,
+.copies-row,
+.device-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.printer-status,
+.control-hint {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+}
+
+.status-dot {
+  flex: 0 0 auto;
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: #9ca3af;
+}
+
+.status-READY {
+  background: #0f766e;
+}
+
+.status-DISCOVERING,
+.status-CONNECTING,
+.status-PRINTING {
+  background: #d97706;
+}
+
+.copies-row {
+  margin-top: 28rpx;
+  padding-top: 28rpx;
+  border-top: 1rpx solid #e5e7eb;
+}
+
+.control-label,
+.device-name {
+  font-weight: 600;
+}
+
+.copies-input {
+  box-sizing: border-box;
+  width: 160rpx;
+  height: 76rpx;
+  padding: 0 20rpx;
+  border: 1rpx solid #d1d5db;
+  border-radius: 12rpx;
+  text-align: center;
+}
+
+.printer-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 28rpx;
+}
+
+.printer-action {
+  flex: 1;
+  min-height: 84rpx;
+  margin: 0;
+  font-size: 28rpx;
+  line-height: 84rpx;
+}
+
+.secondary-action,
+.device-connect {
+  border: 1rpx solid #0f766e;
+  background: #ffffff;
+  color: #0f766e;
+}
+
+.device-list {
+  margin-top: 24rpx;
+  border-top: 1rpx solid #e5e7eb;
+}
+
+.device-row {
+  min-height: 104rpx;
+  border-bottom: 1rpx solid #e5e7eb;
+}
+
+.device-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.device-connect {
+  flex: 0 0 144rpx;
+  min-height: 68rpx;
+  margin: 0;
+  font-size: 26rpx;
+  line-height: 68rpx;
+}
+
+.search-hint,
+.printer-error {
+  margin-top: 24rpx;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.print-button {
+  margin-top: 28rpx;
+}
+
+.sdk-canvas-host {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 .note-title {
   margin-bottom: 12rpx;
   font-weight: 600;

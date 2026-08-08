@@ -1,0 +1,39 @@
+.scan-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.scan-card {
+  margin-top: 32rpx;
+  padding: 72rpx 32rpx;
+  text-align: center;
+}
+
+.scan-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 150rpx;
+  height: 150rpx;
+  margin: 0 auto 32rpx;
+  border: 6rpx solid #0f766e;
+  border-radius: 32rpx;
+  color: #0f766e;
+  font-size: 88rpx;
+  line-height: 1;
+}
+
+.scan-hint {
+  color: #6b7280;
+  font-size: 28rpx;
+}
+
+.scan-button {
+  margin-top: 40rpx;
+}
+
+.error {
+  margin-top: 24rpx;
+  color: #b91c1c;
+  text-align: center;
+}

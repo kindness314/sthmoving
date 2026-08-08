@@ -1,4 +1,5 @@
 {
   "navigationBarTitleText": "物品详情",
+  "navigationStyle": "custom",
   "enablePullDownRefresh": true
 }

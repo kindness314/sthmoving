@@ -1,0 +1,98 @@
+<view class="page">
+  <view class="heading">
+    <view class="title">离库物品管理</view>
+    <view class="muted">查看已离库物品，可重新入库或删除</view>
+  </view>
+
+  <view class="card search-card">
+    <input
+      class="search-input"
+      type="text"
+      maxlength="100"
+      value="{{keyword}}"
+      placeholder="搜索已离库物品名称、详情或编码"
+      confirm-type="search"
+      bindinput="handleKeywordInput"
+      bindconfirm="handleSearchConfirm"
+    />
+  </view>
+
+  <view wx:if="{{selectedIds.length}}" class="card batch-bar">
+    <text>已选 {{selectedIds.length}} 件</text>
+    <button
+      class="restore-button"
+      disabled="{{processing}}"
+      bindtap="handleRestore"
+    >
+      {{selectedIds.length > 1 ? '批量重新入库' : '重新入库'}}
+    </button>
+    <button
+      class="danger-button"
+      disabled="{{processing}}"
+      bindtap="handleBatchDelete"
+    >
+      {{selectedIds.length > 1 ? '批量删除' : '删除'}}
+    </button>
+  </view>
+
+  <view wx:if="{{loading && items.length}}" class="refreshing muted">
+    正在更新…
+  </view>
+  <view wx:if="{{loading && !items.length}}" class="state muted">
+    正在加载离库物品…
+  </view>
+  <view wx:elif="{{errorMessage && !items.length}}" class="card state">
+    <view class="error">{{errorMessage}}</view>
+    <button class="retry-button" size="mini" bindtap="handleRetry">
+      重新加载
+    </button>
+  </view>
+  <view wx:elif="{{!items.length}}" class="card state muted">
+    暂无已离库物品
+  </view>
+
+  <view
+    wx:for="{{items}}"
+    wx:key="id"
+    class="card item-card"
+    data-id="{{item.id}}"
+    bindtap="handleItemTap"
+  >
+    <checkbox
+      class="select-box"
+      value="{{item.id}}"
+      checked="{{item.selected}}"
+      data-id="{{item.id}}"
+      catchtap="handleSelectionToggle"
+    />
+    <image
+      wx:if="{{item.coverImage}}"
+      class="cover"
+      src="{{item.coverImage}}"
+      mode="aspectFill"
+    />
+    <view wx:else class="cover placeholder">暂无图片</view>
+    <view class="item-main">
+      <view class="item-heading">
+        <view class="item-name">{{item.name}}</view>
+        <view class="status">已离库</view>
+      </view>
+      <view class="description muted">{{item.description || '暂无详情'}}</view>
+      <view class="meta">
+        <text>{{item.category.name}}</text>
+        <text>{{item.quantityText}}</text>
+      </view>
+      <view class="updated muted">更新于 {{item.updatedAtText}}</view>
+    </view>
+  </view>
+
+  <text-entry-modal id="text-entry-modal" />
+
+  <view wx:if="{{loadingMore}}" class="state muted">正在加载更多…</view>
+  <view wx:if="{{errorMessage && items.length}}" class="load-more-error error">
+    {{errorMessage}}
+  </view>
+  <view wx:if="{{items.length && !nextCursor && !loading}}" class="state muted">
+    已显示全部离库物品
+  </view>
+</view>

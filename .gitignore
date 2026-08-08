@@ -7,10 +7,11 @@ project.private.config.json
 private.config.json
 
 miniprogram_npm/
+miniprogram/vendor/supvan-t50-pro/SUPVANAPIT50PRO/
+ysu-net-watch-tests/
 cloudfunctions/**/node_modules/
 cloudfunctions/**/dist/
 
 *.log
 .DS_Store
 Thumbs.db
-

@@ -16,17 +16,46 @@ export interface ItemRecord {
   registered_at: string
   updated_by: string
   updated_at: string
+  off_shelf_by?: string
+  off_shelf_at?: string
 }
 
 export interface ItemOperationLogRecord {
   _id: string
   item_id: string
   operator_id: string
-  action_type: 'CREATE'
+  action_type:
+    | 'CREATE'
+    | 'UPDATE'
+    | 'OUTBOUND_REQUEST'
+    | 'OUTBOUND_APPROVE'
+    | 'OUTBOUND_REJECT'
+    | 'OUTBOUND'
+    | 'INBOUND'
   commit_summary: string
   version_before: number
   version_after: number
   created_at: string
+}
+
+export interface PublicItemOperationLog {
+  id: string
+  itemId: string
+  action:
+    | 'CREATE'
+    | 'UPDATE'
+    | 'OUTBOUND_REQUEST'
+    | 'OUTBOUND_APPROVE'
+    | 'OUTBOUND_REJECT'
+    | 'OUTBOUND'
+    | 'INBOUND'
+  summary: string
+  operator: {
+    id: string
+    displayName: string
+  }
+  operatedAt: string
+  itemVersion: number
 }
 
 export interface CreateItemInput {
@@ -40,6 +69,18 @@ export interface CreateItemInput {
   commitSummary: string
 }
 
+export interface UpdateItemInput {
+  itemId: string
+  expectedVersion: number
+  name?: string
+  images?: string[]
+  description?: string
+  quantityMode?: QuantityMode
+  quantity?: number
+  categoryId?: string
+  commitSummary: string
+}
+
 export interface ItemListCursor {
   updatedAt: string
   id: string
@@ -50,6 +91,7 @@ export interface ListItemsInput {
   categoryId?: string
   cursor?: ItemListCursor
   limit?: number
+  status?: ItemStatus
 }
 
 export interface ItemListQuery {
@@ -57,6 +99,7 @@ export interface ItemListQuery {
   categoryId?: string
   cursor?: ItemListCursor
   limit: number
+  status?: ItemStatus
 }
 
 export interface PublicItem {
@@ -99,10 +142,12 @@ export interface PublicItemSummary {
   quantity: number
   category: PublicItemCategory
   status: ItemStatus
+  version: number
   updatedAt: string
 }
 
 export interface PublicItemDetail extends PublicItemSummary {
+  imageFileIds: string[]
   version: number
   registeredBy: PublicItemActor
   registeredAt: string

@@ -11,6 +11,17 @@
         placeholder="便于管理员确认身份"
         bindinput="handleDisplayNameInput"
       />
+      <view class="field-label role-label">申请角色</view>
+      <radio-group bindchange="handleRequestedRoleChange" class="role-options">
+        <label class="role-option">
+          <radio value="MEMBER" checked="{{requestedRole === 'MEMBER'}}" />
+          <text>普通成员</text>
+        </label>
+        <label class="role-option">
+          <radio value="ADMIN" checked="{{requestedRole === 'ADMIN'}}" />
+          <text>管理员</text>
+        </label>
+      </radio-group>
       <button
         class="primary-button submit-button"
         loading="{{submitting}}"

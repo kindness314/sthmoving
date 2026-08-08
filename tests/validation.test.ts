@@ -17,7 +17,10 @@ describe('物品输入校验', () => {
 
   it('要求提交梗概有实际内容', () => {
     expect(validateCommitSummary('更新设备数量')).toBeNull()
-    expect(validateCommitSummary(' 短 ')).not.toBeNull()
+    expect(validateCommitSummary('短')).toBeNull()
+    expect(validateCommitSummary('字'.repeat(250))).toBeNull()
+    expect(validateCommitSummary('字'.repeat(251))).not.toBeNull()
+    expect(validateCommitSummary('   ')).not.toBeNull()
   })
 
   it('区分单件和多件数量', () => {

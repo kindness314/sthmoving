@@ -1,0 +1,62 @@
+<view class="page">
+  <view class="heading">
+    <view class="title">待处理离库申请</view>
+    <view class="muted">管理员或所有者可同意、拒绝成员的离库申请</view>
+  </view>
+
+  <view wx:if="{{refreshing}}" class="refreshing muted">正在更新…</view>
+
+  <view wx:if="{{loading && !requests.length}}" class="muted empty">
+    正在加载…
+  </view>
+  <view wx:elif="{{errorMessage && !requests.length}}" class="card empty">
+    <view class="error">{{errorMessage}}</view>
+    <button class="retry-button" size="mini" bindtap="handleRetry">
+      重新加载
+    </button>
+  </view>
+  <view wx:elif="{{!requests.length}}" class="card empty">
+    暂无待处理离库申请
+  </view>
+
+  <view wx:for="{{requests}}" wx:key="id" class="card request-card">
+    <view class="request-heading">
+      <view class="request-name">{{item.item.name}}</view>
+      <view class="status">待处理</view>
+    </view>
+    <view class="muted meta">编码：{{item.item.code}}</view>
+    <view class="muted meta">申请人：{{item.applicant.displayName}}</view>
+    <view class="reason">{{item.reason}}</view>
+    <button
+      class="secondary-button detail-button"
+      size="mini"
+      data-item-id="{{item.item.id}}"
+      catchtap="handleViewItem"
+    >查看物品详情</button>
+    <view class="muted request-time">申请时间：{{item.createdAt}}</view>
+    <view class="actions">
+      <button
+        class="reject-button"
+        data-id="{{item.id}}"
+        data-decision="REJECT"
+        disabled="{{processingId}}"
+        bindtap="handleReview"
+      >
+        拒绝
+      </button>
+      <button
+        class="approve-button"
+        data-id="{{item.id}}"
+        data-decision="APPROVE"
+        loading="{{processingId === item.id}}"
+        disabled="{{processingId}}"
+        bindtap="handleReview"
+      >
+        同意
+      </button>
+    </view>
+  </view>
+
+  <view wx:if="{{errorMessage}}" class="error">{{errorMessage}}</view>
+  <text-entry-modal id="text-entry-modal" />
+</view>

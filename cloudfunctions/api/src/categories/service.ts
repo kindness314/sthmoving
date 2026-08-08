@@ -213,7 +213,11 @@ function requireCategoryManager(
   openid: string,
 ): asserts user is UserRecord {
   requireApprovedUser(user, openid)
-  if (user.role !== 'ADMIN' && user.role !== 'OWNER') {
+  if (
+    user.role !== 'ADMIN' &&
+    user.role !== 'MANAGER' &&
+    user.role !== 'OWNER'
+  ) {
     throw new ApiException(
       'FORBIDDEN',
       '只有管理员和所有者可以管理分类',

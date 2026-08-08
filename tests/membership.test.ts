@@ -9,19 +9,25 @@ import type {
   JoinRequestRecord,
   UserRecord,
 } from '../cloudfunctions/api/src/membership/types'
+import type { NotificationRecord } from '../cloudfunctions/api/src/notifications/types'
 
 class InMemoryMembershipRepository implements MembershipRepository {
   users = new Map<string, UserRecord>()
   requests = new Map<string, JoinRequestRecord>()
+  notifications = new Map<string, NotificationRecord>()
 
   async runTransaction<T>(
     operation: (unitOfWork: MembershipUnitOfWork) => Promise<T>,
   ): Promise<T> {
     const users = cloneMap(this.users)
     const requests = cloneMap(this.requests)
-    const result = await operation(new InMemoryUnitOfWork(users, requests))
+    const notifications = cloneMap(this.notifications)
+    const result = await operation(
+      new InMemoryUnitOfWork(users, requests, notifications),
+    )
     this.users = users
     this.requests = requests
+    this.notifications = notifications
     return result
   }
 }
@@ -30,6 +36,7 @@ class InMemoryUnitOfWork implements MembershipUnitOfWork {
   constructor(
     private readonly users: Map<string, UserRecord>,
     private readonly requests: Map<string, JoinRequestRecord>,
+    private readonly notifications: Map<string, NotificationRecord>,
   ) {}
 
   getUser(userId: string): Promise<UserRecord | null> {
@@ -44,6 +51,14 @@ class InMemoryUnitOfWork implements MembershipUnitOfWork {
   countOwners(): Promise<number> {
     return Promise.resolve(
       [...this.users.values()].filter((user) => user.role === 'OWNER').length,
+    )
+  }
+
+  countManagers(): Promise<number> {
+    return Promise.resolve(
+      [...this.users.values()].filter(
+        (user) => user.role === 'MANAGER' && user.status === 'APPROVED',
+      ).length,
     )
   }
 
@@ -79,8 +94,27 @@ class InMemoryUnitOfWork implements MembershipUnitOfWork {
         .sort((left, right) =>
           right.created_at.localeCompare(left.created_at),
         )
-        .slice(0, limit),
+      .slice(0, limit),
     )
+  }
+
+  listUsers(limit: number): Promise<UserRecord[]> {
+    return Promise.resolve([...this.users.values()].slice(0, limit))
+  }
+
+  listActiveReviewers(): Promise<UserRecord[]> {
+    return Promise.resolve(
+      [...this.users.values()].filter(
+        (user) =>
+          user.status === 'APPROVED' &&
+          (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'OWNER'),
+      ),
+    )
+  }
+
+  setNotification(notification: NotificationRecord): Promise<void> {
+    this.notifications.set(notification._id, structuredClone(notification))
+    return Promise.resolve()
   }
 }
 
@@ -133,6 +167,7 @@ describe('成员身份服务', () => {
       '成员甲',
     )
     expect(first.accessState).toBe('PENDING')
+    expect(repository.notifications.size).toBe(0)
     await expectApiCode(
       service.submitJoinRequest('member-openid', '成员甲'),
       'JOIN_REQUEST_PENDING',
@@ -144,6 +179,7 @@ describe('成员身份服务', () => {
     await service.reviewJoinRequest('owner-openid', {
       requestId: request!.id,
       decision: 'REJECT',
+      comment: '当前暂不符合加入条件',
     })
     await expect(service.login('member-openid')).resolves.toMatchObject({
       accessState: 'REJECTED',
@@ -153,6 +189,40 @@ describe('成员身份服务', () => {
       service.submitJoinRequest('member-openid', '成员甲（再次申请）'),
     ).resolves.toMatchObject({ accessState: 'PENDING' })
     expect(repository.requests.size).toBe(2)
+  })
+
+  it('拒绝加入申请必须填写原因，并拒绝审核状态已变化的申请人', async () => {
+    const repository = new InMemoryMembershipRepository()
+    const service = createService(repository)
+
+    await service.bootstrapOwner('owner-openid')
+    await service.submitJoinRequest('member-openid', '成员')
+    const [request] = await service.listPendingJoinRequests('owner-openid')
+    expect(request).toBeDefined()
+
+    await expectApiCode(
+      service.reviewJoinRequest('owner-openid', {
+        requestId: request!.id,
+        decision: 'REJECT',
+      }),
+      'INVALID_REVIEW_COMMENT',
+    )
+
+    const member = [...repository.users.values()].find(
+      (user) => user.openid === 'member-openid',
+    )
+    expect(member).toBeDefined()
+    repository.users.set(member!._id, {
+      ...member!,
+      status: 'DISABLED',
+    })
+    await expectApiCode(
+      service.reviewJoinRequest('owner-openid', {
+        requestId: request!.id,
+        decision: 'APPROVE',
+      }),
+      'JOIN_APPLICANT_STATE_CONFLICT',
+    )
   })
 
   it('管理员可以通过申请，普通成员不能调用审核接口', async () => {

@@ -1,0 +1,30 @@
+<view class="page">
+  <view class="heading">
+    <view class="title">申请离库</view>
+    <view class="muted">申请提交后，物品会进入“离库申请中”，由管理员处理</view>
+  </view>
+
+  <view class="card section">
+    <view class="field-label">离库原因</view>
+    <view class="muted field-help">离库原因同时作为本次操作日志的提交梗概，需填写 1～250 个字符</view>
+    <textarea
+      class="reason-area"
+      maxlength="250"
+      auto-height="true"
+      value="{{reason}}"
+      placeholder="例如：物品损坏，无法继续使用"
+      disabled="{{submitting}}"
+      bindinput="handleReasonInput"
+    />
+  </view>
+
+  <view wx:if="{{errorMessage}}" class="error">{{errorMessage}}</view>
+  <button
+    class="primary-button submit-button"
+    loading="{{submitting}}"
+    disabled="{{submitting || !itemId}}"
+    bindtap="handleSubmit"
+  >
+    {{submitting ? '正在提交…' : '提交离库申请'}}
+  </button>
+</view>

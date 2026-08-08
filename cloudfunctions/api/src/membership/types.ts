@@ -1,4 +1,4 @@
-export type UserRole = 'OWNER' | 'ADMIN' | 'MEMBER'
+export type UserRole = 'OWNER' | 'MANAGER' | 'ADMIN' | 'MEMBER'
 
 export type UserStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'DISABLED'
 
@@ -28,6 +28,8 @@ export interface JoinRequestRecord {
   _id: string
   applicant_id: string
   display_name: string
+  requested_role: 'ADMIN' | 'MEMBER'
+  approved_role?: 'ADMIN' | 'MEMBER'
   status: JoinRequestStatus
   review_comment?: string
   reviewed_by?: string
@@ -55,5 +57,12 @@ export interface PendingJoinRequest {
   id: string
   applicant: PublicUser
   displayName: string
+  requestedRole: 'ADMIN' | 'MEMBER'
+  approvedRole?: 'ADMIN' | 'MEMBER'
   createdAt: string
+}
+
+export interface PublicMember extends PublicUser {
+  reviewedBy?: string
+  reviewedAt?: string
 }

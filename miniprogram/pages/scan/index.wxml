@@ -1,0 +1,17 @@
+<view class="page scan-page">
+  <view class="heading">
+    <view class="title">扫码查询</view>
+    <view class="muted">扫描物品小程序码或条形码，打开对应物品</view>
+  </view>
+  <view class="card scan-card">
+    <view class="scan-icon">⌕</view>
+    <view class="scan-hint">将标签放入取景框内</view>
+    <button
+      class="primary-button scan-button"
+      loading="{{scanning}}"
+      disabled="{{scanning}}"
+      bindtap="handleScan"
+    >开始扫码</button>
+  </view>
+  <view wx:if="{{errorMessage}}" class="error">{{errorMessage}}</view>
+</view>

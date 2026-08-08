@@ -1,0 +1,94 @@
+.title {
+  margin-bottom: 8rpx;
+  font-size: 44rpx;
+  font-weight: 700;
+}
+
+.member-card {
+  margin-bottom: 24rpx;
+  padding: 28rpx 32rpx;
+}
+
+.member-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.member-name {
+  min-width: 0;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.role {
+  flex: none;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  background: #e5e7eb;
+  color: #374151;
+  font-size: 22rpx;
+}
+
+.role-OWNER,
+.role-MANAGER {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.meta {
+  line-height: 1.6;
+  font-size: 25rpx;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.actions + .actions {
+  margin-top: 16rpx;
+}
+
+.actions button {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  min-height: 72rpx;
+  margin: 0;
+  padding: 0 24rpx;
+  border-radius: 16rpx;
+  line-height: 72rpx;
+}
+
+.secondary-button {
+  border: 1rpx solid #0f766e;
+  color: #0f766e;
+}
+
+.danger-button {
+  background: #b91c1c;
+  color: #ffffff;
+}
+
+.state {
+  padding: 48rpx 24rpx;
+  text-align: center;
+}
+
+.error {
+  margin-top: 20rpx;
+  color: #b91c1c;
+  text-align: center;
+}
+
+.setup-notice {
+  margin-bottom: 24rpx;
+  border-left: 8rpx solid #0f766e;
+  color: #0f766e;
+  line-height: 1.6;
+}

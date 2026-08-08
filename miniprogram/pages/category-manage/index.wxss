@@ -49,6 +49,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 20rpx;
   margin-bottom: 16rpx;
   padding-top: 24rpx;
   padding-bottom: 24rpx;
@@ -91,13 +92,19 @@
   flex: none;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 12rpx;
+  gap: 16rpx;
   margin-left: 20rpx;
   max-width: 360rpx;
 }
 
 .category-actions button {
+  box-sizing: border-box;
+  min-width: 132rpx;
+  height: 68rpx;
   margin: 0;
+  padding: 0 16rpx;
+  border-radius: 14rpx;
+  line-height: 68rpx;
 }
 
 .disable-button {

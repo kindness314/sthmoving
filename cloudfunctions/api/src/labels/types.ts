@@ -1,4 +1,4 @@
-export type ItemLabelStatus = 'PENDING' | 'READY' | 'FAILED'
+export type ItemLabelStatus = 'PENDING' | 'READY' | 'FAILED' | 'VOID'
 
 export interface ItemLabelRecord {
   _id: string
@@ -8,6 +8,7 @@ export interface ItemLabelRecord {
   scene: string
   file_id?: string
   status: ItemLabelStatus
+  status_before_void?: Exclude<ItemLabelStatus, 'VOID'>
   attempt_count: number
   generation_token?: string
   error_code?: string

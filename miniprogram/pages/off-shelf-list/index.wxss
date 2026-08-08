@@ -1,0 +1,163 @@
+.heading {
+  margin-bottom: 28rpx;
+}
+
+.title {
+  margin-bottom: 8rpx;
+  font-size: 44rpx;
+  font-weight: 700;
+}
+
+.search-card {
+  margin-bottom: 28rpx;
+  padding: 24rpx;
+}
+
+.search-input {
+  box-sizing: border-box;
+  height: 80rpx;
+  padding: 0 24rpx;
+  border: 1rpx solid #d1d5db;
+  border-radius: 16rpx;
+  line-height: 80rpx;
+}
+
+.batch-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16rpx 20rpx;
+  margin-bottom: 20rpx;
+  padding: 20rpx 24rpx;
+}
+
+.batch-bar > text {
+  flex: 0 0 100%;
+  line-height: 1.5;
+}
+
+.batch-bar button {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  height: 72rpx;
+  margin: 0;
+  padding: 0 16rpx;
+  border-radius: 16rpx;
+  line-height: 72rpx;
+}
+
+.refreshing {
+  margin: -8rpx 0 16rpx;
+  font-size: 24rpx;
+  text-align: right;
+}
+
+.item-card {
+  display: flex;
+  margin-bottom: 20rpx;
+  padding: 24rpx;
+}
+
+.select-box {
+  flex: none;
+  margin: 72rpx 16rpx 0 0;
+}
+
+.cover {
+  flex: none;
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 16rpx;
+  background: #f3f4f6;
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 24rpx;
+}
+
+.item-main {
+  min-width: 0;
+  flex: 1;
+  margin-left: 24rpx;
+}
+
+.item-heading,
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.item-name {
+  overflow: hidden;
+  min-width: 0;
+  font-size: 32rpx;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status {
+  flex: none;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 22rpx;
+}
+
+.description {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 14rpx 0;
+  font-size: 26rpx;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.meta {
+  color: #374151;
+  font-size: 25rpx;
+}
+
+.updated {
+  margin-top: 12rpx;
+  font-size: 23rpx;
+}
+
+.state {
+  padding: 48rpx 24rpx;
+  text-align: center;
+}
+
+.error,
+.load-more-error {
+  color: #b91c1c;
+  font-size: 26rpx;
+  text-align: center;
+}
+
+.retry-button {
+  margin-top: 20rpx;
+}
+
+.load-more-error {
+  padding: 20rpx;
+}
+
+.danger-button {
+  margin: 0;
+  background: #b91c1c !important;
+  color: #ffffff !important;
+}
+
+.restore-button {
+  border: 1rpx solid #0f766e;
+  color: #0f766e;
+}

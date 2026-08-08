@@ -9,6 +9,8 @@ export default tseslint.config(
       'coverage/**',
       'cloudfunctions/**/dist/**',
       'miniprogram_npm/**',
+      'miniprogram/vendor/supvan-t50-pro/SUPVANAPIT50PRO/**',
+      'ysu-net-watch-tests/**',
     ],
   },
   eslint.configs.recommended,

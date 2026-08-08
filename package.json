@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "check:secrets": "node scripts/check-secrets.mjs",
+    "install:supvan-sdk": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-supvan-sdk.ps1",
     "lint": "eslint .",
     "typecheck": "npm run typecheck:miniprogram && npm run typecheck:cloud && npm run typecheck:test",
     "typecheck:miniprogram": "tsc -p tsconfig.miniprogram.json --noEmit",

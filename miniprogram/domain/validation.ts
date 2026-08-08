@@ -1,8 +1,8 @@
 import type { QuantityMode } from '../types/domain'
 
 export const MAX_ITEM_IMAGES = 2
-export const MIN_COMMIT_SUMMARY_LENGTH = 5
-export const MAX_COMMIT_SUMMARY_LENGTH = 100
+export const MIN_COMMIT_SUMMARY_LENGTH = 1
+export const MAX_COMMIT_SUMMARY_LENGTH = 250
 export const MAX_ITEM_NAME_LENGTH = 100
 export const MAX_ITEM_DESCRIPTION_LENGTH = 2000
 export const MAX_CATEGORY_NAME_LENGTH = 40
@@ -38,7 +38,7 @@ export function validateCommitSummary(summary: string): string | null {
     length < MIN_COMMIT_SUMMARY_LENGTH ||
     length > MAX_COMMIT_SUMMARY_LENGTH
   ) {
-    return `提交梗概需为 ${MIN_COMMIT_SUMMARY_LENGTH}-${MAX_COMMIT_SUMMARY_LENGTH} 个字符`
+    return `提交梗概不能为空且不能超过 ${MAX_COMMIT_SUMMARY_LENGTH} 个字符`
   }
   return null
 }

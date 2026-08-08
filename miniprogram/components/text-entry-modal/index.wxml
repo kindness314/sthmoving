@@ -1,0 +1,38 @@
+<view wx:if="{{visible}}" class="modal-root">
+  <view class="modal-mask" catchtap="handleCancel"></view>
+  <view class="modal-card" catchtap="stopPropagation">
+    <view class="modal-title">{{title}}</view>
+    <textarea
+      class="modal-input"
+      value="{{inputValue}}"
+      placeholder="{{placeholder}}"
+      maxlength="{{maxLength}}"
+      auto-height="true"
+      focus="{{visible}}"
+      cursor-spacing="32"
+      bindinput="handleInput"
+    />
+    <view class="modal-input-meta">
+      <text wx:if="{{errorMessage}}" class="modal-error">
+        {{errorMessage}}
+      </text>
+      <text wx:else class="modal-counter">
+        {{inputValue.length}}/{{maxLength}}
+      </text>
+    </view>
+    <view class="modal-actions">
+      <button class="modal-cancel" size="mini" bindtap="handleCancel">
+        取消
+      </button>
+      <button
+        class="modal-confirm"
+        size="mini"
+        style="color: {{confirmColor}}"
+        disabled="{{!canConfirm}}"
+        bindtap="handleConfirm"
+      >
+        {{confirmText}}
+      </button>
+    </view>
+  </view>
+</view>
