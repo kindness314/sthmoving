@@ -3,7 +3,7 @@ import type { UserRecord } from '../membership/types'
 import type { ItemLabelRecord } from './types'
 
 export interface LabelUnitOfWork {
-  getUserByOpenid(openid: string): Promise<UserRecord | null>
+  getUser(userId: string): Promise<UserRecord | null>
   getItem(itemId: string): Promise<ItemRecord | null>
   getLabelByItemId(itemId: string): Promise<ItemLabelRecord | null>
   getLabelByPublicCode(

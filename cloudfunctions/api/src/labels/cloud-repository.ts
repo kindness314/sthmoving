@@ -36,12 +36,13 @@ interface TransactionDatabase {
 class CloudLabelUnitOfWork implements LabelUnitOfWork {
   constructor(private readonly database: TransactionDatabase) {}
 
-  getUserByOpenid(openid: string): Promise<UserRecord | null> {
-    return this.getFirst<UserRecord>('users', { openid })
+  getUser(userId: string): Promise<UserRecord | null> {
+    return this.getFirst<UserRecord>('users', { _id: userId })
   }
 
-  getItem(itemId: string): Promise<ItemRecord | null> {
-    return this.getFirst<ItemRecord>('items', { _id: itemId })
+  async getItem(itemId: string): Promise<ItemRecord | null> {
+    const item = await this.getFirst<ItemRecord>('items', { _id: itemId })
+    return item && item.status !== 'DELETED' ? item : null
   }
 
   getLabelByItemId(itemId: string): Promise<ItemLabelRecord | null> {

@@ -4,6 +4,8 @@ import {
   MAX_PROCESSED_IMAGE_BYTES,
   validateOriginalImageSize,
 } from '../domain/image-processing'
+import { discardFiles } from './cloud-api'
+import { uploadDependencies, uploadFile } from './file-upload'
 
 export interface PreparedItemImage {
   tempFilePath: string
@@ -36,12 +38,10 @@ export async function uploadItemImages(
 ): Promise<string[]> {
   const fileIds: string[] = []
   try {
-    for (const [index, image] of images.entries()) {
-      const result = await wx.cloud.uploadFile({
-        cloudPath: createCloudPath(image.tempFilePath, index),
-        filePath: image.tempFilePath,
-      })
-      fileIds.push(result.fileID)
+    for (const image of images) {
+      fileIds.push(
+        await uploadFile(uploadDependencies, 'ITEM_IMAGE', image.tempFilePath),
+      )
     }
     return fileIds
   } catch (error) {
@@ -57,7 +57,7 @@ export async function deleteUploadedItemImages(
     return
   }
   try {
-    await wx.cloud.deleteFile({ fileList: [...fileIds] })
+    await discardFiles(fileIds)
   } catch (error) {
     console.error('清理未使用的物品图片失败', error)
   }
@@ -109,22 +109,3 @@ function getFileSize(filePath: string): Promise<number> {
   })
 }
 
-function createCloudPath(filePath: string, index: number): string {
-  const extension = getImageExtension(filePath)
-  const randomPart = Math.random().toString(36).slice(2, 10)
-  return `items/${Date.now()}-${randomPart}-${index}.${extension}`
-}
-
-function getImageExtension(filePath: string): string {
-  const match = /\.([a-zA-Z0-9]+)(?:\?|$)/u.exec(filePath)
-  const extension = match?.[1]?.toLowerCase()
-  if (
-    extension === 'jpg' ||
-    extension === 'jpeg' ||
-    extension === 'png' ||
-    extension === 'webp'
-  ) {
-    return extension
-  }
-  return 'jpg'
-}

@@ -10,17 +10,27 @@
     "check:secrets": "node scripts/check-secrets.mjs",
     "install:supvan-sdk": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-supvan-sdk.ps1",
     "lint": "eslint .",
-    "typecheck": "npm run typecheck:miniprogram && npm run typecheck:cloud && npm run typecheck:test",
+    "typecheck": "npm run typecheck:miniprogram && npm run typecheck:cloud && npm run typecheck:server && npm run typecheck:test",
     "typecheck:miniprogram": "tsc -p tsconfig.miniprogram.json --noEmit",
     "typecheck:cloud": "tsc -p tsconfig.cloud.json --noEmit",
+    "typecheck:server": "tsc -p tsconfig.server.json --noEmit",
     "typecheck:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "check": "npm run check:secrets && npm run lint && npm run typecheck && npm run test",
-    "build:cloud": "tsc -p cloudfunctions/api/tsconfig.json"
+    "build:cloud": "tsc -p cloudfunctions/api/tsconfig.json",
+    "build:server": "tsc -p tsconfig.server.build.json",
+    "start:server": "node server/dist/server/src/main.js",
+    "migrate": "node server/dist/server/src/migration/cli.js"
+  },
+  "dependencies": {
+    "pg": "8.16.3"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@types/node": "26.1.2",
+    "@types/pg": "8.15.5",
+    "@vitest/coverage-v8": "4.1.10",
     "eslint": "10.8.0",
     "miniprogram-api-typings": "5.2.2",
     "typescript": "6.0.3",

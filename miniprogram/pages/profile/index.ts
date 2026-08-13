@@ -127,7 +127,7 @@ Page({
     this.setData({ uploadingAvatar: true, errorMessage: '' })
     try {
       const filePath = await chooseProfileAvatar()
-      uploadedFileId = await uploadProfileAvatar(this.data.userId, filePath)
+      uploadedFileId = await uploadProfileAvatar(filePath)
       const previousFileId = this.data.avatarFileId
       const user = await updateProfile({ avatarUrl: uploadedFileId })
       getApp<IAppOption>().globalData.currentUser = user

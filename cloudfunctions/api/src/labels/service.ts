@@ -31,13 +31,13 @@ export class LabelService {
   ) {}
 
   async get(
-    openid: string,
+    userId: string,
     itemIdInput: string,
   ): Promise<PublicItemLabel | null> {
     const itemId = validateItemId(itemIdInput)
     const label = await this.repository.runTransaction(async (unitOfWork) => {
-      const user = await unitOfWork.getUserByOpenid(openid)
-      requireApprovedUser(user, openid)
+      const user = await unitOfWork.getUser(userId)
+      requireApprovedUser(user)
       const item = await unitOfWork.getItem(itemId)
       if (!item) {
         throw new ApiException('ITEM_NOT_FOUND', '未找到物品')
@@ -54,15 +54,15 @@ export class LabelService {
   }
 
   async generate(
-    openid: string,
+    userId: string,
     itemIdInput: string,
   ): Promise<PublicItemLabel> {
     const itemId = validateItemId(itemIdInput)
     const generationToken = this.createGenerationToken()
     const label = await this.repository.runTransaction(
       async (unitOfWork) => {
-        const user = await unitOfWork.getUserByOpenid(openid)
-        requireApprovedUser(user, openid)
+        const user = await unitOfWork.getUser(userId)
+        requireApprovedUser(user)
         const item = await unitOfWork.getItem(itemId)
         if (!item) {
           throw new ApiException('ITEM_NOT_FOUND', '未找到物品')
@@ -134,14 +134,11 @@ export class LabelService {
   }
 
   resolve(
-    openid: string,
+    userId: string,
     sceneInput: string,
   ): Promise<ResolvedItemLabel> {
     return this.repository.runTransaction(async (unitOfWork) => {
-      requireApprovedUser(
-        await unitOfWork.getUserByOpenid(openid),
-        openid,
-      )
+      requireApprovedUser(await unitOfWork.getUser(userId))
       const publicCode = parseScene(sceneInput)
       const label = await unitOfWork.getLabelByPublicCode(publicCode)
       if (!label || (label.status !== 'READY' && label.status !== 'VOID')) {
@@ -280,9 +277,8 @@ function validateItemId(value: string): string {
 
 function requireApprovedUser(
   user: UserRecord | null,
-  openid: string,
 ): asserts user is UserRecord {
-  if (!user || user.openid !== openid) {
+  if (!user) {
     throw new ApiException('UNAUTHENTICATED', '当前微信用户尚未建立账号')
   }
   if (user.status !== 'APPROVED') {

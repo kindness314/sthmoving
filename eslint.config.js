@@ -8,6 +8,7 @@ export default tseslint.config(
       '.npm-cache/**',
       'coverage/**',
       'cloudfunctions/**/dist/**',
+      'server/dist/**',
       'miniprogram_npm/**',
       'miniprogram/vendor/supvan-t50-pro/SUPVANAPIT50PRO/**',
     ],

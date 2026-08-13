@@ -1,5 +1,5 @@
+import type { ApiDependencies } from '../dependencies'
 import { ApiException } from '../errors'
-import { CloudMembershipRepository } from '../membership/cloud-repository'
 import {
   MembershipService,
   type ProfileUpdateInput,
@@ -53,8 +53,8 @@ const userThemes: ReadonlySet<UserTheme> = new Set([
   'RUST',
 ])
 
-function createService(): MembershipService {
-  return new MembershipService(new CloudMembershipRepository())
+function createService(deps: ApiDependencies): MembershipService {
+  return new MembershipService(deps.membership)
 }
 
 function parseReviewInput(payload: unknown): ReviewInput {
@@ -106,87 +106,102 @@ function parseProfileUpdate(payload: unknown): ProfileUpdateInput {
   return result
 }
 
-export const membershipHandlers: Readonly<Record<string, ApiHandler>> = {
-  updateProfile: async (payload, context) =>
-    createService().updateProfile(context.openid, parseProfileUpdate(payload)),
+export function createMembershipHandlers(
+  deps: ApiDependencies,
+): Readonly<Record<string, ApiHandler>> {
+  return {
+    updateProfile: async (payload, context) =>
+      createService(deps).updateProfile(
+        context.userId,
+        parseProfileUpdate(payload),
+      ),
 
-  submitJoinRequest: async (payload, context) => {
-    const input = payload as SubmitPayload | undefined
-    const displayName = input?.displayName
-    if (typeof displayName !== 'string') {
-      throw new ApiException(
-        'INVALID_DISPLAY_NAME',
-        '申请人名称必须是字符串',
+    submitJoinRequest: async (payload, context) => {
+      const input = payload as SubmitPayload | undefined
+      const displayName = input?.displayName
+      if (typeof displayName !== 'string') {
+        throw new ApiException(
+          'INVALID_DISPLAY_NAME',
+          '申请人名称必须是字符串',
+        )
+      }
+      const requestedRole = input?.requestedRole ?? 'MEMBER'
+      if (requestedRole !== 'MEMBER' && requestedRole !== 'ADMIN') {
+        throw new ApiException('INVALID_REQUESTED_ROLE', '申请角色只能是普通成员或管理员')
+      }
+      return createService(deps).submitJoinRequest(
+        context.userId,
+        context.openid,
+        displayName,
+        requestedRole,
       )
-    }
-    const requestedRole = input?.requestedRole ?? 'MEMBER'
-    if (requestedRole !== 'MEMBER' && requestedRole !== 'ADMIN') {
-      throw new ApiException('INVALID_REQUESTED_ROLE', '申请角色只能是普通成员或管理员')
-    }
-    return createService().submitJoinRequest(context.openid, displayName, requestedRole)
-  },
+    },
 
-  listPendingJoinRequests: async (_payload, context) =>
-    createService().listPendingJoinRequests(context.openid),
+    listPendingJoinRequests: async (_payload, context) =>
+      createService(deps).listPendingJoinRequests(context.userId),
 
-  reviewJoinRequest: async (payload, context) =>
-    createService().reviewJoinRequest(context.openid, parseReviewInput(payload)),
+    reviewJoinRequest: async (payload, context) =>
+      createService(deps).reviewJoinRequest(
+        context.userId,
+        parseReviewInput(payload),
+      ),
 
-  listMembers: async (_payload, context) =>
-    createService().listMembers(context.openid),
+    listMembers: async (_payload, context) =>
+      createService(deps).listMembers(context.userId),
 
-  disableMember: async (payload, context) => {
-    const userId = (payload as UserIdPayload | undefined)?.userId
-    if (typeof userId !== 'string') {
-      throw new ApiException('INVALID_USER_ID', '成员 ID 无效')
-    }
-    return createService().disableMember(context.openid, userId)
-  },
+    disableMember: async (payload, context) => {
+      const userId = (payload as UserIdPayload | undefined)?.userId
+      if (typeof userId !== 'string') {
+        throw new ApiException('INVALID_USER_ID', '成员 ID 无效')
+      }
+      return createService(deps).disableMember(context.userId, userId)
+    },
 
-  setAdminRole: async (payload, context) => {
-    const input = payload as RolePayload | undefined
-    if (
-      typeof input?.userId !== 'string' ||
-      (input.role !== 'ADMIN' && input.role !== 'MEMBER')
-    ) {
-      throw new ApiException('INVALID_ROLE', '角色调整请求无效')
-    }
-    return createService().setAdminRole(context.openid, {
-      userId: input.userId,
-      role: input.role,
-    })
-  },
+    setAdminRole: async (payload, context) => {
+      const input = payload as RolePayload | undefined
+      if (
+        typeof input?.userId !== 'string' ||
+        (input.role !== 'ADMIN' && input.role !== 'MEMBER')
+      ) {
+        throw new ApiException('INVALID_ROLE', '角色调整请求无效')
+      }
+      return createService(deps).setAdminRole(context.userId, {
+        userId: input.userId,
+        role: input.role,
+      })
+    },
 
-  appointManager: async (payload, context) => {
-    const userId = (payload as UserIdPayload | undefined)?.userId
-    if (typeof userId !== 'string') {
-      throw new ApiException('INVALID_USER_ID', '成员 ID 无效')
-    }
-    return createService().appointManager(context.openid, userId)
-  },
+    appointManager: async (payload, context) => {
+      const userId = (payload as UserIdPayload | undefined)?.userId
+      if (typeof userId !== 'string') {
+        throw new ApiException('INVALID_USER_ID', '成员 ID 无效')
+      }
+      return createService(deps).appointManager(context.userId, userId)
+    },
 
-  removeManager: async (payload, context) => {
-    const userId = (payload as UserIdPayload | undefined)?.userId
-    if (typeof userId !== 'string') {
-      throw new ApiException('INVALID_USER_ID', '成员 ID 无效')
-    }
-    return createService().removeManager(context.openid, userId)
-  },
+    removeManager: async (payload, context) => {
+      const userId = (payload as UserIdPayload | undefined)?.userId
+      if (typeof userId !== 'string') {
+        throw new ApiException('INVALID_USER_ID', '成员 ID 无效')
+      }
+      return createService(deps).removeManager(context.userId, userId)
+    },
 
-  transferManager: async (payload, context) => {
-    const input = payload as TransferManagerPayload | undefined
-    if (
-      typeof input?.userId !== 'string' ||
-      (input.sourceManagerId !== undefined &&
-        typeof input.sourceManagerId !== 'string')
-    ) {
-      throw new ApiException('INVALID_USER_ID', '实际管理者交接请求无效')
-    }
-    return createService().transferManager(context.openid, {
-      targetUserId: input.userId,
-      ...(typeof input.sourceManagerId === 'string'
-        ? { sourceManagerId: input.sourceManagerId }
-        : {}),
-    })
-  },
+    transferManager: async (payload, context) => {
+      const input = payload as TransferManagerPayload | undefined
+      if (
+        typeof input?.userId !== 'string' ||
+        (input.sourceManagerId !== undefined &&
+          typeof input.sourceManagerId !== 'string')
+      ) {
+        throw new ApiException('INVALID_USER_ID', '实际管理者交接请求无效')
+      }
+      return createService(deps).transferManager(context.userId, {
+        targetUserId: input.userId,
+        ...(typeof input.sourceManagerId === 'string'
+          ? { sourceManagerId: input.sourceManagerId }
+          : {}),
+      })
+    },
+  }
 }

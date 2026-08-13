@@ -5,6 +5,7 @@ export interface ApiEvent {
 }
 
 export interface RequestContext {
+  userId: string
   openid: string
 }
 

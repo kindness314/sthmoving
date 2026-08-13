@@ -26,11 +26,8 @@ class InMemoryItemRepository implements ItemRepository {
   users = new Map<string, UserRecord>()
   failOnLogWrite = false
 
-  getUserByOpenid(openid: string): Promise<UserRecord | null> {
-    return Promise.resolve(
-      [...this.users.values()].find((user) => user.openid === openid) ??
-        null,
-    )
+  getUser(userId: string): Promise<UserRecord | null> {
+    return Promise.resolve(this.users.get(userId) ?? null)
   }
 
   getCategory(categoryId: string): Promise<CategoryRecord | null> {
@@ -54,7 +51,8 @@ class InMemoryItemRepository implements ItemRepository {
   }
 
   getItem(itemId: string): Promise<ItemRecord | null> {
-    return Promise.resolve(this.items.get(itemId) ?? null)
+    const item = this.items.get(itemId)
+    return Promise.resolve(item && item.status !== 'DELETED' ? item : null)
   }
 
   listOperationLogs(itemId: string): Promise<ItemOperationLogRecord[]> {
@@ -145,11 +143,8 @@ class InMemoryItemUnitOfWork implements ItemUnitOfWork {
     private readonly failOnLogWrite: boolean,
   ) {}
 
-  getUserByOpenid(openid: string): Promise<UserRecord | null> {
-    return Promise.resolve(
-      [...this.users.values()].find((user) => user.openid === openid) ??
-        null,
-    )
+  getUser(userId: string): Promise<UserRecord | null> {
+    return Promise.resolve(this.users.get(userId) ?? null)
   }
 
   getCategory(categoryId: string): Promise<CategoryRecord | null> {
@@ -167,7 +162,8 @@ class InMemoryItemUnitOfWork implements ItemUnitOfWork {
   }
 
   getItem(itemId: string): Promise<ItemRecord | null> {
-    return Promise.resolve(this.items.get(itemId) ?? null)
+    const item = this.items.get(itemId)
+    return Promise.resolve(item && item.status !== 'DELETED' ? item : null)
   }
 
   setCategory(category: CategoryRecord): Promise<void> {
@@ -316,7 +312,7 @@ describe('物品登记服务', () => {
     const service = createService(repository)
 
     const item = await service.create(
-      'member-openid',
+      'user-member',
       createInput({
         name: '  折叠桌  ',
         description: '  活动使用  ',
@@ -378,7 +374,7 @@ describe('物品登记服务', () => {
 
     await expect(
       service.create(
-        'member-openid',
+        'user-member',
         createInput({
           images: ['cloud://env/1.jpg', 'cloud://env/2.jpg'],
           quantityMode: 'MULTIPLE',
@@ -398,7 +394,7 @@ describe('物品登记服务', () => {
 
     await expect(
       service.create(
-        'member-openid',
+        'user-member',
         createNewCategoryInput('  活动器材  '),
       ),
     ).resolves.toMatchObject({ categoryId: 'category-new' })
@@ -415,7 +411,7 @@ describe('物品登记服务', () => {
 
     await expectApiCode(
       service.create(
-        'member-openid',
+        'user-member',
         createNewCategoryInput(' 日常用品 '),
       ),
       'CATEGORY_NAME_EXISTS',
@@ -428,60 +424,60 @@ describe('物品登记服务', () => {
 
     await expectApiCode(
       service.create(
-        'member-openid',
+        'user-member',
         createInput({ quantity: 2 }),
       ),
       'INVALID_ITEM_QUANTITY',
     )
     await expectApiCode(
       service.create(
-        'member-openid',
+        'user-member',
         createInput({ quantityMode: 'MULTIPLE', quantity: 1.5 }),
       ),
       'INVALID_ITEM_QUANTITY',
     )
     await expectApiCode(
       service.create(
-        'member-openid',
+        'user-member',
         createInput({ images: ['1', '2', '3'] }),
       ),
       'INVALID_ITEM_IMAGES',
     )
     await expectApiCode(
       service.create(
-        'member-openid',
+        'user-member',
         createInput({ images: ['not-a-cloud-file-id'] }),
       ),
       'INVALID_ITEM_IMAGES',
     )
     await expectApiCode(
-      service.create('member-openid', createInput({ name: '   ' })),
+      service.create('user-member', createInput({ name: '   ' })),
       'INVALID_ITEM_NAME',
     )
     await expectApiCode(
       service.create(
-        'member-openid',
+        'user-member',
         createInput({ description: '详情'.repeat(1001) }),
       ),
       'INVALID_ITEM_DESCRIPTION',
     )
     await expectApiCode(
       service.create(
-        'member-openid',
+        'user-member',
         createInput({ commitSummary: '   ' }),
       ),
       'INVALID_COMMIT_SUMMARY',
     )
     await expectApiCode(
       service.create(
-        'member-openid',
+        'user-member',
         createInput({ commitSummary: '字'.repeat(251) }),
       ),
       'INVALID_COMMIT_SUMMARY',
     )
     await expectApiCode(
       service.create(
-        'member-openid',
+        'user-member',
         createInput({ newCategoryName: '活动器材' }),
       ),
       'INVALID_CATEGORY_SELECTION',
@@ -489,7 +485,7 @@ describe('物品登记服务', () => {
     const noCategory = createInput()
     delete noCategory.categoryId
     await expectApiCode(
-      service.create('member-openid', noCategory),
+      service.create('user-member', noCategory),
       'INVALID_CATEGORY_SELECTION',
     )
     expect(repository.items.size).toBe(0)
@@ -506,14 +502,14 @@ describe('物品登记服务', () => {
 
     repository.users.set('user-member', createUser('PENDING'))
     await expectApiCode(
-      service.create('member-openid', createInput()),
+      service.create('user-member', createInput()),
       'ACCOUNT_NOT_ACTIVE',
     )
 
     repository.users.set('user-member', createUser())
     await expectApiCode(
       service.create(
-        'member-openid',
+        'user-member',
         createInput({ categoryId: 'missing-category' }),
       ),
       'CATEGORY_NOT_FOUND',
@@ -524,7 +520,7 @@ describe('物品登记服务', () => {
       createCategory('DISABLED'),
     )
     await expectApiCode(
-      service.create('member-openid', createInput()),
+      service.create('user-member', createInput()),
       'CATEGORY_DISABLED',
     )
   })
@@ -535,7 +531,7 @@ describe('物品登记服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.create('member-openid', createNewCategoryInput()),
+      service.create('user-member', createNewCategoryInput()),
     ).rejects.toThrow('模拟日志写入失败')
     expect(repository.items.size).toBe(0)
     expect(repository.logs.size).toBe(0)
@@ -551,7 +547,7 @@ describe('物品登记服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.update('member-openid', {
+      service.update('user-member', {
         itemId: 'item-1',
         expectedVersion: 1,
         name: 'Updated item',
@@ -600,7 +596,7 @@ describe('物品登记服务', () => {
     const service = createService(repository)
 
     await expectApiCode(
-      service.update('member-openid', {
+      service.update('user-member', {
         itemId: 'item-1',
         expectedVersion: 1,
         categoryId: 'category-tech',
@@ -616,7 +612,7 @@ describe('物品登记服务', () => {
       role: 'ADMIN',
     })
     await expect(
-      service.update('admin-openid', {
+      service.update('user-admin', {
         itemId: 'item-1',
         expectedVersion: 1,
         categoryId: 'category-tech',
@@ -640,7 +636,7 @@ describe('物品登记服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.update('member-openid', {
+      service.update('user-member', {
         itemId: 'item-1',
         expectedVersion: 1,
         name: 'Local change',
@@ -666,7 +662,7 @@ describe('物品登记服务', () => {
     const service = createService(repository)
 
     await expectApiCode(
-      service.update('member-openid', {
+      service.update('user-member', {
         itemId: 'item-1',
         expectedVersion: 1,
         commitSummary: 'No field changes',
@@ -674,7 +670,7 @@ describe('物品登记服务', () => {
       'NO_ITEM_CHANGES',
     )
     await expectApiCode(
-      service.update('member-openid', {
+      service.update('user-member', {
         itemId: 'item-1',
         expectedVersion: 1,
         name: '物品item-1',
@@ -687,7 +683,7 @@ describe('物品登记服务', () => {
       'NO_ITEM_CHANGES',
     )
     await expectApiCode(
-      service.update('member-openid', {
+      service.update('user-member', {
         itemId: 'item-1',
         expectedVersion: 1,
         quantityMode: 'SINGLE',
@@ -702,7 +698,7 @@ describe('物品登记服务', () => {
       createItemRecord('item-1', { status: 'OFF_SHELF' }),
     )
     await expectApiCode(
-      service.update('member-openid', {
+      service.update('user-member', {
         itemId: 'item-1',
         expectedVersion: 1,
         name: 'Archived item',
@@ -719,7 +715,7 @@ describe('物品登记服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.update('member-openid', {
+      service.update('user-member', {
         itemId: 'item-1',
         expectedVersion: 1,
         name: 'Updated item',
@@ -755,12 +751,12 @@ describe('物品登记服务', () => {
       'https://storage.example/cloud%3A%2F%2Fenv%2Fitems%2Ftable.jpg'
 
     await expect(
-      service.list('member-openid', {}),
+      service.list('user-member', {}),
     ).resolves.toMatchObject({
       items: [{ id: 'item-table', images: [expectedUrl] }],
     })
     await expect(
-      service.detail('member-openid', 'item-table'),
+      service.detail('user-member', 'item-table'),
     ).resolves.toMatchObject({ images: [expectedUrl] })
     expect(requested).toEqual([
       ['cloud://env/items/table.jpg'],
@@ -784,7 +780,7 @@ describe('物品登记服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.logs('member-openid', 'item-1'),
+      service.logs('user-member', 'item-1'),
     ).resolves.toEqual([
       {
         id: 'item-log-1',
@@ -827,7 +823,7 @@ describe('物品查询服务', () => {
     )
     const service = createService(repository)
 
-    const first = await service.list('member-openid', { limit: 2 })
+    const first = await service.list('user-member', { limit: 2 })
     expect(first.items.map((item) => item.id)).toEqual([
       'item-c',
       'item-b',
@@ -838,7 +834,7 @@ describe('物品查询服务', () => {
     })
 
     expect(first.nextCursor).toBeDefined()
-    const second = await service.list('member-openid', {
+    const second = await service.list('user-member', {
       limit: 2,
       cursor: first.nextCursor!,
     })
@@ -867,7 +863,7 @@ describe('物品查询服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.list('member-openid', {
+      service.list('user-member', {
         keyword: '活动',
         categoryId: 'category-daily',
       }),
@@ -875,7 +871,7 @@ describe('物品查询服务', () => {
       items: [{ id: 'item-table', category: { name: '日常用品' } }],
     })
     await expect(
-      service.list('member-openid', { keyword: 'xyz789' }),
+      service.list('user-member', { keyword: 'xyz789' }),
     ).resolves.toMatchObject({ items: [{ id: 'item-cable' }] })
 
     repository.categories.set(
@@ -883,7 +879,7 @@ describe('物品查询服务', () => {
       createCategory('DISABLED'),
     )
     await expectApiCode(
-      service.list('member-openid', {
+      service.list('user-member', {
         categoryId: 'category-daily',
       }),
       'CATEGORY_DISABLED',
@@ -899,7 +895,7 @@ describe('物品查询服务', () => {
     const service = createService(repository)
 
     await expectApiCode(
-      service.list('member-openid', { status: 'OFF_SHELF' }),
+      service.list('user-member', { status: 'OFF_SHELF' }),
       'FORBIDDEN',
     )
     repository.users.set('user-admin', {
@@ -910,7 +906,7 @@ describe('物品查询服务', () => {
       role: 'ADMIN',
     })
     await expect(
-      service.list('admin-openid', { status: 'OFF_SHELF' }),
+      service.list('user-admin', { status: 'OFF_SHELF' }),
     ).resolves.toMatchObject({
       items: [{ id: 'item-off-shelf', status: 'OFF_SHELF', version: 1 }],
     })
@@ -928,7 +924,7 @@ describe('物品查询服务', () => {
     const service = createService(repository)
 
     await expect(
-      service.detail('member-openid', 'item-table'),
+      service.detail('user-member', 'item-table'),
     ).resolves.toMatchObject({
       id: 'item-table',
       images: ['cloud://env/items/table.jpg'],
@@ -939,7 +935,7 @@ describe('物品查询服务', () => {
       version: 3,
     })
     await expectApiCode(
-      service.detail('member-openid', 'missing'),
+      service.detail('user-member', 'missing'),
       'ITEM_NOT_FOUND',
     )
   })
@@ -950,16 +946,16 @@ describe('物品查询服务', () => {
 
     repository.users.set('user-member', createUser('PENDING'))
     await expectApiCode(
-      service.list('member-openid', {}),
+      service.list('user-member', {}),
       'ACCOUNT_NOT_ACTIVE',
     )
     repository.users.set('user-member', createUser())
     await expectApiCode(
-      service.list('member-openid', { limit: 21 }),
+      service.list('user-member', { limit: 21 }),
       'INVALID_PAGE_SIZE',
     )
     await expectApiCode(
-      service.list('member-openid', {
+      service.list('user-member', {
         cursor: { id: '', updatedAt: 'not-a-date' },
       }),
       'INVALID_CURSOR',

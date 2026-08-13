@@ -70,7 +70,7 @@ export interface Category {
   name: string
   status: 'ACTIVE' | 'DISABLED'
   isPreset: boolean
-  createdBy: string
+  createdBy?: string
   createdAt: string
   updatedAt: string
 }

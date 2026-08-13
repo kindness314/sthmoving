@@ -1,3 +1,6 @@
+import { discardFiles, resolveFileUrls } from './cloud-api'
+import { uploadDependencies, uploadFile } from './file-upload'
+
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024
 
 export async function chooseProfileAvatar(): Promise<string> {
@@ -17,45 +20,32 @@ export async function chooseProfileAvatar(): Promise<string> {
   return file.tempFilePath
 }
 
-export async function uploadProfileAvatar(
-  userId: string,
-  filePath: string,
-): Promise<string> {
-  const extension = getImageExtension(filePath)
-  const randomPart = Math.random().toString(36).slice(2, 10)
-  const result = await wx.cloud.uploadFile({
-    cloudPath: `avatars/${userId}/${Date.now()}-${randomPart}.${extension}`,
-    filePath,
-  })
-  return result.fileID
+export function uploadProfileAvatar(filePath: string): Promise<string> {
+  return uploadFile(uploadDependencies, 'AVATAR', filePath)
 }
 
-export async function resolveProfileAvatar(fileId: string | undefined): Promise<string> {
+export async function resolveProfileAvatar(
+  fileId: string | undefined,
+): Promise<string> {
   if (!fileId) {
     return ''
   }
-  if (!fileId.startsWith('cloud://')) {
+  if (!fileId.startsWith('file://') && !fileId.startsWith('cloud://')) {
     return fileId
   }
-  const result = await wx.cloud.getTempFileURL({ fileList: [fileId] })
-  return result.fileList[0]?.tempFileURL ?? ''
+  const urls = await resolveFileUrls([fileId])
+  return urls[fileId] ?? ''
 }
 
-export async function deleteProfileAvatar(fileId: string | undefined): Promise<void> {
-  if (!fileId?.startsWith('cloud://')) {
+export async function deleteProfileAvatar(
+  fileId: string | undefined,
+): Promise<void> {
+  if (!fileId) {
     return
   }
   try {
-    await wx.cloud.deleteFile({ fileList: [fileId] })
+    await discardFiles([fileId])
   } catch (error) {
     console.error('清理旧头像失败', error)
   }
-}
-
-function getImageExtension(filePath: string): string {
-  const extension = /\.([a-zA-Z0-9]+)(?:\?|$)/u.exec(filePath)?.[1]?.toLowerCase()
-  if (extension === 'jpg' || extension === 'jpeg' || extension === 'png' || extension === 'webp') {
-    return extension
-  }
-  return 'jpg'
 }

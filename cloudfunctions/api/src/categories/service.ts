@@ -28,12 +28,9 @@ export class CategoryService {
       `category-${randomUUID()}`,
   ) {}
 
-  async list(openid: string): Promise<PublicCategory[]> {
+  async list(userId: string): Promise<PublicCategory[]> {
     return this.repository.runTransaction(async (unitOfWork) => {
-      requireApprovedUser(
-        await unitOfWork.getUserByOpenid(openid),
-        openid,
-      )
+      requireApprovedUser(await unitOfWork.getUser(userId))
       await this.ensurePresetCategories(unitOfWork)
       const categories = await unitOfWork.listActiveCategories()
       return categories
@@ -42,13 +39,13 @@ export class CategoryService {
     })
   }
 
-  async create(openid: string, nameInput: string): Promise<PublicCategory> {
+  async create(userId: string, nameInput: string): Promise<PublicCategory> {
     const name = validateCategoryName(nameInput)
     const normalizedName = normalizeCategoryName(name)
 
     return this.repository.runTransaction(async (unitOfWork) => {
-      const user = await unitOfWork.getUserByOpenid(openid)
-      requireApprovedUser(user, openid)
+      const user = await unitOfWork.getUser(userId)
+      requireApprovedUser(user)
       await this.ensurePresetCategories(unitOfWork)
 
       if (
@@ -78,12 +75,9 @@ export class CategoryService {
     })
   }
 
-  async listManageable(openid: string): Promise<PublicCategory[]> {
+  async listManageable(userId: string): Promise<PublicCategory[]> {
     return this.repository.runTransaction(async (unitOfWork) => {
-      requireCategoryManager(
-        await unitOfWork.getUserByOpenid(openid),
-        openid,
-      )
+      requireCategoryManager(await unitOfWork.getUser(userId))
       await this.ensurePresetCategories(unitOfWork)
       return (await unitOfWork.listAllCategories())
         .sort(compareCategories)
@@ -92,7 +86,7 @@ export class CategoryService {
   }
 
   async rename(
-    openid: string,
+    userId: string,
     categoryId: string,
     nameInput: string,
   ): Promise<PublicCategory> {
@@ -100,10 +94,7 @@ export class CategoryService {
     const normalizedName = normalizeCategoryName(name)
 
     return this.repository.runTransaction(async (unitOfWork) => {
-      requireCategoryManager(
-        await unitOfWork.getUserByOpenid(openid),
-        openid,
-      )
+      requireCategoryManager(await unitOfWork.getUser(userId))
       const category = await getMutableCategory(unitOfWork, categoryId)
       const sameName =
         await unitOfWork.getCategoryByNormalizedName(normalizedName)
@@ -126,15 +117,12 @@ export class CategoryService {
   }
 
   async setStatus(
-    openid: string,
+    userId: string,
     categoryId: string,
     status: 'ACTIVE' | 'DISABLED',
   ): Promise<PublicCategory> {
     return this.repository.runTransaction(async (unitOfWork) => {
-      requireCategoryManager(
-        await unitOfWork.getUserByOpenid(openid),
-        openid,
-      )
+      requireCategoryManager(await unitOfWork.getUser(userId))
       const category = await getMutableCategory(unitOfWork, categoryId)
       const updated: CategoryRecord = {
         ...category,
@@ -147,22 +135,27 @@ export class CategoryService {
   }
 
   async delete(
-    openid: string,
+    userId: string,
     categoryId: string,
   ): Promise<{ id: string }> {
     return this.repository.runTransaction(async (unitOfWork) => {
-      requireCategoryManager(
-        await unitOfWork.getUserByOpenid(openid),
-        openid,
-      )
-      await getMutableCategory(unitOfWork, categoryId)
+      const user = await unitOfWork.getUser(userId)
+      requireCategoryManager(user)
+      const category = await getMutableCategory(unitOfWork, categoryId)
       if (await unitOfWork.hasItemReference(categoryId)) {
         throw new ApiException(
           'CATEGORY_IN_USE',
           '该分类已被物品使用，只能停用',
         )
       }
-      await unitOfWork.removeCategory(categoryId)
+      const now = this.now()
+      await unitOfWork.setCategory({
+        ...category,
+        status: 'DELETED',
+        deleted_by: user._id,
+        deleted_at: now,
+        updated_at: now,
+      })
       return { id: categoryId }
     })
   }
@@ -185,7 +178,6 @@ export class CategoryService {
         is_preset: true,
         sort_order: index,
         item_reference_count: 0,
-        created_by: 'SYSTEM',
         created_at: now,
         updated_at: now,
       })
@@ -195,9 +187,8 @@ export class CategoryService {
 
 function requireApprovedUser(
   user: UserRecord | null,
-  openid: string,
 ): asserts user is UserRecord {
-  if (!user || user.openid !== openid) {
+  if (!user) {
     throw new ApiException('UNAUTHENTICATED', '当前微信用户尚未建立账号')
   }
   if (user.status !== 'APPROVED') {
@@ -207,9 +198,8 @@ function requireApprovedUser(
 
 function requireCategoryManager(
   user: UserRecord | null,
-  openid: string,
 ): asserts user is UserRecord {
-  requireApprovedUser(user, openid)
+  requireApprovedUser(user)
   if (
     user.role !== 'ADMIN' &&
     user.role !== 'MANAGER' &&
@@ -281,7 +271,7 @@ function toPublicCategory(category: CategoryRecord): PublicCategory {
     name: category.name,
     status: category.status,
     isPreset: category.is_preset,
-    createdBy: category.created_by,
+    ...(category.created_by ? { createdBy: category.created_by } : {}),
     createdAt: category.created_at,
     updatedAt: category.updated_at,
   }

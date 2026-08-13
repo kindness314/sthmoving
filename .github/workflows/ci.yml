@@ -7,6 +7,22 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: sthmoving
+          POSTGRES_PASSWORD: sthmoving
+          POSTGRES_DB: sthmoving_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sthmoving -d sthmoving_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgres://sthmoving:sthmoving@localhost:5432/sthmoving_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

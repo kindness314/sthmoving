@@ -1,6 +1,8 @@
 import cloud from 'wx-server-sdk'
 
-export type MiniProgramEnvironment = 'develop' | 'trial' | 'release'
+import type { MiniProgramEnvironment } from './environment'
+
+export type { MiniProgramEnvironment }
 
 export interface GenerateMiniProgramCodeInput {
   page: 'pages/item-detail/index'

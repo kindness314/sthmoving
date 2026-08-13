@@ -39,15 +39,18 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
     private readonly itemCategoryIds: Set<string>,
   ) {}
 
-  getUserByOpenid(openid: string): Promise<UserRecord | null> {
+  getUser(userId: string): Promise<UserRecord | null> {
     return Promise.resolve(
-      [...this.users.values()].find((user) => user.openid === openid) ??
+      [...this.users.values()].find((user) => user._id === userId) ??
         null,
     )
   }
 
   getCategory(categoryId: string): Promise<CategoryRecord | null> {
-    return Promise.resolve(this.categories.get(categoryId) ?? null)
+    const category = this.categories.get(categoryId)
+    return Promise.resolve(
+      category && category.status !== 'DELETED' ? category : null,
+    )
   }
 
   getCategoryByNormalizedName(
@@ -55,7 +58,9 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
   ): Promise<CategoryRecord | null> {
     return Promise.resolve(
       [...this.categories.values()].find(
-        (category) => category.normalized_name === normalizedName,
+        (category) =>
+          category.normalized_name === normalizedName &&
+          category.status !== 'DELETED',
       ) ?? null,
     )
   }
@@ -69,11 +74,6 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
     return Promise.resolve()
   }
 
-  removeCategory(categoryId: string): Promise<void> {
-    this.categories.delete(categoryId)
-    return Promise.resolve()
-  }
-
   listActiveCategories(): Promise<CategoryRecord[]> {
     return Promise.resolve(
       [...this.categories.values()].filter(
@@ -83,7 +83,11 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
   }
 
   listAllCategories(): Promise<CategoryRecord[]> {
-    return Promise.resolve([...this.categories.values()])
+    return Promise.resolve(
+      [...this.categories.values()].filter(
+        (category) => category.status !== 'DELETED',
+      ),
+    )
   }
 }
 
@@ -134,8 +138,8 @@ describe('分类服务', () => {
     repository.users.set('approved-user', createUser('approved-openid'))
     const service = createService(repository)
 
-    const first = await service.list('approved-openid')
-    const second = await service.list('approved-openid')
+    const first = await service.list('user-approved-openid')
+    const second = await service.list('user-approved-openid')
 
     expect(first.map((category) => category.name)).toEqual(
       presetCategoryNames,
@@ -151,7 +155,7 @@ describe('分类服务', () => {
     const service = createService(repository)
 
     const created = await service.create(
-      'approved-openid',
+      'user-approved-openid',
       '  活动器材  ',
     )
     expect(created).toMatchObject({
@@ -162,10 +166,10 @@ describe('分类服务', () => {
     })
 
     await expectApiCode(
-      service.create('approved-openid', '活动器材'),
+      service.create('user-approved-openid', '活动器材'),
       'CATEGORY_NAME_EXISTS',
     )
-    const categories = await service.list('approved-openid')
+    const categories = await service.list('user-approved-openid')
     expect(categories[categories.length - 1]?.name).toBe('活动器材')
   })
 
@@ -175,11 +179,11 @@ describe('分类服务', () => {
     const service = createService(repository)
 
     await expectApiCode(
-      service.create('approved-openid', ' 日常用品 '),
+      service.create('user-approved-openid', ' 日常用品 '),
       'CATEGORY_NAME_EXISTS',
     )
     expect(repository.categories.size).toBe(0)
-    await expect(service.list('approved-openid')).resolves.toHaveLength(
+    await expect(service.list('user-approved-openid')).resolves.toHaveLength(
       presetCategoryNames.length,
     )
   })
@@ -197,11 +201,11 @@ describe('分类服务', () => {
     const service = createService(repository)
 
     await expectApiCode(
-      service.list('pending-openid'),
+      service.list('user-pending-openid'),
       'ACCOUNT_NOT_ACTIVE',
     )
     await expectApiCode(
-      service.create('disabled-openid', '测试分类'),
+      service.create('user-disabled-openid', '测试分类'),
       'ACCOUNT_NOT_ACTIVE',
     )
     expect(repository.categories.size).toBe(0)
@@ -215,19 +219,19 @@ describe('分类服务', () => {
       createUser('admin-openid', 'APPROVED', 'ADMIN'),
     )
     const service = createService(repository)
-    const category = await service.create('member-openid', '活动器材')
+    const category = await service.create('user-member-openid', '活动器材')
 
     await expectApiCode(
-      service.listManageable('member-openid'),
+      service.listManageable('user-member-openid'),
       'FORBIDDEN',
     )
     await expectApiCode(
-      service.rename('member-openid', category.id, '体育器材'),
+      service.rename('user-member-openid', category.id, '体育器材'),
       'FORBIDDEN',
     )
     await expectApiCode(
       service.setStatus(
-        'member-openid',
+        'user-member-openid',
         category.id,
         'DISABLED',
       ),
@@ -235,7 +239,7 @@ describe('分类服务', () => {
     )
 
     const renamed = await service.rename(
-      'admin-openid',
+      'user-admin-openid',
       category.id,
       '体育器材',
     )
@@ -244,23 +248,23 @@ describe('分类服务', () => {
       name: '体育器材',
     })
 
-    const recreated = await service.create('member-openid', '活动器材')
+    const recreated = await service.create('user-member-openid', '活动器材')
     expect(recreated.id).not.toBe(category.id)
 
     await service.setStatus(
-      'admin-openid',
+      'user-admin-openid',
       category.id,
       'DISABLED',
     )
-    const active = await service.list('member-openid')
+    const active = await service.list('user-member-openid')
     expect(active.some((item) => item.id === category.id)).toBe(false)
-    const manageable = await service.listManageable('admin-openid')
+    const manageable = await service.listManageable('user-admin-openid')
     expect(
       manageable.find((item) => item.id === category.id)?.status,
     ).toBe('DISABLED')
 
-    await service.setStatus('admin-openid', category.id, 'ACTIVE')
-    await expect(service.list('member-openid')).resolves.toContainEqual(
+    await service.setStatus('user-admin-openid', category.id, 'ACTIVE')
+    await expect(service.list('user-member-openid')).resolves.toContainEqual(
       expect.objectContaining({ id: category.id, status: 'ACTIVE' }),
     )
   })
@@ -273,27 +277,29 @@ describe('分类服务', () => {
       createUser('admin-openid', 'APPROVED', 'ADMIN'),
     )
     const service = createService(repository)
-    const unused = await service.create('member-openid', '未使用分类')
+    const unused = await service.create('user-member-openid', '未使用分类')
 
     await expectApiCode(
-      service.delete('member-openid', unused.id),
+      service.delete('user-member-openid', unused.id),
       'FORBIDDEN',
     )
     await expect(
-      service.delete('admin-openid', unused.id),
+      service.delete('user-admin-openid', unused.id),
     ).resolves.toEqual({ id: unused.id })
-    expect(repository.categories.has(unused.id)).toBe(false)
+    expect(repository.categories.get(unused.id)?.status).toBe('DELETED')
 
     const referenced = await service.create(
-      'member-openid',
+      'user-member-openid',
       '已使用分类',
     )
     repository.itemCategoryIds.add(referenced.id)
     await expectApiCode(
-      service.delete('admin-openid', referenced.id),
+      service.delete('user-admin-openid', referenced.id),
       'CATEGORY_IN_USE',
     )
-    expect(repository.categories.has(referenced.id)).toBe(true)
+    expect(repository.categories.get(referenced.id)?.status).not.toBe(
+      'DELETED',
+    )
 
     repository.itemCategoryIds.delete(referenced.id)
     repository.categories.set(referenced.id, {
@@ -301,12 +307,20 @@ describe('分类服务', () => {
       item_reference_count: 1,
     })
     await expect(
-      service.delete('admin-openid', referenced.id),
+      service.delete('user-admin-openid', referenced.id),
     ).resolves.toEqual({ id: referenced.id })
 
-    const [preset] = await service.listManageable('admin-openid')
+    await expect(
+      service.listManageable('user-admin-openid'),
+    ).resolves.not.toContainEqual(
+      expect.objectContaining({ id: referenced.id }),
+    )
+    const rebuilt = await service.create('user-member-openid', '已使用分类')
+    expect(rebuilt.id).not.toBe(referenced.id)
+
+    const [preset] = await service.listManageable('user-admin-openid')
     await expectApiCode(
-      service.delete('admin-openid', preset!.id),
+      service.delete('user-admin-openid', preset!.id),
       'PRESET_CATEGORY_IMMUTABLE',
     )
   })
@@ -318,16 +332,16 @@ describe('分类服务', () => {
       createUser('owner-openid', 'APPROVED', 'OWNER'),
     )
     const service = createService(repository)
-    const [preset] = await service.listManageable('owner-openid')
+    const [preset] = await service.listManageable('user-owner-openid')
     expect(preset?.isPreset).toBe(true)
 
     await expectApiCode(
-      service.rename('owner-openid', preset!.id, '新名称'),
+      service.rename('user-owner-openid', preset!.id, '新名称'),
       'PRESET_CATEGORY_IMMUTABLE',
     )
     await expectApiCode(
       service.setStatus(
-        'owner-openid',
+        'user-owner-openid',
         preset!.id,
         'DISABLED',
       ),

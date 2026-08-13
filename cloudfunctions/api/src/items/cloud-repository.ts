@@ -54,8 +54,8 @@ interface CloudDatabase extends TransactionDatabase {
 class CloudItemUnitOfWork implements ItemUnitOfWork {
   constructor(private readonly database: TransactionDatabase) {}
 
-  getUserByOpenid(openid: string): Promise<UserRecord | null> {
-    return this.getFirst<UserRecord>('users', { openid })
+  getUser(userId: string): Promise<UserRecord | null> {
+    return this.getFirst<UserRecord>('users', { _id: userId })
   }
 
   getCategory(categoryId: string): Promise<CategoryRecord | null> {
@@ -72,8 +72,9 @@ class CloudItemUnitOfWork implements ItemUnitOfWork {
     })
   }
 
-  getItem(itemId: string): Promise<ItemRecord | null> {
-    return this.getFirst<ItemRecord>('items', { _id: itemId })
+  async getItem(itemId: string): Promise<ItemRecord | null> {
+    const item = await this.getFirst<ItemRecord>('items', { _id: itemId })
+    return item && item.status !== 'DELETED' ? item : null
   }
 
   async setCategory(category: CategoryRecord): Promise<void> {
@@ -121,8 +122,8 @@ class CloudItemUnitOfWork implements ItemUnitOfWork {
 export class CloudItemRepository implements ItemRepository {
   private readonly database = cloud.database() as unknown as CloudDatabase
 
-  getUserByOpenid(openid: string): Promise<UserRecord | null> {
-    return this.getFirst<UserRecord>('users', { openid })
+  getUser(userId: string): Promise<UserRecord | null> {
+    return this.getFirst<UserRecord>('users', { _id: userId })
   }
 
   getCategory(categoryId: string): Promise<CategoryRecord | null> {
@@ -139,8 +140,9 @@ export class CloudItemRepository implements ItemRepository {
     return this.getManyByIds<UserRecord>('users', userIds)
   }
 
-  getItem(itemId: string): Promise<ItemRecord | null> {
-    return this.getFirst<ItemRecord>('items', { _id: itemId })
+  async getItem(itemId: string): Promise<ItemRecord | null> {
+    const item = await this.getFirst<ItemRecord>('items', { _id: itemId })
+    return item && item.status !== 'DELETED' ? item : null
   }
 
   async listOperationLogs(

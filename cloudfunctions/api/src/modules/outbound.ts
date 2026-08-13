@@ -1,7 +1,6 @@
+import type { ApiDependencies } from '../dependencies'
 import { ApiException } from '../errors'
-import { CloudOutboundRepository } from '../outbound/cloud-repository'
 import { OutboundService } from '../outbound/service'
-import { CloudOutboundImageStorage } from '../outbound/storage'
 import type {
   BatchDeleteItemsInput,
   BatchRestoreInboundInput,
@@ -47,96 +46,100 @@ interface BatchRestoreInboundPayload {
   commitSummary?: unknown
 }
 
-function createService(): OutboundService {
+function createService(deps: ApiDependencies): OutboundService {
   return new OutboundService(
-    new CloudOutboundRepository(),
+    deps.outbound,
     undefined,
     undefined,
     undefined,
-    new CloudOutboundImageStorage(),
+    deps.outboundImages,
   )
 }
 
-export const outboundHandlers: Readonly<Record<string, ApiHandler>> = {
-  create: async (payload, context) => {
-    const input = payload as CreateOutboundPayload | undefined
-    if (
-      typeof input?.itemId !== 'string' ||
-      typeof input.reason !== 'string'
-    ) {
-      throw new ApiException(
-        'INVALID_REQUEST',
-        '离库申请请求字段无效',
-      )
-    }
-    return createService().createRequest(context.openid, {
-      itemId: input.itemId,
-      reason: input.reason,
-    })
-  },
+export function createOutboundHandlers(
+  deps: ApiDependencies,
+): Readonly<Record<string, ApiHandler>> {
+  return {
+    create: async (payload, context) => {
+      const input = payload as CreateOutboundPayload | undefined
+      if (
+        typeof input?.itemId !== 'string' ||
+        typeof input.reason !== 'string'
+      ) {
+        throw new ApiException(
+          'INVALID_REQUEST',
+          '离库申请请求字段无效',
+        )
+      }
+      return createService(deps).createRequest(context.userId, {
+        itemId: input.itemId,
+        reason: input.reason,
+      })
+    },
 
-  listPending: async (_payload, context) =>
-    createService().listPendingRequests(context.openid),
+    listPending: async (_payload, context) =>
+      createService(deps).listPendingRequests(context.userId),
 
-  listMine: async (_payload, context) =>
-    createService().listMyRequests(context.openid),
+    listMine: async (_payload, context) =>
+      createService(deps).listMyRequests(context.userId),
 
-  pendingByItem: async (payload, context) => {
-    const itemId = (payload as { itemId?: unknown } | undefined)?.itemId
-    if (typeof itemId !== 'string') {
-      throw new ApiException('INVALID_ITEM_ID', '物品 ID 无效')
-    }
-    return createService().getPendingRequestByItem(context.openid, itemId)
-  },
+    pendingByItem: async (payload, context) => {
+      const itemId = (payload as { itemId?: unknown } | undefined)?.itemId
+      if (typeof itemId !== 'string') {
+        throw new ApiException('INVALID_ITEM_ID', '物品 ID 无效')
+      }
+      return createService(deps).getPendingRequestByItem(context.userId, itemId)
+    },
 
-  approve: async (payload, context) => {
-    const input = parseReviewPayload(payload, false)
-    return createService().approveRequest(context.openid, input)
-  },
+    approve: async (payload, context) => {
+      const input = parseReviewPayload(payload, false)
+      return createService(deps).approveRequest(context.userId, input)
+    },
 
-  reject: async (payload, context) => {
-    const input = parseReviewPayload(payload, true)
-    return createService().rejectRequest(context.openid, input)
-  },
+    reject: async (payload, context) => {
+      const input = parseReviewPayload(payload, true)
+      return createService(deps).rejectRequest(context.userId, input)
+    },
 
-  direct: async (payload, context) => {
-    const input = payload as DirectOutboundPayload | undefined
-    if (
-      typeof input?.itemId !== 'string' ||
-      typeof input.expectedVersion !== 'number' ||
-      typeof input.commitSummary !== 'string'
-    ) {
-      throw new ApiException(
-        'INVALID_REQUEST',
-        '直接离库请求字段无效',
-      )
-    }
-    return createService().directOutbound(context.openid, {
-      itemId: input.itemId,
-      expectedVersion: input.expectedVersion,
-      commitSummary: input.commitSummary,
-    })
-  },
+    direct: async (payload, context) => {
+      const input = payload as DirectOutboundPayload | undefined
+      if (
+        typeof input?.itemId !== 'string' ||
+        typeof input.expectedVersion !== 'number' ||
+        typeof input.commitSummary !== 'string'
+      ) {
+        throw new ApiException(
+          'INVALID_REQUEST',
+          '直接离库请求字段无效',
+        )
+      }
+      return createService(deps).directOutbound(context.userId, {
+        itemId: input.itemId,
+        expectedVersion: input.expectedVersion,
+        commitSummary: input.commitSummary,
+      })
+    },
 
-  restore: async (payload, context) => {
-    const input = parseRestorePayload(payload)
-    return createService().restoreInbound(context.openid, input)
-  },
+    restore: async (payload, context) => {
+      const input = parseRestorePayload(payload)
+      return createService(deps).restoreInbound(context.userId, input)
+    },
 
-  batchRestore: async (payload, context) => {
-    const input = parseBatchRestorePayload(payload)
-    return createService().batchRestoreInbound(context.openid, input)
-  },
+    batchRestore: async (payload, context) => {
+      const input = parseBatchRestorePayload(payload)
+      return createService(deps).batchRestoreInbound(context.userId, input)
+    },
 
-  batchDirect: async (payload, context) => {
-    const input = parseBatchDirectPayload(payload)
-    return createService().batchDirectOutbound(context.openid, input)
-  },
+    batchDirect: async (payload, context) => {
+      const input = parseBatchDirectPayload(payload)
+      return createService(deps).batchDirectOutbound(context.userId, input)
+    },
 
-  batchDelete: async (payload, context) => {
-    const input = parseBatchDeletePayload(payload)
-    return createService().deleteItems(context.openid, input)
-  },
+    batchDelete: async (payload, context) => {
+      const input = parseBatchDeletePayload(payload)
+      return createService(deps).deleteItems(context.userId, input)
+    },
+  }
 }
 
 function parseReviewPayload(

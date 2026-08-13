@@ -1,4 +1,4 @@
-export type CategoryStatus = 'ACTIVE' | 'DISABLED'
+export type CategoryStatus = 'ACTIVE' | 'DISABLED' | 'DELETED'
 
 export interface CategoryRecord {
   _id: string
@@ -8,9 +8,11 @@ export interface CategoryRecord {
   is_preset: boolean
   sort_order: number
   item_reference_count?: number
-  created_by: string
+  created_by?: string
   created_at: string
   updated_at: string
+  deleted_by?: string
+  deleted_at?: string
 }
 
 export interface PublicCategory {
@@ -18,7 +20,7 @@ export interface PublicCategory {
   name: string
   status: CategoryStatus
   isPreset: boolean
-  createdBy: string
+  createdBy?: string
   createdAt: string
   updatedAt: string
 }

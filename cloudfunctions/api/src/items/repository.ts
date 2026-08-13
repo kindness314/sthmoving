@@ -8,7 +8,7 @@ import type {
 } from './types'
 
 export interface ItemUnitOfWork {
-  getUserByOpenid(openid: string): Promise<UserRecord | null>
+  getUser(userId: string): Promise<UserRecord | null>
   getCategory(categoryId: string): Promise<CategoryRecord | null>
   getCategoryByNormalizedName(
     normalizedName: string,
@@ -21,7 +21,7 @@ export interface ItemUnitOfWork {
 }
 
 export interface ItemRepository {
-  getUserByOpenid(openid: string): Promise<UserRecord | null>
+  getUser(userId: string): Promise<UserRecord | null>
   getCategory(categoryId: string): Promise<CategoryRecord | null>
   getCategoriesByIds(categoryIds: string[]): Promise<CategoryRecord[]>
   getUsersByIds(userIds: string[]): Promise<UserRecord[]>

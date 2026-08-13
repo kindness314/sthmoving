@@ -1,6 +1,10 @@
-import { createHash, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 
 import { ApiException } from '../errors'
+import {
+  isAvatarOwnedBy,
+  isManagedFileReference,
+} from '../storage/file-reference'
 import type {
   MembershipRepository,
   MembershipUnitOfWork,
@@ -51,8 +55,7 @@ export class MembershipService {
     private readonly createRequestId: () => string = randomUUID,
   ) {}
 
-  async login(openid: string): Promise<AuthSession> {
-    const userId = getUserId(openid)
+  async login(userId: string, openid: string): Promise<AuthSession> {
 
     return this.repository.runTransaction(async (unitOfWork) => {
       let user = await unitOfWork.getUser(userId)
@@ -76,13 +79,13 @@ export class MembershipService {
   }
 
   async submitJoinRequest(
+    userId: string,
     openid: string,
     displayNameInput: string,
     requestedRoleInput: RequestedRole = 'MEMBER',
   ): Promise<AuthSession> {
     const displayName = validateDisplayName(displayNameInput)
     const requestedRole = validateRequestedRole(requestedRoleInput)
-    const userId = getUserId(openid)
 
     return this.repository.runTransaction(async (unitOfWork) => {
       const now = this.now()
@@ -141,8 +144,7 @@ export class MembershipService {
     })
   }
 
-  async bootstrapOwner(openid: string): Promise<AuthSession> {
-    const userId = getUserId(openid)
+  async bootstrapOwner(userId: string, openid: string): Promise<AuthSession> {
 
     return this.repository.runTransaction(async (unitOfWork) => {
       if ((await unitOfWork.countOwners()) > 0) {
@@ -192,13 +194,13 @@ export class MembershipService {
   }
 
   async listPendingJoinRequests(
-    openid: string,
+    userId: string,
   ): Promise<PendingJoinRequest[]> {
-    const reviewerId = getUserId(openid)
+    const reviewerId = userId
 
     return this.repository.runTransaction(async (unitOfWork) => {
       const reviewer = await unitOfWork.getUser(reviewerId)
-      requireReviewer(reviewer, openid)
+      requireReviewer(reviewer)
 
       const requests = await unitOfWork.listPendingJoinRequests(50)
       const result: PendingJoinRequest[] = []
@@ -227,15 +229,15 @@ export class MembershipService {
   }
 
   async reviewJoinRequest(
-    openid: string,
+    userId: string,
     input: ReviewInput,
   ): Promise<PendingJoinRequest> {
-    const reviewerId = getUserId(openid)
+    const reviewerId = userId
     const comment = validateReviewComment(input.comment, input.decision)
 
     return this.repository.runTransaction(async (unitOfWork) => {
       const reviewer = await unitOfWork.getUser(reviewerId)
-      requireReviewer(reviewer, openid)
+      requireReviewer(reviewer)
 
       const request = await unitOfWork.getJoinRequest(input.requestId)
       if (!request) {
@@ -322,26 +324,26 @@ export class MembershipService {
     })
   }
 
-  async listMembers(openid: string): Promise<PublicMember[]> {
+  async listMembers(userId: string): Promise<PublicMember[]> {
     return this.repository.runTransaction(async (unitOfWork) => {
-      const actor = await unitOfWork.getUser(getUserId(openid))
-      requireMemberManager(actor, openid)
+      const actor = await unitOfWork.getUser(userId)
+      requireMemberManager(actor)
       const users = await unitOfWork.listUsers(200)
       return users.map(toPublicMember)
     })
   }
 
   async updateProfile(
-    openid: string,
+    userId: string,
     input: ProfileUpdateInput,
   ): Promise<PublicUser> {
     const updates = validateProfileUpdate(input)
     return this.repository.runTransaction(async (unitOfWork) => {
-      const user = await unitOfWork.getUser(getUserId(openid))
-      requireApprovedIdentity(user, openid)
+      const user = await unitOfWork.getUser(userId)
+      requireApprovedIdentity(user)
       if (
         updates.avatar_url &&
-        !updates.avatar_url.includes(`/avatars/${user._id}/`)
+        !isAvatarOwnedBy(updates.avatar_url, user._id)
       ) {
         throw new ApiException(
           'INVALID_AVATAR_URL',
@@ -358,10 +360,10 @@ export class MembershipService {
     })
   }
 
-  async disableMember(openid: string, targetUserId: string): Promise<PublicMember> {
+  async disableMember(userId: string, targetUserId: string): Promise<PublicMember> {
     return this.repository.runTransaction(async (unitOfWork) => {
-      const actor = await unitOfWork.getUser(getUserId(openid))
-      requireMemberManager(actor, openid)
+      const actor = await unitOfWork.getUser(userId)
+      requireMemberManager(actor)
       const target = await getTargetUser(unitOfWork, targetUserId)
       if (target._id === actor._id) {
         throw new ApiException('SELF_MEMBER_DISABLE_FORBIDDEN', '不能停用自己的账号')
@@ -391,15 +393,15 @@ export class MembershipService {
     })
   }
 
-  async setAdminRole(openid: string, input: MemberRoleInput): Promise<PublicMember> {
-    const userId = validateUserId(input.userId)
+  async setAdminRole(userId: string, input: MemberRoleInput): Promise<PublicMember> {
+    const targetUserId = validateUserId(input.userId)
     if (input.role !== 'ADMIN' && input.role !== 'MEMBER') {
       throw new ApiException('INVALID_ROLE', '只能设置普通成员或管理员角色')
     }
     return this.repository.runTransaction(async (unitOfWork) => {
-      const actor = await unitOfWork.getUser(getUserId(openid))
-      requireManagerOrOwner(actor, openid)
-      const target = await getTargetUser(unitOfWork, userId)
+      const actor = await unitOfWork.getUser(userId)
+      requireManagerOrOwner(actor)
+      const target = await getTargetUser(unitOfWork, targetUserId)
       if (target.status !== 'APPROVED' || target.role === 'OWNER' || target.role === 'MANAGER') {
         throw new ApiException('ROLE_CHANGE_FORBIDDEN', '只能调整已通过审核的普通成员或管理员')
       }
@@ -415,10 +417,10 @@ export class MembershipService {
     })
   }
 
-  async appointManager(openid: string, targetUserId: string): Promise<PublicMember> {
+  async appointManager(userId: string, targetUserId: string): Promise<PublicMember> {
     return this.repository.runTransaction(async (unitOfWork) => {
-      const actor = await unitOfWork.getUser(getUserId(openid))
-      requireOwner(actor, openid)
+      const actor = await unitOfWork.getUser(userId)
+      requireOwner(actor)
       const target = await getTargetUser(unitOfWork, validateUserId(targetUserId))
       if (target.status !== 'APPROVED' || target.role !== 'ADMIN') {
         throw new ApiException('MANAGER_TARGET_INVALID', '实际管理者必须从已通过审核的管理员中任命')
@@ -429,10 +431,10 @@ export class MembershipService {
     })
   }
 
-  async removeManager(openid: string, targetUserId: string): Promise<PublicMember> {
+  async removeManager(userId: string, targetUserId: string): Promise<PublicMember> {
     return this.repository.runTransaction(async (unitOfWork) => {
-      const actor = await unitOfWork.getUser(getUserId(openid))
-      requireOwner(actor, openid)
+      const actor = await unitOfWork.getUser(userId)
+      requireOwner(actor)
       const target = await getTargetUser(unitOfWork, validateUserId(targetUserId))
       if (target.role !== 'MANAGER' || target.status !== 'APPROVED') {
         throw new ApiException('MANAGER_TARGET_INVALID', '目标用户不是有效的实际管理者')
@@ -446,11 +448,11 @@ export class MembershipService {
     })
   }
 
-  async transferManager(openid: string, input: ManagerTargetInput): Promise<PublicMember> {
+  async transferManager(userId: string, input: ManagerTargetInput): Promise<PublicMember> {
     const targetUserId = validateUserId(input.targetUserId)
     return this.repository.runTransaction(async (unitOfWork) => {
-      const actor = await unitOfWork.getUser(getUserId(openid))
-      requireManagerOrOwner(actor, openid)
+      const actor = await unitOfWork.getUser(userId)
+      requireManagerOrOwner(actor)
       const sourceId = actor.role === 'MANAGER'
         ? actor._id
         : validateUserId(input.sourceManagerId ?? '')
@@ -487,10 +489,6 @@ export class MembershipService {
   }
 }
 
-function getUserId(openid: string): string {
-  return createHash('sha256').update(openid).digest('hex').slice(0, 32)
-}
-
 function assertMatchingOpenid(user: UserRecord, openid: string): void {
   if (user.openid !== openid) {
     throw new ApiException('IDENTITY_CONFLICT', '微信身份映射发生冲突')
@@ -499,12 +497,10 @@ function assertMatchingOpenid(user: UserRecord, openid: string): void {
 
 function requireReviewer(
   user: UserRecord | null,
-  openid: string,
 ): asserts user is UserRecord {
   if (!user) {
     throw new ApiException('UNAUTHENTICATED', '当前微信用户尚未建立账号')
   }
-  assertMatchingOpenid(user, openid)
   if (user.status !== 'APPROVED') {
     throw new ApiException('ACCOUNT_NOT_ACTIVE', '当前账号尚未通过审核')
   }
@@ -519,9 +515,8 @@ function requireReviewer(
 
 function requireMemberManager(
   user: UserRecord | null,
-  openid: string,
 ): asserts user is UserRecord {
-  requireApprovedIdentity(user, openid)
+  requireApprovedIdentity(user)
   if (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'OWNER') {
     throw new ApiException('FORBIDDEN', '只有管理权限角色可以管理成员')
   }
@@ -529,9 +524,8 @@ function requireMemberManager(
 
 function requireManagerOrOwner(
   user: UserRecord | null,
-  openid: string,
 ): asserts user is UserRecord {
-  requireApprovedIdentity(user, openid)
+  requireApprovedIdentity(user)
   if (user.role !== 'MANAGER' && user.role !== 'OWNER') {
     throw new ApiException('FORBIDDEN', '只有实际管理者或所有者可以执行此操作')
   }
@@ -539,9 +533,8 @@ function requireManagerOrOwner(
 
 function requireOwner(
   user: UserRecord | null,
-  openid: string,
 ): asserts user is UserRecord {
-  requireApprovedIdentity(user, openid)
+  requireApprovedIdentity(user)
   if (user.role !== 'OWNER') {
     throw new ApiException('FORBIDDEN', '只有所有者可以任免实际管理者')
   }
@@ -549,12 +542,10 @@ function requireOwner(
 
 function requireApprovedIdentity(
   user: UserRecord | null,
-  openid: string,
 ): asserts user is UserRecord {
   if (!user) {
     throw new ApiException('UNAUTHENTICATED', '当前微信用户尚未建立账号')
   }
-  assertMatchingOpenid(user, openid)
   if (user.status !== 'APPROVED') {
     throw new ApiException('ACCOUNT_NOT_ACTIVE', '当前账号尚未通过审核')
   }
@@ -605,7 +596,7 @@ function validateProfileUpdate(input: ProfileUpdateInput): Partial<UserRecord> {
   }
   if (input.avatarUrl !== undefined) {
     const avatarUrl = input.avatarUrl.trim()
-    if (!avatarUrl.startsWith('cloud://') || avatarUrl.length > 500) {
+    if (!isManagedFileReference(avatarUrl)) {
       throw new ApiException('INVALID_AVATAR_URL', '头像必须是有效的云存储文件')
     }
     updates.avatar_url = avatarUrl

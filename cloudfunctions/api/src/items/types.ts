@@ -1,5 +1,9 @@
 export type QuantityMode = 'SINGLE' | 'MULTIPLE'
-export type ItemStatus = 'ACTIVE' | 'OUTBOUND_PENDING' | 'OFF_SHELF'
+export type ItemStatus =
+  | 'ACTIVE'
+  | 'OUTBOUND_PENDING'
+  | 'OFF_SHELF'
+  | 'DELETED'
 
 export interface ItemRecord {
   _id: string
@@ -18,6 +22,8 @@ export interface ItemRecord {
   updated_at: string
   off_shelf_by?: string
   off_shelf_at?: string
+  deleted_by?: string
+  deleted_at?: string
 }
 
 export interface ItemOperationLogRecord {
@@ -125,7 +131,7 @@ export interface PublicItemCategory {
   status: CategoryRecordStatus
 }
 
-type CategoryRecordStatus = 'ACTIVE' | 'DISABLED'
+type CategoryRecordStatus = 'ACTIVE' | 'DISABLED' | 'DELETED'
 
 export interface PublicItemActor {
   id: string

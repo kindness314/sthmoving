@@ -4,6 +4,7 @@ import {
   normalizeCategoryName,
   validateCategoryName,
 } from '../categories/service'
+import { isManagedFileReference } from '../storage/file-reference'
 import type { CategoryRecord } from '../categories/types'
 import { ApiException } from '../errors'
 import { createPendingItemLabel } from '../labels/service'
@@ -43,12 +44,12 @@ export class ItemService {
     private readonly resolveFileUrls: ItemFileUrlResolver = identityFileUrls,
   ) {}
 
-  async create(openid: string, input: CreateItemInput): Promise<PublicItem> {
+  async create(userId: string, input: CreateItemInput): Promise<PublicItem> {
     const validated = validateCreateInput(input)
 
     return this.repository.runTransaction(async (unitOfWork) => {
-      const user = await unitOfWork.getUserByOpenid(openid)
-      requireApprovedUser(user, openid)
+      const user = await unitOfWork.getUser(userId)
+      requireApprovedUser(user)
 
       const now = this.now()
       const category = await this.resolveCategory(
@@ -93,14 +94,14 @@ export class ItemService {
   }
 
   async update(
-    openid: string,
+    userId: string,
     input: UpdateItemInput,
   ): Promise<PublicItem> {
     const validated = validateUpdateInput(input)
 
     return this.repository.runTransaction(async (unitOfWork) => {
-      const user = await unitOfWork.getUserByOpenid(openid)
-      requireApprovedUser(user, openid)
+      const user = await unitOfWork.getUser(userId)
+      requireApprovedUser(user)
 
       const item = await unitOfWork.getItem(validated.itemId)
       if (!item) {
@@ -203,11 +204,11 @@ export class ItemService {
   }
 
   async list(
-    openid: string,
+    userId: string,
     input: ListItemsInput,
   ): Promise<PublicItemList> {
-    const user = await this.repository.getUserByOpenid(openid)
-    requireApprovedUser(user, openid)
+    const user = await this.repository.getUser(userId)
+    requireApprovedUser(user)
     if (
       input.status === 'OFF_SHELF' &&
       user.role !== 'ADMIN' &&
@@ -255,11 +256,11 @@ export class ItemService {
   }
 
   async detail(
-    openid: string,
+    userId: string,
     itemIdInput: string,
   ): Promise<PublicItemDetail> {
-    const user = await this.repository.getUserByOpenid(openid)
-    requireApprovedUser(user, openid)
+    const user = await this.repository.getUser(userId)
+    requireApprovedUser(user)
     const itemId = itemIdInput.trim()
     if (!itemId || itemId.length > 100) {
       throw new ApiException('INVALID_ITEM_ID', '物品 ID 无效')
@@ -307,11 +308,11 @@ export class ItemService {
   }
 
   async logs(
-    openid: string,
+    userId: string,
     itemIdInput: string,
   ): Promise<PublicItemOperationLog[]> {
-    const user = await this.repository.getUserByOpenid(openid)
-    requireApprovedUser(user, openid)
+    const user = await this.repository.getUser(userId)
+    requireApprovedUser(user)
     const itemId = itemIdInput.trim()
     if (!itemId || itemId.length > 100) {
       throw new ApiException('INVALID_ITEM_ID', '物品 ID 无效')
@@ -517,9 +518,8 @@ function isIsoDate(value: string): boolean {
 
 function requireApprovedUser(
   user: UserRecord | null,
-  openid: string,
 ): asserts user is UserRecord {
-  if (!user || user.openid !== openid) {
+  if (!user) {
     throw new ApiException('UNAUTHENTICATED', '当前微信用户尚未建立账号')
   }
   if (user.status !== 'APPROVED') {
@@ -562,8 +562,7 @@ function validateCreateInput(input: CreateItemInput): CreateItemInput {
     input.images.some(
       (fileId) =>
         typeof fileId !== 'string' ||
-        !fileId.trim().startsWith('cloud://') ||
-        fileId.length > 1024,
+        !isManagedFileReference(fileId.trim()),
     )
   ) {
     throw new ApiException(
@@ -666,8 +665,7 @@ function validateUpdateInput(input: UpdateItemInput): UpdateItemInput {
       input.images.some(
         (fileId) =>
           typeof fileId !== 'string' ||
-          !fileId.trim().startsWith('cloud://') ||
-          fileId.length > 1024,
+          !isManagedFileReference(fileId.trim()),
       )
     ) {
       throw new ApiException(

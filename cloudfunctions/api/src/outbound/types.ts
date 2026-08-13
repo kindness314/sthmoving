@@ -1,3 +1,5 @@
+import type { ItemStatus } from '../items/types'
+
 export type OutboundRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 
 export interface OutboundRequestRecord {
@@ -40,7 +42,7 @@ export interface PublicOutboundRequestDetail extends PublicOutboundRequest {
     id: string
     code: string
     name: string
-    status: 'ACTIVE' | 'OUTBOUND_PENDING' | 'OFF_SHELF'
+    status: ItemStatus
     version: number
   }
 }
@@ -61,7 +63,7 @@ export interface PublicMyOutboundRequest extends PublicOutboundRequest {
     id: string
     code: string
     name: string
-    status: 'ACTIVE' | 'OUTBOUND_PENDING' | 'OFF_SHELF'
+    status: ItemStatus
     version: number
   } | null
 }

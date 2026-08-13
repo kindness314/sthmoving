@@ -1,0 +1,13 @@
+.git
+.github
+node_modules
+coverage
+dist
+server/dist
+cloudfunctions/**/dist
+cloudfunctions/**/node_modules
+miniprogram
+miniprogram_npm
+tests
+docs
+*.log

@@ -11,7 +11,6 @@ import type {
   OutboundUnitOfWork,
 } from './repository'
 import type { OutboundRequestRecord } from './types'
-import type { NotificationRecord } from '../notifications/types'
 
 interface QueryResult {
   data: unknown[]
@@ -43,16 +42,13 @@ interface TransactionDatabase {
 class CloudOutboundUnitOfWork implements OutboundUnitOfWork {
   constructor(private readonly database: TransactionDatabase) {}
 
-  getUserByOpenid(openid: string): Promise<UserRecord | null> {
-    return this.getFirst<UserRecord>('users', { openid })
-  }
-
   getUser(userId: string): Promise<UserRecord | null> {
     return this.getFirst<UserRecord>('users', { _id: userId })
   }
 
-  getItem(itemId: string): Promise<ItemRecord | null> {
-    return this.getFirst<ItemRecord>('items', { _id: itemId })
+  async getItem(itemId: string): Promise<ItemRecord | null> {
+    const item = await this.getFirst<ItemRecord>('items', { _id: itemId })
+    return item && item.status !== 'DELETED' ? item : null
   }
 
   getRequest(requestId: string): Promise<OutboundRequestRecord | null> {
@@ -93,24 +89,6 @@ class CloudOutboundUnitOfWork implements OutboundUnitOfWork {
     return sortByCreatedAt(result.data as OutboundRequestRecord[])
   }
 
-  async listActiveReviewers(): Promise<UserRecord[]> {
-    const result = await this.database
-      .collection('users')
-      .where({ status: 'APPROVED' })
-      .limit(100)
-      .get()
-    return (result.data as UserRecord[]).filter(
-      (user) =>
-        user.role === 'ADMIN' ||
-        user.role === 'MANAGER' ||
-        user.role === 'OWNER',
-    )
-  }
-
-  async setNotification(notification: NotificationRecord): Promise<void> {
-    const { _id, ...data } = notification
-    await this.database.collection('notifications').doc(_id).set({ data })
-  }
 
   getLabelByItemId(itemId: string): Promise<ItemLabelRecord | null> {
     return this.getFirst<ItemLabelRecord>('item_labels', {
@@ -121,10 +99,6 @@ class CloudOutboundUnitOfWork implements OutboundUnitOfWork {
   async setItem(item: ItemRecord): Promise<void> {
     const { _id, ...data } = item
     await this.database.collection('items').doc(_id).set({ data })
-  }
-
-  async deleteItem(itemId: string): Promise<void> {
-    await this.database.collection('items').doc(itemId).remove()
   }
 
   async setRequest(request: OutboundRequestRecord): Promise<void> {

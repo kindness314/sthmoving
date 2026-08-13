@@ -42,15 +42,16 @@ class InMemoryLabelUnitOfWork implements LabelUnitOfWork {
     private readonly labels: Map<string, ItemLabelRecord>,
   ) {}
 
-  getUserByOpenid(openid: string): Promise<UserRecord | null> {
+  getUser(userId: string): Promise<UserRecord | null> {
     return Promise.resolve(
-      [...this.users.values()].find((user) => user.openid === openid) ??
+      [...this.users.values()].find((user) => user._id === userId) ??
         null,
     )
   }
 
   getItem(itemId: string): Promise<ItemRecord | null> {
-    return Promise.resolve(this.items.get(itemId) ?? null)
+    const item = this.items.get(itemId)
+    return Promise.resolve(item && item.status !== 'DELETED' ? item : null)
   }
 
   getLabelByItemId(itemId: string): Promise<ItemLabelRecord | null> {
@@ -226,7 +227,7 @@ describe('物品小程序码服务', () => {
     )
 
     await expect(
-      service.generate('member-openid', 'item-1'),
+      service.generate('user-member', 'item-1'),
     ).resolves.toMatchObject({
       itemId: 'item-1',
       publicCode: 'A1B2C3D4E5F6',
@@ -250,8 +251,8 @@ describe('物品小程序码服务', () => {
   it('READY 标签重复请求直接返回，不重复调用微信接口', async () => {
     const { generator, service } = prepare()
 
-    const first = await service.generate('member-openid', 'item-1')
-    const second = await service.generate('member-openid', 'item-1')
+    const first = await service.generate('user-member', 'item-1')
+    const second = await service.generate('user-member', 'item-1')
 
     expect(first.status).toBe('READY')
     expect(second).toEqual(first)
@@ -262,7 +263,7 @@ describe('物品小程序码服务', () => {
     const { generator, service } = prepare()
     generator.error = new Error('微信接口不可用')
 
-    const failed = await service.generate('member-openid', 'item-1')
+    const failed = await service.generate('user-member', 'item-1')
     expect(failed).toMatchObject({
       status: 'FAILED',
       publicCode: 'A1B2C3D4E5F6',
@@ -271,7 +272,7 @@ describe('物品小程序码服务', () => {
     })
 
     generator.error = null
-    const retried = await service.generate('member-openid', 'item-1')
+    const retried = await service.generate('user-member', 'item-1')
     expect(retried).toMatchObject({
       status: 'READY',
       publicCode: 'A1B2C3D4E5F6',
@@ -287,7 +288,7 @@ describe('物品小程序码服务', () => {
       repository.labels.set(label._id, { ...label, status: 'VOID' })
     }
 
-    const result = await service.generate('member-openid', 'item-1')
+    const result = await service.generate('user-member', 'item-1')
 
     expect(result.status).toBe('VOID')
     expect(
@@ -299,7 +300,7 @@ describe('物品小程序码服务', () => {
     const { repository, service } = prepare()
     expect(repository.labels.size).toBe(0)
 
-    await service.generate('member-openid', 'item-1')
+    await service.generate('user-member', 'item-1')
 
     expect(repository.labels.size).toBe(1)
     expect(repository.labels.get('item-label-item-1')).toMatchObject({
@@ -311,10 +312,10 @@ describe('物品小程序码服务', () => {
 
   it('解析 READY 或 VOID 标签，并拒绝无效 scene 和未审核账号', async () => {
     const { repository, service } = prepare()
-    await service.generate('member-openid', 'item-1')
+    await service.generate('user-member', 'item-1')
 
     await expect(
-      service.resolve('member-openid', 'i=A1B2C3D4E5F6'),
+      service.resolve('user-member', 'i=A1B2C3D4E5F6'),
     ).resolves.toEqual({ itemId: 'item-1' })
     const label = repository.labels.get('item-label-item-1')
     if (!label) {
@@ -329,34 +330,34 @@ describe('物品小程序码服务', () => {
       status: 'OFF_SHELF',
     })
     await expectApiCode(
-      service.resolve('member-openid', 'i=A1B2C3D4E5F6'),
+      service.resolve('user-member', 'i=A1B2C3D4E5F6'),
       'ITEM_OFF_SHELF',
     )
     await expectApiCode(
-      service.get('member-openid', 'item-1'),
+      service.get('user-member', 'item-1'),
       'ITEM_OFF_SHELF',
     )
     await expectApiCode(
-      service.generate('member-openid', 'item-1'),
+      service.generate('user-member', 'item-1'),
       'LABEL_VOID',
     )
     repository.items.delete('item-1')
     await expectApiCode(
-      service.resolve('member-openid', 'i=A1B2C3D4E5F6'),
+      service.resolve('user-member', 'i=A1B2C3D4E5F6'),
       'ITEM_DELETED',
     )
     await expectApiCode(
-      service.resolve('member-openid', 'item-1'),
+      service.resolve('user-member', 'item-1'),
       'INVALID_LABEL_SCENE',
     )
 
     repository.users.set('user-member', createUser('PENDING'))
     await expectApiCode(
-      service.get('member-openid', 'item-1'),
+      service.get('user-member', 'item-1'),
       'ACCOUNT_NOT_ACTIVE',
     )
     await expectApiCode(
-      service.generate('member-openid', 'item-1'),
+      service.generate('user-member', 'item-1'),
       'ACCOUNT_NOT_ACTIVE',
     )
   })
@@ -365,7 +366,7 @@ describe('物品小程序码服务', () => {
     const { service } = prepareWithFileUrlResolver()
 
     await expect(
-      service.generate('member-openid', 'item-1'),
+      service.generate('user-member', 'item-1'),
     ).resolves.toMatchObject({
       status: 'READY',
       fileId: 'cloud://env/labels/item-1/A1B2C3D4E5F6.png',

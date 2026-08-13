@@ -5,7 +5,6 @@ import type {
   MembershipUnitOfWork,
 } from './repository'
 import type { JoinRequestRecord, UserRecord } from './types'
-import type { NotificationRecord } from '../notifications/types'
 
 interface QueryResult {
   data: unknown[]
@@ -108,24 +107,6 @@ class CloudMembershipUnitOfWork implements MembershipUnitOfWork {
     return result.data as UserRecord[]
   }
 
-  async listActiveReviewers(): Promise<UserRecord[]> {
-    const result = await this.database
-      .collection('users')
-      .where({ status: 'APPROVED' })
-      .limit(100)
-      .get()
-    return (result.data as UserRecord[]).filter(
-      (user) =>
-        user.role === 'ADMIN' ||
-        user.role === 'MANAGER' ||
-        user.role === 'OWNER',
-    )
-  }
-
-  async setNotification(notification: NotificationRecord): Promise<void> {
-    const { _id, ...data } = notification
-    await this.database.collection('notifications').doc(_id).set({ data })
-  }
 
   private async getFirst<TRecord>(
     collection: string,

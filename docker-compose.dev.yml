@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: sthmoving
+      POSTGRES_PASSWORD: sthmoving
+      POSTGRES_DB: sthmoving
+    ports:
+      - '55433:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U sthmoving -d sthmoving']
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  api:
+    image: node:24-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run build:server && npm run start:server"
+    environment:
+      PORT: '8080'
+      DATABASE_URL: postgres://sthmoving:sthmoving@postgres:5432/sthmoving
+      WECHAT_APP_ID: ${WECHAT_APP_ID:?}
+      WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:?}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://127.0.0.1:8080}
+      STORAGE_ROOT: /var/lib/sthmoving/files
+      FILE_SIGNING_SECRET: ${FILE_SIGNING_SECRET:?}
+      MINI_PROGRAM_ENVIRONMENT: ${MINI_PROGRAM_ENVIRONMENT:-develop}
+      OWNER_BOOTSTRAP_TOKEN: ${OWNER_BOOTSTRAP_TOKEN:-}
+    ports:
+      - '8080:8080'
+    volumes:
+      - .:/app
+      - api-node-modules:/app/node_modules
+      - api-files:/var/lib/sthmoving/files
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  api-node-modules:
+  api-files:

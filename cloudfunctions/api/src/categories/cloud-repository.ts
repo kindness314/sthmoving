@@ -13,7 +13,6 @@ interface QueryResult {
 
 interface DocumentReference {
   set(options: { data: object }): Promise<unknown>
-  remove(): Promise<unknown>
 }
 
 interface Query {
@@ -27,7 +26,12 @@ interface Collection extends Query {
   doc(id: string): DocumentReference
 }
 
+interface DatabaseCommand {
+  in(values: unknown[]): object
+}
+
 interface TransactionDatabase {
+  command: DatabaseCommand
   collection(name: string): Collection
   runTransaction<T>(
     operation: (transaction: TransactionDatabase) => Promise<T>,
@@ -37,26 +41,37 @@ interface TransactionDatabase {
 class CloudCategoryUnitOfWork implements CategoryUnitOfWork {
   constructor(private readonly database: TransactionDatabase) {}
 
-  getUserByOpenid(openid: string): Promise<UserRecord | null> {
-    return this.getFirst<UserRecord>('users', { openid })
+  getUser(userId: string): Promise<UserRecord | null> {
+    return this.getFirst<UserRecord>('users', { _id: userId })
   }
 
-  getCategory(categoryId: string): Promise<CategoryRecord | null> {
-    return this.getFirst<CategoryRecord>('categories', { _id: categoryId })
+  async getCategory(categoryId: string): Promise<CategoryRecord | null> {
+    const category = await this.getFirst<CategoryRecord>('categories', {
+      _id: categoryId,
+    })
+    return category && category.status !== 'DELETED' ? category : null
   }
 
-  getCategoryByNormalizedName(
+  async getCategoryByNormalizedName(
     normalizedName: string,
   ): Promise<CategoryRecord | null> {
-    return this.getFirst<CategoryRecord>('categories', {
+    const category = await this.getFirst<CategoryRecord>('categories', {
       normalized_name: normalizedName,
     })
+    return category && category.status !== 'DELETED' ? category : null
   }
 
   async hasItemReference(categoryId: string): Promise<boolean> {
     const result = await this.database
       .collection('items')
-      .where({ category_id: categoryId })
+      .where({
+        category_id: categoryId,
+        status: this.database.command.in([
+          'ACTIVE',
+          'OUTBOUND_PENDING',
+          'OFF_SHELF',
+        ]),
+      })
       .limit(1)
       .get()
     return result.data.length > 0
@@ -70,19 +85,13 @@ class CloudCategoryUnitOfWork implements CategoryUnitOfWork {
       .set({ data })
   }
 
-  async removeCategory(categoryId: string): Promise<void> {
-    await this.database
-      .collection('categories')
-      .doc(categoryId)
-      .remove()
-  }
-
   async listActiveCategories(): Promise<CategoryRecord[]> {
     return this.listCategories({ status: 'ACTIVE' })
   }
 
   async listAllCategories(): Promise<CategoryRecord[]> {
-    return this.listCategories()
+    const categories = await this.listCategories()
+    return categories.filter((category) => category.status !== 'DELETED')
   }
 
   private async listCategories(
