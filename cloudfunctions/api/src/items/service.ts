@@ -4,7 +4,11 @@ import {
   normalizeCategoryName,
   validateCategoryName,
 } from '../categories/service'
-import { isManagedFileReference } from '../storage/file-reference'
+import {
+  isItemImageOf,
+  isManagedFileReference,
+  parseSelfHostedPath,
+} from '../storage/file-reference'
 import type { CategoryRecord } from '../categories/types'
 import { ApiException } from '../errors'
 import { createPendingItemLabel } from '../labels/service'
@@ -50,6 +54,19 @@ export class ItemService {
     return this.repository.runTransaction(async (unitOfWork) => {
       const user = await unitOfWork.getUser(userId)
       requireApprovedUser(user)
+      // 归属校验只约束自建存储引用；cloud:// 遗留引用不受影响
+      if (
+        validated.images.some(
+          (fileId) =>
+            parseSelfHostedPath(fileId) !== null &&
+            !isItemImageOf(fileId, user._id),
+        )
+      ) {
+        throw new ApiException(
+          'INVALID_ITEM_IMAGES',
+          '物品图片必须是本人上传的图片',
+        )
+      }
 
       const now = this.now()
       const category = await this.resolveCategory(
@@ -121,6 +138,20 @@ export class ItemService {
             latestVersion: item.version,
             latestItem: toPublicItem(item),
           },
+        )
+      }
+      if (
+        validated.images !== undefined &&
+        validated.images.some(
+          (fileId) =>
+            !item.images.includes(fileId) &&
+            parseSelfHostedPath(fileId) !== null &&
+            !isItemImageOf(fileId, user._id),
+        )
+      ) {
+        throw new ApiException(
+          'INVALID_ITEM_IMAGES',
+          '物品图片必须是本人上传或物品已有的图片',
         )
       }
 

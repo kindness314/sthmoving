@@ -618,12 +618,12 @@ export class OutboundService {
     try {
       await this.imageStorage.delete(imageFileIds)
     } catch (error) {
+      console.error('物品图片清理失败', error)
       throw new ApiException(
         'ITEM_IMAGE_DELETE_FAILED',
         '物品已删除，但图片文件清理失败，请联系管理员处理',
         {
           itemIds: deleted.map((item) => item._id),
-          message: error instanceof Error ? error.message : String(error),
         },
       )
     }

@@ -24,4 +24,5 @@ export interface ApiDependencies {
     fileIds: string[],
   ) => Promise<Map<string, string>>
   readonly resolveFileUrl: (fileId: string) => Promise<string>
+  readonly revokeUserSessions?: (userId: string) => Promise<void>
 }

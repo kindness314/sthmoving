@@ -32,7 +32,13 @@ export class StorageService {
     input: unknown,
   ): Promise<Record<string, string>> {
     const fileIds = validateFileIds(input)
-    await this.requireApprovedUser(userId)
+    const user = await this.requireApprovedUser(userId)
+    const labels = fileIds.filter((fileId) => fileId.startsWith('file://labels/'))
+    const managesLabels =
+      user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'OWNER'
+    if (labels.length > 0 && !managesLabels) {
+      throw new ApiException('FORBIDDEN', '小程序码文件只能由管理角色获取')
+    }
     return Object.fromEntries(await this.resolveFileUrls(fileIds))
   }
 

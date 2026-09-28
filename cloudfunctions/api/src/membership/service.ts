@@ -53,6 +53,7 @@ export class MembershipService {
     private readonly repository: MembershipRepository,
     private readonly now: () => string = () => new Date().toISOString(),
     private readonly createRequestId: () => string = randomUUID,
+    private readonly revokeUserSessions?: (userId: string) => Promise<void>,
   ) {}
 
   async login(userId: string, openid: string): Promise<AuthSession> {
@@ -361,7 +362,7 @@ export class MembershipService {
   }
 
   async disableMember(userId: string, targetUserId: string): Promise<PublicMember> {
-    return this.repository.runTransaction(async (unitOfWork) => {
+    const disabled = await this.repository.runTransaction(async (unitOfWork) => {
       const actor = await unitOfWork.getUser(userId)
       requireMemberManager(actor)
       const target = await getTargetUser(unitOfWork, targetUserId)
@@ -391,6 +392,8 @@ export class MembershipService {
       await unitOfWork.setUser(updated)
       return toPublicMember(updated)
     })
+    await this.revokeUserSessions?.(targetUserId)
+    return disabled
   }
 
   async setAdminRole(userId: string, input: MemberRoleInput): Promise<PublicMember> {

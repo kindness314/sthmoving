@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import type { IncomingMessage } from 'node:http'
 
 import { ApiException } from '../../../cloudfunctions/api/src/errors'
+import type { MembershipRepository } from '../../../cloudfunctions/api/src/membership/repository'
 import {
   parseSelfHostedPath,
   toSelfHostedReference,
@@ -33,6 +34,7 @@ export interface FileRouteOptions {
   readonly registry: FileRegistry
   readonly signer: FileUrlSigner
   readonly authenticate: (request: IncomingMessage) => Promise<RequestContext>
+  readonly membership: MembershipRepository
   readonly uploadTtlMilliseconds: number
   readonly now?: () => string
 }
@@ -105,6 +107,18 @@ export function createFileRoutes(
             throw error
           }
           sendApiError(response, error.code, error.message)
+          return
+        }
+
+        const uploader = await options.membership.runTransaction(
+          (unitOfWork) => unitOfWork.getUser(context.userId),
+        )
+        if (!uploader || uploader.status === 'DISABLED') {
+          sendApiError(response, 'ACCOUNT_DISABLED', '当前账号已被停用')
+          return
+        }
+        if (uploader.status !== 'APPROVED') {
+          sendApiError(response, 'ACCOUNT_NOT_ACTIVE', '当前账号尚未通过审核')
           return
         }
 

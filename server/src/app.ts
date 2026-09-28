@@ -81,17 +81,20 @@ export async function startServer(
       appSecret: config.wechatAppSecret,
     }
     const accessTokens = new WeChatAccessTokenProvider(credentials)
-
-    const dependencies = createPgDependencies(pool, {
-      ...files,
-      miniProgramCode: new HttpMiniProgramCodeGenerator(accessTokens),
-      miniProgramEnvironment: config.miniProgramEnvironment,
-      ...overrides.external,
-    })
     const sessions = new PostgresSessionStore(
       pool,
       config.sessionTtlDays * 24 * 60 * 60 * 1000,
     )
+
+    const dependencies = {
+      ...createPgDependencies(pool, {
+        ...files,
+        miniProgramCode: new HttpMiniProgramCodeGenerator(accessTokens),
+        miniProgramEnvironment: config.miniProgramEnvironment,
+        ...overrides.external,
+      }),
+      revokeUserSessions: (userId: string) => sessions.revokeUser(userId),
+    }
     const wechat = overrides.wechat ?? new HttpWeChatAuthClient(credentials)
     const authenticate =
       overrides.authenticate ?? createBearerAuthenticator(sessions)
@@ -101,6 +104,12 @@ export async function startServer(
       authenticate,
       checkHealth: async () => {
         await pool.query('SELECT 1')
+      },
+      rateLimits: {
+        // 登录换取会话：每 IP 每分钟 10 次，限制 code2Session 放大攻击
+        authSessionPerMinute: 10,
+        // 业务接口整体兜底：每 IP 每分钟 120 次，覆盖 bootstrapOwner 口令爆破
+        apiPerMinute: 120,
       },
       routes: [
         createSessionRoute({
@@ -113,6 +122,7 @@ export async function startServer(
           registry,
           signer,
           authenticate,
+          membership: dependencies.membership,
           uploadTtlMilliseconds: config.uploadUrlTtlSeconds * 1000,
         }),
         ...(overrides.routes ?? []),

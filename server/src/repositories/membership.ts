@@ -59,7 +59,7 @@ class PostgresMembershipUnitOfWork implements MembershipUnitOfWork {
 
   async getJoinRequest(requestId: string): Promise<JoinRequestRecord | null> {
     const result = await this.client.query(
-      'SELECT * FROM join_requests WHERE id = $1',
+      'SELECT * FROM join_requests WHERE id = $1 FOR UPDATE',
       [requestId],
     )
     return result.rows[0] ? joinRequestRow(result.rows[0]) : null

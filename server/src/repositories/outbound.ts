@@ -44,7 +44,7 @@ class PostgresOutboundUnitOfWork implements OutboundUnitOfWork {
 
   async getRequest(requestId: string): Promise<OutboundRequestRecord | null> {
     const result = await this.client.query(
-      'SELECT * FROM outbound_requests WHERE id = $1',
+      'SELECT * FROM outbound_requests WHERE id = $1 FOR UPDATE',
       [requestId],
     )
     return result.rows[0] ? outboundRequestRow(result.rows[0]) : null

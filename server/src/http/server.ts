@@ -8,6 +8,7 @@ import type {
   RequestContext,
 } from '../../../cloudfunctions/api/src/types'
 import { PayloadTooLargeError, readJsonBody } from './body'
+import { clientIp, RateLimiter } from './rate-limit'
 import { sendApiError, sendApiResponse, sendJson } from './respond'
 
 export type HttpHandler = (
@@ -28,6 +29,11 @@ export interface HttpApiOptions {
   readonly checkHealth: () => Promise<void>
   readonly routes?: readonly HttpRoute[]
   readonly maxBodyBytes?: number
+  // 敏感端点的每分钟单 IP 限额；默认关闭，生产装配处显式开启
+  readonly rateLimits?: {
+    readonly authSessionPerMinute?: number
+    readonly apiPerMinute?: number
+  }
 }
 
 const defaultMaxBodyBytes = 1024 * 1024
@@ -120,7 +126,27 @@ async function dispatch(
 export function createApiRequestListener(
   options: HttpApiOptions,
 ): (request: IncomingMessage, response: ServerResponse) => void {
+  const authSessionLimiter =
+    options.rateLimits?.authSessionPerMinute === undefined
+      ? null
+      : new RateLimiter(options.rateLimits.authSessionPerMinute, 60_000)
+  const apiLimiter =
+    options.rateLimits?.apiPerMinute === undefined
+      ? null
+      : new RateLimiter(options.rateLimits.apiPerMinute, 60_000)
   return (request, response) => {
+    const pathname = new URL(request.url ?? '/', 'http://localhost').pathname
+    const isPost = request.method === 'POST'
+    const limiter =
+      isPost && pathname === '/auth/session'
+        ? authSessionLimiter
+        : isPost && pathname === '/api'
+          ? apiLimiter
+          : null
+    if (limiter !== null && !limiter.tryAcquire(clientIp(request))) {
+      sendApiError(response, 'RATE_LIMITED', '请求过于频繁，请稍后再试')
+      return
+    }
     dispatch(options, request, response).catch((error: unknown) => {
       console.error(error)
       if (response.headersSent) {

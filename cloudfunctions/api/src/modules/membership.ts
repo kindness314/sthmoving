@@ -54,7 +54,12 @@ const userThemes: ReadonlySet<UserTheme> = new Set([
 ])
 
 function createService(deps: ApiDependencies): MembershipService {
-  return new MembershipService(deps.membership)
+  return new MembershipService(
+    deps.membership,
+    undefined,
+    undefined,
+    deps.revokeUserSessions,
+  )
 }
 
 function parseReviewInput(payload: unknown): ReviewInput {
