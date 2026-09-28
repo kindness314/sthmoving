@@ -40,6 +40,7 @@ const excludedDirectories = new Set([
   'node_modules',
 ])
 const excludedFiles = new Set([
+  '.env',
   'private.config.json',
   'project.private.config.json',
 ])

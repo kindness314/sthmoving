@@ -64,7 +64,7 @@ describe('自建后端的运行时依赖', () => {
   it('入口确实覆盖到了仓储与路由', async () => {
     const graph = await collectRuntimeGraph()
     const files = [...graph.keys()].map((path) =>
-      path.slice(repositoryRoot.length + 1),
+      path.slice(repositoryRoot.length + 1).replace(/\\/g, '/'),
     )
 
     expect(files).toContain('server/src/repositories/items.ts')

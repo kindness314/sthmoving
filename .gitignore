@@ -5,6 +5,7 @@ dist/
 
 project.private.config.json
 private.config.json
+.env
 
 miniprogram_npm/
 miniprogram/vendor/supvan-t50-pro/SUPVANAPIT50PRO/
