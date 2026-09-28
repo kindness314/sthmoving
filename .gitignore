@@ -15,3 +15,9 @@ cloudfunctions/**/dist/
 *.log
 .DS_Store
 Thumbs.db
+
+# 开发过程文档，仅保留在本地
+/产品需求与架构.md
+/实施计划.md
+/docs/archive/
+/docs/阶段8硕方T50Pro打印验收.md
