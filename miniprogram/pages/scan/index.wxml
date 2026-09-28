@@ -1,4 +1,5 @@
 <view class="page scan-page" style="{{themeStyle}}">
+  <nav-bar title="扫码查询" />
   <view class="heading">
     <view class="title">扫码查询</view>
     <view class="muted">扫描物品标签上的微信小程序码</view>

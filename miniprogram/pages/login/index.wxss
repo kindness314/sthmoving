@@ -1,10 +1,12 @@
 .login-page {
   display: flex;
-  align-items: center;
+  flex-direction: column;
 }
 
 .card {
   width: 100%;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .brand-mark {

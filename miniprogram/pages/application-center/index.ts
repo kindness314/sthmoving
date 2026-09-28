@@ -1,4 +1,4 @@
-import { getPageThemeStyle } from '../../services/theme'
+import { getThemeStyle } from '../../services/theme'
 import { listMyOutboundRequests } from '../../services/outbound'
 import type { OutboundRequest } from '../../types/domain'
 
@@ -10,59 +10,58 @@ interface ApplicationView extends OutboundRequest {
 
 let requestSequence = 0
 
-Page({
-  data: {
-    themeStyle: getPageThemeStyle(),
-    loading: true,
-    refreshing: false,
-    requests: [] as ApplicationView[],
-    errorMessage: '',
+Page({ data: {
+  themeStyle: getThemeStyle(),
+  loading: true,
+  refreshing: false,
+  requests: [] as ApplicationView[],
+  errorMessage: '',
+},
+  onLoad() {
+    this.setData({ themeStyle: getThemeStyle() })
   },
-
   onShow() {
-    void this.loadRequests()
-  },
-
-  onUnload() {
-    requestSequence += 1
-  },
-
-  onPullDownRefresh() {
-    void this.loadRequests().finally(() => wx.stopPullDownRefresh())
-  },
-
-  async loadRequests() {
-    const sequence = ++requestSequence
-    const hasContent = this.data.requests.length > 0
-    this.setData({
-      ...(hasContent ? { refreshing: true } : { loading: true }),
-      errorMessage: '',
-    })
-    try {
-      const requests = await listMyOutboundRequests()
-      if (sequence !== requestSequence) {
-        return
-      }
-      this.setData({ requests: requests.map(toView) })
-    } catch (error) {
-      if (sequence !== requestSequence) {
-        return
-      }
+      this.setData({ themeStyle: getThemeStyle() })
+      void this.loadRequests()
+    }, onUnload() {
+      requestSequence += 1
+    },
+  
+    onPullDownRefresh() {
+      void this.loadRequests().finally(() => wx.stopPullDownRefresh())
+    },
+  
+    async loadRequests() {
+      const sequence = ++requestSequence
+      const hasContent = this.data.requests.length > 0
       this.setData({
-        errorMessage:
-          error instanceof Error ? error.message : '加载申请记录失败',
+        ...(hasContent ? { refreshing: true } : { loading: true }),
+        errorMessage: '',
       })
-    } finally {
-      if (sequence === requestSequence) {
-        this.setData({ loading: false, refreshing: false })
+      try {
+        const requests = await listMyOutboundRequests()
+        if (sequence !== requestSequence) {
+          return
+        }
+        this.setData({ requests: requests.map(toView) })
+      } catch (error) {
+        if (sequence !== requestSequence) {
+          return
+        }
+        this.setData({
+          errorMessage:
+            error instanceof Error ? error.message : '加载申请记录失败',
+        })
+      } finally {
+        if (sequence === requestSequence) {
+          this.setData({ loading: false, refreshing: false })
+        }
       }
-    }
-  },
-
-  handleRetry() {
-    void this.loadRequests()
-  },
-})
+    },
+  
+    handleRetry() {
+      void this.loadRequests()
+    }, })
 
 function toView(request: OutboundRequest): ApplicationView {
   return {

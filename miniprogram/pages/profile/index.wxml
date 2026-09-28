@@ -1,10 +1,9 @@
 <view class="page profile-page" style="{{themeStyle}}">
+  <nav-bar title="个人信息" show-back="{{false}}" show-home="{{false}}" />
   <view class="profile-header">
     <view class="heading">
       <view class="title">个人信息</view>
-      <view class="muted">管理你的资料与界面偏好</view>
     </view>
-    <view class="page-switch"><bottom-navigation active="profile" /></view>
   </view>
 
   <view wx:if="{{loading}}" class="card state muted">正在加载个人资料…</view>
@@ -67,7 +66,6 @@
 
     <view class="card theme-card">
       <view class="section-title">界面颜色</view>
-      <view class="muted theme-description">选择经过文字对比度检查的主题颜色</view>
       <view class="theme-options">
         <view
           wx:for="{{themes}}"
@@ -85,9 +83,6 @@
     </view>
 
     <view wx:if="{{errorMessage}}" class="error form-error">{{errorMessage}}</view>
-    <button class="primary-button save-button" loading="{{saving}}" disabled="{{saving || savingNickname || uploadingAvatar}}" bindtap="handleSave">
-      保存个人资料
-    </button>
   </block>
 
   <text-entry-modal id="nicknameModal" />

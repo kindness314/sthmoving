@@ -1,4 +1,5 @@
 <view class="page login-page" style="{{themeStyle}}">
+  <nav-bar title="登录" show-back="{{false}}" show-home="{{false}}" />
   <view class="card">
     <view class="brand-mark"></view>
     <view class="title">{{organizationName}}</view>

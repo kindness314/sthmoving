@@ -1,4 +1,5 @@
 <view class="page" style="{{themeStyle}}">
+  <nav-bar title="成员管理" />
   <view class="heading">
     <view class="title">成员管理</view>
     <view class="muted">管理成员、管理员与实际管理者</view>

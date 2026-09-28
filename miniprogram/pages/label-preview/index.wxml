@@ -1,4 +1,5 @@
 <view class="page" style="{{themeStyle}}">
+  <nav-bar title="物品小程序码" />
   <view class="heading">
     <view class="title">物品小程序码</view>
     <view class="muted">{{item ? item.name : '正在读取物品信息'}}</view>

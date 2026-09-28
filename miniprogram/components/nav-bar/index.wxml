@@ -1,0 +1,21 @@
+<view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+  <view class="nav-bar-row">
+    <view
+      wx:if="{{showBack}}"
+      class="nav-back"
+      bindtap="handleBack"
+      hover-class="nav-back-active"
+    >
+      <image class="nav-back-icon" src="/assets/icons/arrow-left-nav.svg" mode="aspectFit" />
+    </view>
+    <view
+      wx:if="{{showHome}}"
+      class="nav-home"
+      bindtap="handleHome"
+      hover-class="nav-back-active"
+    >
+      <image class="nav-back-icon" src="/assets/icons/home-nav.svg" mode="aspectFit" />
+    </view>
+    <text class="nav-title">{{title}}</text>
+  </view>
+</view>

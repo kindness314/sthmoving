@@ -32,7 +32,17 @@
   },
   "usingComponents": {
     "text-entry-modal": "/components/text-entry-modal/index",
-    "bottom-navigation": "/components/bottom-navigation/index"
+    "nav-bar": "/components/nav-bar/index"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#64748b",
+    "selectedColor": "#17365d",
+    "backgroundColor": "#ffffff",
+    "list": [
+      { "pagePath": "pages/home/index", "text": "工作台" },
+      { "pagePath": "pages/profile/index", "text": "个人资料" }
+    ]
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"

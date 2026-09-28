@@ -1,25 +1,24 @@
-import { getPageThemeStyle } from '../../services/theme'
+import { getThemeStyle } from '../../services/theme'
 import { validateCommitSummary } from '../../domain/validation'
 import { createOutboundRequest } from '../../services/outbound'
 
-Page({
-  data: {
-    themeStyle: getPageThemeStyle(),
-    itemId: '',
-    reason: '',
-    submitting: false,
-    errorMessage: '',
-  },
-
-  onLoad(options: Record<string, string | undefined>) {
+Page({ data: {
+  themeStyle: getThemeStyle(),
+  itemId: '',
+  reason: '',
+  submitting: false,
+  errorMessage: '',
+},
+  onShow() {
+    this.setData({ themeStyle: getThemeStyle() })
+  }, onLoad(options: Record<string, string | undefined>) {
+    this.setData({ themeStyle: getThemeStyle() })
     const itemId = safeDecode(options['itemId'])
     this.setData({ itemId })
     if (!itemId) {
       this.setData({ errorMessage: '物品链接无效' })
     }
-  },
-
-  handleReasonInput(event: WechatMiniprogram.TextareaInput) {
+  }, handleReasonInput(event: WechatMiniprogram.TextareaInput) {
     this.setData({ reason: event.detail.value, errorMessage: '' })
   },
 
@@ -56,8 +55,7 @@ Page({
     } finally {
       this.setData({ submitting: false })
     }
-  },
-})
+  }, })
 
 function safeDecode(value: string | undefined): string {
   if (!value) {

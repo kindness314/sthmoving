@@ -39,6 +39,11 @@ page {
   font-weight: 600;
 }
 
+.primary-button[disabled] {
+  background: #b6c2d2 !important;
+  color: #f1f5f9 !important;
+}
+
 .muted {
   color: #6d7976;
 }

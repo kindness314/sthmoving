@@ -1,4 +1,5 @@
 <view class="page" style="{{themeStyle}}">
+  <nav-bar title="查询物品" />
   <view class="heading">
     <view class="title">查询物品</view>
     <view class="muted">按名称、详情、编码或分类查找</view>

@@ -1,0 +1,52 @@
+.nav-bar {
+  position: sticky;
+  z-index: 100;
+  top: 0;
+  box-sizing: border-box;
+  margin: calc(-1 * var(--page-inset-top, 48rpx)) -32rpx 32rpx;
+  background: var(--brand-color, #17365d);
+  color: #ffffff;
+}
+
+.nav-bar-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;
+  padding: 0 24rpx;
+}
+
+.nav-back {
+  position: absolute;
+  left: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68rpx;
+  height: 68rpx;
+}
+
+.nav-home {
+  position: absolute;
+  left: 96rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68rpx;
+  height: 68rpx;
+}
+
+.nav-back-active {
+  opacity: 0.6;
+}
+
+.nav-back-icon {
+  width: 36rpx;
+  height: 36rpx;
+}
+
+.nav-title {
+  font-size: 32rpx;
+  font-weight: 600;
+}

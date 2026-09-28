@@ -1,4 +1,4 @@
 {
-  "navigationBarTitleText": "成员审核",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "navigationStyle": "custom"
 }

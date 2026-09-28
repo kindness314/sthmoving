@@ -1,4 +1,5 @@
 <view class="page" style="{{themeStyle}}">
+  <nav-bar title="离库物品管理" />
   <view class="heading">
     <view class="title">离库物品管理</view>
     <view class="muted">查看已离库物品，可重新入库或删除</view>

@@ -1,4 +1,5 @@
 <view class="page" style="{{themeStyle}}">
+  <nav-bar title="离库审核" />
   <view class="heading">
     <view class="title">待处理离库申请</view>
     <view class="muted">管理员或所有者可同意、拒绝成员的离库申请</view>

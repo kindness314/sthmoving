@@ -1,4 +1,4 @@
-import { getPageThemeStyle } from '../../services/theme'
+import { getThemeStyle } from '../../services/theme'
 import {
   generateItemMiniProgramCode,
   getItemLabel,
@@ -21,43 +21,42 @@ const labelSizeOptions: Array<{
   { value: 20, label: '20 × 20 mm' },
 ]
 
-Page({
-  data: {
-    themeStyle: getPageThemeStyle(),
-    itemId: '',
-    item: null as ItemDetail | null,
-    label: null as ItemLabel | null,
-    labelImageUrl: '',
-    loading: true,
-    generating: false,
-    errorMessage: '',
-    printerDevices: [] as PrinterDevice[],
-    printerStatus: 'DISCONNECTED' as PrinterStatus,
-    printerStatusText: '尚未连接打印机',
-    connectedDeviceName: '',
-    discovering: false,
-    connectingDeviceId: '',
-    printing: false,
-    copiesInput: '1',
-    labelSizeOptions,
-    selectedLabelSize: 30 as LabelSizeMillimetres,
-    printerErrorMessage: '',
-    templateWidth: 240,
-    templateHeight: 240,
-    barCodeWidth: 20,
-    barCodeHeight: 20,
-    qrCodeWidth: 20,
-    qrCodeHeight: 20,
-    pixelRatio: 1,
-  },
-
-  onLoad(options: Record<string, string | undefined>) {
+Page({ data: {
+  themeStyle: getThemeStyle(),
+  itemId: '',
+  item: null as ItemDetail | null,
+  label: null as ItemLabel | null,
+  labelImageUrl: '',
+  loading: true,
+  generating: false,
+  errorMessage: '',
+  printerDevices: [] as PrinterDevice[],
+  printerStatus: 'DISCONNECTED' as PrinterStatus,
+  printerStatusText: '尚未连接打印机',
+  connectedDeviceName: '',
+  discovering: false,
+  connectingDeviceId: '',
+  printing: false,
+  copiesInput: '1',
+  labelSizeOptions,
+  selectedLabelSize: 30 as LabelSizeMillimetres,
+  printerErrorMessage: '',
+  templateWidth: 240,
+  templateHeight: 240,
+  barCodeWidth: 20,
+  barCodeHeight: 20,
+  qrCodeWidth: 20,
+  qrCodeHeight: 20,
+  pixelRatio: 1,
+},
+  onShow() {
+    this.setData({ themeStyle: getThemeStyle() })
+  }, onLoad(options: Record<string, string | undefined>) {
+    this.setData({ themeStyle: getThemeStyle() })
     const itemId = safeDecode(options['itemId'])
     this.setData({ itemId })
     void this.loadPage()
-  },
-
-  onReady() {
+  }, onReady() {
     const canvasText = wx.createCanvasContext('Canvas', this)
     const canvasBarCode = wx.createSelectorQuery().in(this)
     supvanT50ProPrinter.bindRenderContext({
@@ -308,8 +307,7 @@ Page({
       ),
       connectedDeviceName,
     })
-  },
-})
+  }, })
 
 
 function safeDecode(value: string | undefined): string {

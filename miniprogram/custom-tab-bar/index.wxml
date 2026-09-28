@@ -1,0 +1,20 @@
+<view class="tab-bar" style="{{themeStyle}}">
+  <view
+    class="tab-item {{selected === 0 ? 'tab-item-active' : ''}}"
+    data-url="/pages/home/index"
+    bindtap="handleSwitch"
+    hover-class="tab-item-pressed"
+  >
+    <image class="tab-icon" src="/assets/icons/appstore.svg" mode="aspectFit" />
+    <text class="tab-label">工作台</text>
+  </view>
+  <view
+    class="tab-item {{selected === 1 ? 'tab-item-active' : ''}}"
+    data-url="/pages/profile/index"
+    bindtap="handleSwitch"
+    hover-class="tab-item-pressed"
+  >
+    <image class="tab-icon" src="/assets/icons/profile.svg" mode="aspectFit" />
+    <text class="tab-label">个人资料</text>
+  </view>
+</view>

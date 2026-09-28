@@ -1,4 +1,4 @@
 {
-  "navigationBarTitleText": "分类管理",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "navigationStyle": "custom"
 }

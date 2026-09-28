@@ -1,4 +1,5 @@
 <view class="page" style="{{themeStyle}}">
+  <nav-bar title="操作日志" />
   <view class="heading">
     <view class="title">操作日志</view>
     <view class="muted">只记录操作人、时间、动作和提交梗概</view>

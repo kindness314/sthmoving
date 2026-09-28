@@ -1,5 +1,8 @@
 .profile-page {
+  --page-inset-top: 32rpx;
   padding-top: 32rpx;
+  padding-bottom: calc(180rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(180rpx + env(safe-area-inset-bottom));
 }
 
 .profile-header {
@@ -14,11 +17,6 @@
   min-width: 0;
   flex: 1;
   margin-bottom: 0;
-}
-
-.page-switch {
-  flex: none;
-  margin-top: 24rpx;
 }
 
 .identity-card {
@@ -190,12 +188,6 @@
   text-align: left;
 }
 
-.theme-description {
-  margin-top: -12rpx;
-  margin-bottom: 20rpx;
-  font-size: 24rpx;
-}
-
 .theme-options {
   display: grid;
   gap: 14rpx;
@@ -233,16 +225,6 @@
 
 .form-error {
   margin-top: 20rpx;
-}
-
-.save-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 88rpx;
-  margin-top: 24rpx;
-  padding: 0 24rpx;
-  line-height: 1.4;
 }
 
 .state {

@@ -1,6 +1,12 @@
 .pending-page {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+}
+
+.card {
+  width: 100%;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .title {
@@ -28,10 +34,13 @@
 .text-input {
   box-sizing: border-box;
   width: 100%;
-  padding: 24rpx;
+  height: 88rpx;
+  padding: 0 24rpx;
   border: 1rpx solid #d7dee8;
   border-radius: 14rpx;
   background: #f8fafc;
+  font-size: 30rpx;
+  line-height: 86rpx;
 }
 
 .submit-button {

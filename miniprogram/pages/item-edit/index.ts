@@ -1,4 +1,4 @@
-import { getPageThemeStyle } from '../../services/theme'
+import { getThemeStyle } from '../../services/theme'
 import { ApiClientError } from '../../services/cloud-api'
 import {
   MAX_ITEM_IMAGES,
@@ -64,34 +64,35 @@ interface ConflictState {
   fields: ConflictField[]
 }
 
-Page({
-  data: {
-    themeStyle: getPageThemeStyle(),
-    itemId: '',
-    item: null as ItemDetail | null,
-    name: '',
-    description: '',
-    quantityMode: 'SINGLE' as QuantityMode,
-    quantityInput: '1',
-    commitSummary: '',
-    categories: [] as Category[],
-    categoryNames: [] as string[],
-    categoryIndex: -1,
-    selectedCategoryId: '',
-    canEditCategory: false,
-    loadingCategories: false,
-    selectedImages: [] as EditImage[],
-    baseVersion: 0,
-    baseFields: null as DraftFields | null,
-    baseImageFileIds: [] as string[],
-    loading: true,
-    processingImages: false,
-    submitting: false,
-    errorMessage: '',
-    conflict: null as ConflictState | null,
-  },
-
-  onLoad(options: Record<string, string | undefined>) {
+Page({ data: {
+  themeStyle: getThemeStyle(),
+  itemId: '',
+  item: null as ItemDetail | null,
+  name: '',
+  description: '',
+  quantityMode: 'SINGLE' as QuantityMode,
+  quantityInput: '1',
+  commitSummary: '',
+  categories: [] as Category[],
+  categoryNames: [] as string[],
+  categoryIndex: -1,
+  selectedCategoryId: '',
+  canEditCategory: false,
+  loadingCategories: false,
+  selectedImages: [] as EditImage[],
+  baseVersion: 0,
+  baseFields: null as DraftFields | null,
+  baseImageFileIds: [] as string[],
+  loading: true,
+  processingImages: false,
+  submitting: false,
+  errorMessage: '',
+  conflict: null as ConflictState | null,
+},
+  onShow() {
+    this.setData({ themeStyle: getThemeStyle() })
+  }, onLoad(options: Record<string, string | undefined>) {
+    this.setData({ themeStyle: getThemeStyle() })
     const itemId = safeDecode(options['itemId'])
     this.setData({ itemId })
     if (!itemId) {
@@ -109,9 +110,7 @@ Page({
     if (canEditCategory) {
       void this.loadCategories()
     }
-  },
-
-  async loadCategories() {
+  }, async loadCategories() {
     this.setData({ loadingCategories: true })
     try {
       const categories = await listManageableCategories()
@@ -473,8 +472,7 @@ Page({
       selectedCategoryId: categoryId,
       categoryIndex,
     })
-  },
-})
+  }, })
 
 function toImageFileIds(
   images: readonly EditImage[],

@@ -1,4 +1,5 @@
 <view class="page" style="{{themeStyle}}">
+  <nav-bar title="分类管理" />
   <view class="heading">
     <view class="title">分类管理</view>
     <view class="muted">

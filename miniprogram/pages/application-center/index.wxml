@@ -1,4 +1,5 @@
 <view class="page" style="{{themeStyle}}">
+  <nav-bar title="申请中心" />
   <view class="heading">
     <view class="title">申请中心</view>
     <view class="muted">查看你提交的离库申请及处理结果</view>

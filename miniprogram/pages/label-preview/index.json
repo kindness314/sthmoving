@@ -1,4 +1,4 @@
 {
-  "navigationBarTitleText": "物品小程序码",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "navigationStyle": "custom"
 }

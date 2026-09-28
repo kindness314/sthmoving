@@ -1,4 +1,4 @@
-import { getPageThemeStyle } from '../../services/theme'
+import { getThemeStyle } from '../../services/theme'
 import {
   MAX_ITEM_IMAGES,
   validateCategoryName,
@@ -21,32 +21,31 @@ import type {
   QuantityMode,
 } from '../../types/domain'
 
-Page({
-  data: {
-    themeStyle: getPageThemeStyle(),
-    name: '',
-    description: '',
-    quantityMode: 'SINGLE' as QuantityMode,
-    quantityInput: '1',
-    commitSummary: '首次登记物品',
-    categories: [] as Category[],
-    categoryMode: 'EXISTING' as 'EXISTING' | 'NEW',
-    selectedCategoryIndex: -1,
-    selectedCategoryId: '',
-    selectedCategoryName: '',
-    newCategoryName: '',
-    selectedImages: [] as PreparedItemImage[],
-    loadingCategories: true,
-    processingImages: false,
-    submitting: false,
-    errorMessage: '',
-  },
-
-  onLoad() {
+Page({ data: {
+  themeStyle: getThemeStyle(),
+  name: '',
+  description: '',
+  quantityMode: 'SINGLE' as QuantityMode,
+  quantityInput: '1',
+  commitSummary: '首次登记物品',
+  categories: [] as Category[],
+  categoryMode: 'EXISTING' as 'EXISTING' | 'NEW',
+  selectedCategoryIndex: -1,
+  selectedCategoryId: '',
+  selectedCategoryName: '',
+  newCategoryName: '',
+  selectedImages: [] as PreparedItemImage[],
+  loadingCategories: true,
+  processingImages: false,
+  submitting: false,
+  errorMessage: '',
+},
+  onShow() {
+    this.setData({ themeStyle: getThemeStyle() })
+  }, onLoad() {
+    this.setData({ themeStyle: getThemeStyle() })
     void this.loadCategories()
-  },
-
-  async loadCategories(selectedCategoryId?: string) {
+  }, async loadCategories(selectedCategoryId?: string) {
     this.setData({ loadingCategories: true, errorMessage: '' })
     try {
       const categories = await listCategories()
@@ -251,8 +250,7 @@ Page({
         : validateCategoryName(this.data.newCategoryName)) ??
       validateCommitSummary(this.data.commitSummary)
     )
-  },
-})
+  }, })
 
 function getErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error) {

@@ -1,4 +1,4 @@
-import { getPageThemeStyle } from '../../services/theme'
+import { getThemeStyle } from '../../services/theme'
 import { listItemLogs } from '../../services/items'
 import type { ItemOperationLog } from '../../types/domain'
 
@@ -8,16 +8,17 @@ interface ItemOperationLogView extends ItemOperationLog {
   operatedAtText: string
 }
 
-Page({
-  data: {
-    themeStyle: getPageThemeStyle(),
-    itemId: '',
-    logs: [] as ItemOperationLogView[],
-    loading: true,
-    errorMessage: '',
-  },
-
-  onLoad(options: Record<string, string | undefined>) {
+Page({ data: {
+  themeStyle: getThemeStyle(),
+  itemId: '',
+  logs: [] as ItemOperationLogView[],
+  loading: true,
+  errorMessage: '',
+},
+  onShow() {
+    this.setData({ themeStyle: getThemeStyle() })
+  }, onLoad(options: Record<string, string | undefined>) {
+    this.setData({ themeStyle: getThemeStyle() })
     const itemId = safeDecode(options['itemId'])
     this.setData({ itemId })
     if (!itemId) {
@@ -28,9 +29,7 @@ Page({
       return
     }
     void this.loadLogs()
-  },
-
-  onPullDownRefresh() {
+  }, onPullDownRefresh() {
     void this.loadLogs().finally(() => wx.stopPullDownRefresh())
   },
 
@@ -55,8 +54,7 @@ Page({
     } finally {
       this.setData({ loading: false })
     }
-  },
-})
+  }, })
 
 function toLogView(log: ItemOperationLog): ItemOperationLogView {
   return {

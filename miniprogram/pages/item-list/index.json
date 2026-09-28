@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "查询物品",
   "enablePullDownRefresh": true,
-  "onReachBottomDistance": 120
+  "onReachBottomDistance": 120,
+  "navigationStyle": "custom"
 }

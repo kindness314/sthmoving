@@ -1,51 +1,50 @@
-import { getPageThemeStyle } from '../../services/theme'
+import { getThemeStyle } from '../../services/theme'
 import { parseScanTarget } from './parser'
 
-Page({
-  data: {
-    themeStyle: getPageThemeStyle(),
-    scanning: false,
-    errorMessage: '',
-    autoStarted: false,
+Page({ data: {
+  themeStyle: getThemeStyle(),
+  scanning: false,
+  errorMessage: '',
+  autoStarted: false,
+},
+  onLoad() {
+    this.setData({ themeStyle: getThemeStyle() })
   },
-
   onShow() {
-    if (this.data.autoStarted) {
-      return
-    }
-    this.setData({ autoStarted: true })
-    void this.startScan()
-  },
-
-  handleScan() {
-    void this.startScan()
-  },
-
-  async startScan() {
-    if (this.data.scanning) {
-      return
-    }
-    this.setData({ scanning: true, errorMessage: '' })
-    try {
-      const result = await wx.scanCode({
-        onlyFromCamera: false,
-        scanType: ['wxCode', 'qrCode', 'barCode'],
-      })
-      const target = parseScanTarget(result as unknown as Record<string, unknown>)
-      if (!target) {
-        throw new Error('未识别到物品标签')
+      this.setData({ themeStyle: getThemeStyle() })
+      if (this.data.autoStarted) {
+        return
       }
-      await wx.navigateTo({ url: target })
-    } catch (error) {
-      const message = getScanErrorMessage(error)
-      if (!isScanCancelled(error)) {
-        this.setData({ errorMessage: message })
+      this.setData({ autoStarted: true })
+      void this.startScan()
+    }, handleScan() {
+      void this.startScan()
+    },
+  
+    async startScan() {
+      if (this.data.scanning) {
+        return
       }
-    } finally {
-      this.setData({ scanning: false })
-    }
-  },
-})
+      this.setData({ scanning: true, errorMessage: '' })
+      try {
+        const result = await wx.scanCode({
+          onlyFromCamera: false,
+          scanType: ['wxCode', 'qrCode', 'barCode'],
+        })
+        const target = parseScanTarget(result as unknown as Record<string, unknown>)
+        if (!target) {
+          throw new Error('未识别到物品标签')
+        }
+        await wx.navigateTo({ url: target })
+      } catch (error) {
+        const message = getScanErrorMessage(error)
+        if (!isScanCancelled(error)) {
+          this.setData({ errorMessage: message })
+        }
+      } finally {
+        this.setData({ scanning: false })
+      }
+    }, })
 
 function isScanCancelled(error: unknown): boolean {
   const message = getScanErrorMessage(error).toLowerCase()

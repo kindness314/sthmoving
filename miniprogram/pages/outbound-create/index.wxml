@@ -1,4 +1,5 @@
 <view class="page" style="{{themeStyle}}">
+  <nav-bar title="申请离库" />
   <view class="heading">
     <view class="title">申请离库</view>
     <view class="muted">申请提交后，物品会进入“离库申请中”，由管理员处理</view>

@@ -1,4 +1,5 @@
 <view class="page pending-page" style="{{themeStyle}}">
+  <nav-bar title="加入审核" show-back="{{false}}" show-home="{{false}}" />
   <view class="card">
     <view class="title">{{title}}</view>
     <view class="muted">{{description}}</view>

@@ -1,4 +1,5 @@
 <view class="page" style="{{themeStyle}}">
+  <nav-bar title="编辑物品" />
   <view wx:if="{{loading}}" class="card state muted">正在加载物品…</view>
   <view wx:elif="{{!item}}" class="card state">
     <view class="error">{{errorMessage || '物品不存在'}}</view>
