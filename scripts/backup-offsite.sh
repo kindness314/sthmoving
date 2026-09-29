@@ -13,5 +13,5 @@ if ! command -v coscli >/dev/null 2>&1; then
   exit 1
 fi
 
-coscli sync "${source_dir}" "cos://${bucket}/${prefix}"
+coscli sync "${source_dir}" "cos://${bucket}/${prefix}" --recursive
 echo "异地同步完成：cos://${bucket}/${prefix}"
