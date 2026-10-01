@@ -24,6 +24,7 @@ page {
 }
 
 .card {
+  box-sizing: border-box;
   padding: 32rpx;
   border: 1rpx solid #e6ecea;
   border-radius: 20rpx;
