@@ -1,4 +1,5 @@
 import { getThemeStyle } from '../../services/theme'
+import { organizationName } from '../../config/env'
 import {
   login,
   submitJoinRequest,
@@ -10,7 +11,7 @@ const stateContent: Record<
   { title: string; description: string; canApply: boolean }
 > = {
   UNAPPLIED: {
-    title: '申请加入 YUNA仓储',
+    title: `申请加入 ${organizationName}`,
     description: '请填写管理员能够识别的姓名或称呼。',
     canApply: true,
   },

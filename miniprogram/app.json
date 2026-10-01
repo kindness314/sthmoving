@@ -20,7 +20,7 @@
     "pages/profile/index"
   ],
   "window": {
-    "navigationBarTitleText": "YUNA仓储",
+    "navigationBarTitleText": "YUNA个物终端",
     "navigationBarBackgroundColor": "#17365d",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#f4f6f9"

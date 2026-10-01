@@ -1,3 +1,3 @@
-export const apiBaseUrl = 'http://127.0.0.1:8080'
+export const apiBaseUrl = 'https://yunasthmoving.cn'
 
-export const organizationName = 'YUNA仓储'
+export const organizationName = 'YUNA'
