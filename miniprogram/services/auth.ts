@@ -50,6 +50,21 @@ export function listMembers(): Promise<PublicMember[]> {
   })
 }
 
+export interface MemberCandidate {
+  id: string
+  displayName: string
+}
+
+export function listMemberCandidates(
+  keyword?: string,
+): Promise<MemberCandidate[]> {
+  return callApi<{ keyword?: string }, MemberCandidate[]>({
+    module: 'membership',
+    action: 'listCandidates',
+    payload: keyword ? { keyword } : {},
+  })
+}
+
 export function disableMember(userId: string): Promise<PublicMember> {
   return callApi<{ userId: string }, PublicMember>({
     module: 'membership',

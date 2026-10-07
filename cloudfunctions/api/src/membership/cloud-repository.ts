@@ -107,6 +107,29 @@ class CloudMembershipUnitOfWork implements MembershipUnitOfWork {
     return result.data as UserRecord[]
   }
 
+  async searchApprovedMembers(
+    keyword: string | null,
+    limit: number,
+  ): Promise<UserRecord[]> {
+    const result = await this.database
+      .collection('users')
+      .where({ status: 'APPROVED' })
+      .limit(200)
+      .get()
+    const normalized = keyword?.toLowerCase() ?? null
+    return (result.data as UserRecord[])
+      .filter(
+        (user) =>
+          normalized === null ||
+          user.display_name.toLowerCase().includes(normalized),
+      )
+      .sort(
+        (left, right) =>
+          left.display_name.localeCompare(right.display_name) ||
+          left._id.localeCompare(right._id),
+      )
+      .slice(0, limit)
+  }
 
   private async getFirst<TRecord>(
     collection: string,

@@ -82,6 +82,24 @@ class InMemoryItemRepository implements ItemRepository {
             item.category_id === query.categoryId,
         )
         .filter((item) => {
+          if (query.ownership === 'PUBLIC') {
+            return item.owner_id === undefined
+          }
+          if (query.ownership === 'PRIVATE') {
+            return item.owner_id !== undefined
+          }
+          return true
+        })
+        .filter((item) => {
+          if (!query.ownershipUserId) {
+            return true
+          }
+          return (
+            item.owner_id === query.ownershipUserId ||
+            item.donor_id === query.ownershipUserId
+          )
+        })
+        .filter((item) => {
           if (!keyword) {
             return true
           }
@@ -960,5 +978,166 @@ describe('物品查询服务', () => {
       }),
       'INVALID_CURSOR',
     )
+  })
+})
+
+describe('物品归属', () => {
+  function addMember(
+    repository: InMemoryItemRepository,
+    id: string,
+    displayName: string,
+    status: UserRecord['status'] = 'APPROVED',
+  ): void {
+    repository.users.set(id, {
+      ...createUser(),
+      _id: id,
+      openid: `${id}-openid`,
+      display_name: displayName,
+      status,
+    })
+  }
+
+  it('登记时拒绝同时指定所有者和捐赠者', async () => {
+    const repository = prepareRepository()
+    addMember(repository, 'user-owner', '所有者')
+    addMember(repository, 'user-donor', '捐赠者')
+    const service = createService(repository)
+
+    await expectApiCode(
+      service.create(
+        'user-member',
+        createInput({ ownerId: 'user-owner', donorId: 'user-donor' }),
+      ),
+      'OWNER_DONOR_CONFLICT',
+    )
+    expect(repository.items.size).toBe(0)
+  })
+
+  it('登记时拒绝未通过审核的归属成员', async () => {
+    const repository = prepareRepository()
+    addMember(repository, 'user-pending', '待审核', 'PENDING')
+    const service = createService(repository)
+
+    await expectApiCode(
+      service.create('user-member', createInput({ ownerId: 'user-pending' })),
+      'OWNERSHIP_USER_INVALID',
+    )
+    expect(repository.items.size).toBe(0)
+  })
+
+  it('登记指定所有者的物品并在列表中返回归属信息', async () => {
+    const repository = prepareRepository()
+    addMember(repository, 'user-owner', '所有者')
+    const service = createService(repository)
+
+    const created = await service.create(
+      'user-member',
+      createInput({ ownerId: 'user-owner' }),
+    )
+    expect(repository.items.get(created.id)?.owner_id).toBe('user-owner')
+    expect(repository.items.get(created.id)?.donor_id).toBeUndefined()
+
+    const list = await service.list('user-member', {})
+    expect(list.items).toHaveLength(1)
+    expect(list.items[0]?.owner).toEqual({
+      id: 'user-owner',
+      displayName: '所有者',
+    })
+    expect(list.items[0]?.donor).toBeUndefined()
+  })
+
+  it('更新时拒绝同时指定所有者和捐赠者', async () => {
+    const repository = prepareRepository()
+    addMember(repository, 'user-owner', '所有者')
+    addMember(repository, 'user-donor', '捐赠者')
+    repository.items.set('item-1', createItemRecord('item-1'))
+    const service = createService(repository)
+
+    await expectApiCode(
+      service.update('user-member', {
+        itemId: 'item-1',
+        expectedVersion: 1,
+        ownerId: 'user-owner',
+        donorId: 'user-donor',
+        commitSummary: '调整归属',
+      }),
+      'OWNER_DONOR_CONFLICT',
+    )
+    expect(repository.items.get('item-1')?.version).toBe(1)
+  })
+
+  it('更新可以切换和清除归属', async () => {
+    const repository = prepareRepository()
+    addMember(repository, 'user-owner', '所有者')
+    addMember(repository, 'user-donor', '捐赠者')
+    repository.items.set('item-1', createItemRecord('item-1'))
+    const service = createService(repository)
+
+    await service.update('user-member', {
+      itemId: 'item-1',
+      expectedVersion: 1,
+      ownerId: 'user-owner',
+      commitSummary: '指定所有者',
+    })
+    expect(repository.items.get('item-1')).toMatchObject({
+      owner_id: 'user-owner',
+      version: 2,
+    })
+
+    await service.update('user-member', {
+      itemId: 'item-1',
+      expectedVersion: 2,
+      ownerId: null,
+      donorId: 'user-donor',
+      commitSummary: '改为捐赠者',
+    })
+    const switched = repository.items.get('item-1')
+    expect(switched?.owner_id).toBeUndefined()
+    expect(switched?.donor_id).toBe('user-donor')
+
+    await service.update('user-member', {
+      itemId: 'item-1',
+      expectedVersion: 3,
+      donorId: null,
+      commitSummary: '改回公用',
+    })
+    const cleared = repository.items.get('item-1')
+    expect(cleared?.owner_id).toBeUndefined()
+    expect(cleared?.donor_id).toBeUndefined()
+    expect(cleared?.version).toBe(4)
+  })
+
+  it('按公用/私用和归属成员筛选列表', async () => {
+    const repository = prepareRepository()
+    addMember(repository, 'user-owner', '所有者')
+    addMember(repository, 'user-donor', '捐赠者')
+    repository.items.set('item-public', createItemRecord('item-public'))
+    repository.items.set(
+      'item-owned',
+      createItemRecord('item-owned', { owner_id: 'user-owner' }),
+    )
+    repository.items.set(
+      'item-donated',
+      createItemRecord('item-donated', { donor_id: 'user-donor' }),
+    )
+    const service = createService(repository)
+
+    const publicList = await service.list('user-member', {
+      ownership: 'PUBLIC',
+    })
+    expect(publicList.items.map((item) => item.id)).toEqual([
+      'item-public',
+      'item-donated',
+    ])
+
+    const privateList = await service.list('user-member', {
+      ownership: 'PRIVATE',
+    })
+    expect(privateList.items.map((item) => item.id)).toEqual(['item-owned'])
+
+    const donorList = await service.list('user-member', {
+      ownershipUserId: 'user-donor',
+    })
+    expect(donorList.items.map((item) => item.id)).toEqual(['item-donated'])
   })
 })

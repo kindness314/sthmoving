@@ -8,6 +8,7 @@ import type {
   JoinRequestRecord,
   UserRecord,
 } from '../../../cloudfunctions/api/src/membership/types'
+import { escapeLike } from '../db/mapping'
 import { withTransaction } from '../db/pool'
 import {
   joinRequestRow,
@@ -86,6 +87,22 @@ class PostgresMembershipUnitOfWork implements MembershipUnitOfWork {
        ORDER BY created_at DESC, id DESC
        LIMIT $1`,
       [limit],
+    )
+    return result.rows.map(userRow)
+  }
+
+  async searchApprovedMembers(
+    keyword: string | null,
+    limit: number,
+  ): Promise<UserRecord[]> {
+    const pattern = keyword ? `%${escapeLike(keyword)}%` : null
+    const result = await this.client.query(
+      `SELECT * FROM users
+       WHERE status = 'APPROVED'
+         AND ($1::text IS NULL OR display_name ILIKE $1 ESCAPE '\\')
+       ORDER BY display_name ASC, id ASC
+       LIMIT $2`,
+      [pattern, limit],
     )
     return result.rows.map(userRow)
   }

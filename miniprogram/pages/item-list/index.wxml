@@ -31,6 +31,30 @@
       </view>
     </picker>
   </view>
+  <view class="card filter-card">
+    <picker
+      mode="selector"
+      range="{{ownershipNames}}"
+      value="{{ownershipIndex}}"
+      bindchange="handleOwnershipChange"
+    >
+      <view class="category-picker">
+        <text>{{ownershipNames[ownershipIndex]}}</text>
+        <view class="picker-arrow"></view>
+      </view>
+    </picker>
+    <view class="category-picker member-filter" catchtap="handlePickOwnershipUser">
+      <text>{{ownershipUserName || '按成员筛选'}}</text>
+      <view class="picker-arrow"></view>
+    </view>
+    <view
+      wx:if="{{ownershipUserId}}"
+      class="filter-clear"
+      catchtap="handleClearOwnershipUser"
+    >
+      清除
+    </view>
+  </view>
 
   <view wx:if="{{userRole === 'ADMIN' || userRole === 'MANAGER' || userRole === 'OWNER'}}" class="management-bar">
     <button
@@ -135,4 +159,5 @@
   >
     已显示全部物品
   </view>
+  <member-picker-modal id="member-picker-modal" />
 </view>

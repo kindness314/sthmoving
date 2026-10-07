@@ -154,6 +154,17 @@ export function createMembershipHandlers(
     listMembers: async (_payload, context) =>
       createService(deps).listMembers(context.userId),
 
+    listCandidates: async (payload, context) => {
+      const keyword = (payload as { keyword?: unknown } | undefined)?.keyword
+      if (keyword !== undefined && typeof keyword !== 'string') {
+        throw new ApiException('INVALID_SEARCH_KEYWORD', '搜索关键词必须是字符串')
+      }
+      return createService(deps).listCandidates(
+        context.userId,
+        typeof keyword === 'string' ? keyword : undefined,
+      )
+    },
+
     disableMember: async (payload, context) => {
       const userId = (payload as UserIdPayload | undefined)?.userId
       if (typeof userId !== 'string') {

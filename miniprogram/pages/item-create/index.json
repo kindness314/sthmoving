@@ -1,3 +1,6 @@
 {
-  "navigationStyle": "custom"
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "member-picker-modal": "../../components/member-picker-modal/index"
+  }
 }

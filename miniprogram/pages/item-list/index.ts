@@ -4,6 +4,7 @@ import { listItems } from '../../services/items'
 import { batchDirectOutbound } from '../../services/outbound'
 import { validateCommitSummary } from '../../domain/validation'
 import type { TextEntryModalInstance } from '../../components/text-entry-modal/types'
+import type { MemberPickerModalInstance } from '../../components/member-picker-modal/types'
 import type {
   Category,
   ItemListCursor,
@@ -29,6 +30,10 @@ Page({ data: {
   categories: [] as Category[],
   categoryNames: ['全部分类'],
   categoryIndex: 0,
+  ownershipNames: ['全部归属', '公用', '私用'],
+  ownershipIndex: 0,
+  ownershipUserId: '',
+  ownershipUserName: '',
   items: [] as ItemListView[],
   nextCursor: null as ItemListCursor | null,
   loading: true,
@@ -122,6 +127,33 @@ Page({ data: {
   
     handleCategoryChange(event: WechatMiniprogram.PickerChange) {
       this.setData({ categoryIndex: Number(event.detail.value) })
+      void this.loadFirstPage()
+    },
+  
+    handleOwnershipChange(event: WechatMiniprogram.PickerChange) {
+      this.setData({ ownershipIndex: Number(event.detail.value) })
+      void this.loadFirstPage()
+    },
+  
+    async handlePickOwnershipUser() {
+      const modal = this.selectComponent(
+        '#member-picker-modal',
+      ) as unknown as MemberPickerModalInstance | null
+      if (!modal) {
+        return
+      }
+      const member = await modal.open({ title: '按归属成员筛选' })
+      if (member) {
+        this.setData({
+          ownershipUserId: member.id,
+          ownershipUserName: member.displayName,
+        })
+        void this.loadFirstPage()
+      }
+    },
+  
+    handleClearOwnershipUser() {
+      this.setData({ ownershipUserId: '', ownershipUserName: '' })
       void this.loadFirstPage()
     },
   
@@ -336,9 +368,16 @@ Page({ data: {
         this.data.categoryIndex > 0
           ? this.data.categories[this.data.categoryIndex - 1]
           : undefined
+      const ownershipUserId = this.data.ownershipUserId
       return {
         ...(keyword ? { keyword } : {}),
         ...(category ? { categoryId: category.id } : {}),
+        ...(this.data.ownershipIndex === 1
+          ? { ownership: 'PUBLIC' as const }
+          : this.data.ownershipIndex === 2
+            ? { ownership: 'PRIVATE' as const }
+            : {}),
+        ...(ownershipUserId ? { ownershipUserId } : {}),
         ...(cursor ? { cursor } : {}),
         limit: 10,
       }

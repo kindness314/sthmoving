@@ -114,6 +114,8 @@ export interface ItemSummary {
   category: ItemCategorySummary
   status: ItemStatus
   version: number
+  owner?: ItemActor
+  donor?: ItemActor
   updatedAt: string
 }
 

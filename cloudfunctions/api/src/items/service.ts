@@ -68,6 +68,11 @@ export class ItemService {
         )
       }
 
+      const ownership = await this.resolveOwnership(unitOfWork, {
+        ownerId: validated.ownerId,
+        donorId: validated.donorId,
+      })
+
       const now = this.now()
       const category = await this.resolveCategory(
         unitOfWork,
@@ -84,6 +89,7 @@ export class ItemService {
         quantity_mode: validated.quantityMode,
         quantity: validated.quantity,
         category_id: category._id,
+        ...ownership,
         status: 'ACTIVE',
         version: 1,
         registered_by: user._id,
@@ -155,6 +161,12 @@ export class ItemService {
         )
       }
 
+      const ownership = await this.resolveOwnershipUpdate(
+        unitOfWork,
+        item,
+        validated,
+      )
+
       const quantityMode = validated.quantityMode ?? item.quantity_mode
       const quantity = validated.quantity ?? item.quantity
       validateQuantity(quantityMode, quantity)
@@ -188,6 +200,8 @@ export class ItemService {
           validated.description !== item.description) ||
         quantityMode !== item.quantity_mode ||
         quantity !== item.quantity ||
+        ownership.owner_id !== item.owner_id ||
+        ownership.donor_id !== item.donor_id ||
         categoryChanged
       if (!hasEffectiveChange) {
         throw new ApiException('NO_ITEM_CHANGES', '至少修改一个物品字段')
@@ -207,7 +221,8 @@ export class ItemService {
           : {}),
         quantity_mode: quantityMode,
         quantity,
-        ...(categoryChanged ? { category_id: category._id } : {}),
+        category_id: category._id,
+        ...ownership,
         version: item.version + 1,
         updated_by: user._id,
         updated_at: now,
@@ -232,6 +247,44 @@ export class ItemService {
       })
       return toPublicItem(updated)
     })
+  }
+
+
+  private async resolveOwnership(
+    unitOfWork: ItemUnitOfWork,
+    input: { ownerId?: string | undefined; donorId?: string | undefined },
+  ): Promise<{ owner_id?: string | undefined; donor_id?: string | undefined }> {
+    if (input.ownerId && input.donorId) {
+      throw new ApiException(
+        'OWNER_DONOR_CONFLICT',
+        '所有者和捐赠者只能选择其一',
+      )
+    }
+    if (input.ownerId) {
+      await requireApprovedOwnershipUser(unitOfWork, input.ownerId)
+      return { owner_id: input.ownerId }
+    }
+    if (input.donorId) {
+      await requireApprovedOwnershipUser(unitOfWork, input.donorId)
+      return { donor_id: input.donorId }
+    }
+    return {}
+  }
+
+  private async resolveOwnershipUpdate(
+    unitOfWork: ItemUnitOfWork,
+    item: ItemRecord,
+    input: UpdateItemInput,
+  ): Promise<{ owner_id?: string | undefined; donor_id?: string | undefined }> {
+    const ownerId =
+      input.ownerId === undefined ? item.owner_id : (input.ownerId ?? undefined)
+    const donorId =
+      input.donorId === undefined ? item.donor_id : (input.donorId ?? undefined)
+    const resolved = await this.resolveOwnership(unitOfWork, {
+      ownerId,
+      donorId,
+    })
+    return { owner_id: resolved.owner_id, donor_id: resolved.donor_id }
   }
 
   async list(
@@ -453,6 +506,25 @@ export class ItemService {
     const categoriesById = new Map(
       categories.map((category) => [category._id, category]),
     )
+    const ownershipUserIds = items.flatMap((item) =>
+      [item.owner_id, item.donor_id].filter(
+        (id): id is string => id !== undefined,
+      ),
+    )
+    const ownershipUsers = await this.repository.getUsersByIds(ownershipUserIds)
+    const ownershipUsersById = new Map(
+      ownershipUsers.map((user) => [user._id, user]),
+    )
+    const actorOf = (userId: string) => {
+      const user = ownershipUsersById.get(userId)
+      if (!user) {
+        throw new ApiException(
+          'ITEM_DATA_INVALID',
+          '物品归属关联的用户不存在',
+        )
+      }
+      return { id: user._id, displayName: user.display_name }
+    }
     return items.map((item) => {
       const category = categoriesById.get(item.category_id)
       if (!category) {
@@ -478,6 +550,12 @@ export class ItemService {
         },
         status: item.status,
         version: item.version,
+        ...(item.owner_id !== undefined
+          ? { owner: actorOf(item.owner_id) }
+          : {}),
+        ...(item.donor_id !== undefined
+          ? { donor: actorOf(item.donor_id) }
+          : {}),
         updatedAt: item.updated_at,
       }
     })
@@ -526,10 +604,25 @@ function validateListInput(input: ListItemsInput) {
   ) {
     throw new ApiException('INVALID_CURSOR', '分页游标无效')
   }
+  if (
+    input.ownership !== undefined &&
+    input.ownership !== 'PUBLIC' &&
+    input.ownership !== 'PRIVATE'
+  ) {
+    throw new ApiException('INVALID_OWNERSHIP_FILTER', '归属筛选无效')
+  }
+  const ownershipUserId = input.ownershipUserId?.trim()
+  if (input.ownershipUserId !== undefined && !ownershipUserId) {
+    throw new ApiException('INVALID_OWNERSHIP_USER_ID', '归属成员 ID 无效')
+  }
   return {
     ...(keyword ? { keyword } : {}),
     ...(categoryId ? { categoryId } : {}),
     ...(input.status ? { status: input.status } : {}),
+    ...(input.ownership === 'PUBLIC' || input.ownership === 'PRIVATE'
+      ? { ownership: input.ownership }
+      : {}),
+    ...(ownershipUserId ? { ownershipUserId } : {}),
     ...(cursor
       ? {
           cursor: {
@@ -555,6 +648,19 @@ function requireApprovedUser(
   }
   if (user.status !== 'APPROVED') {
     throw new ApiException('ACCOUNT_NOT_ACTIVE', '当前账号尚未通过审核')
+  }
+}
+
+async function requireApprovedOwnershipUser(
+  unitOfWork: ItemUnitOfWork,
+  userId: string,
+): Promise<void> {
+  const target = await unitOfWork.getUser(userId)
+  if (!target || target.status !== 'APPROVED') {
+    throw new ApiException(
+      'OWNERSHIP_USER_INVALID',
+      '所有者或捐赠者必须是已审核成员',
+    )
   }
 }
 
@@ -651,6 +757,22 @@ function validateCreateInput(input: CreateItemInput): CreateItemInput {
   } else if (newCategoryName) {
     validated.newCategoryName = newCategoryName
   }
+  const ownerId =
+    input.ownerId !== undefined ? requireOwnershipUserId(input.ownerId) : undefined
+  const donorId =
+    input.donorId !== undefined ? requireOwnershipUserId(input.donorId) : undefined
+  if (ownerId && donorId) {
+    throw new ApiException(
+      'OWNER_DONOR_CONFLICT',
+      '所有者和捐赠者只能选择其一',
+    )
+  }
+  if (ownerId) {
+    validated.ownerId = ownerId
+  }
+  if (donorId) {
+    validated.donorId = donorId
+  }
   return validated
 }
 
@@ -669,6 +791,8 @@ function validateUpdateInput(input: UpdateItemInput): UpdateItemInput {
     input.description !== undefined ||
     input.quantityMode !== undefined ||
     input.quantity !== undefined ||
+    input.ownerId !== undefined ||
+    input.donorId !== undefined ||
     input.categoryId !== undefined
   if (!hasChanges) {
     throw new ApiException('NO_ITEM_CHANGES', '至少修改一个物品字段')
@@ -735,8 +859,33 @@ function validateUpdateInput(input: UpdateItemInput): UpdateItemInput {
     }
     validated.categoryId = categoryId
   }
+  if (input.ownerId !== undefined) {
+    validated.ownerId =
+      input.ownerId === null ? null : requireOwnershipUserId(input.ownerId)
+  }
+  if (input.donorId !== undefined) {
+    validated.donorId =
+      input.donorId === null ? null : requireOwnershipUserId(input.donorId)
+  }
+  if (validated.ownerId && validated.donorId) {
+    throw new ApiException(
+      'OWNER_DONOR_CONFLICT',
+      '所有者和捐赠者只能选择其一',
+    )
+  }
 
   return validated
+}
+
+function requireOwnershipUserId(value: string): string {
+  const userId = value.trim()
+  if (!userId || userId.length > 100) {
+    throw new ApiException(
+      'INVALID_OWNERSHIP_USER_ID',
+      '所有者或捐赠者成员 ID 无效',
+    )
+  }
+  return userId
 }
 
 function validateCommitSummary(value: string): string {
@@ -797,6 +946,8 @@ function toPublicItem(item: ItemRecord): PublicItem {
     categoryId: item.category_id,
     status: item.status,
     version: item.version,
+    ...(item.owner_id ? { ownerId: item.owner_id } : {}),
+    ...(item.donor_id ? { donorId: item.donor_id } : {}),
     registeredBy: item.registered_by,
     registeredAt: item.registered_at,
     updatedBy: item.updated_by,

@@ -16,14 +16,16 @@ export interface ItemRecord {
   category_id: string
   status: ItemStatus
   version: number
+  owner_id?: string | undefined
+  donor_id?: string | undefined
   registered_by: string
   registered_at: string
   updated_by: string
   updated_at: string
-  off_shelf_by?: string
-  off_shelf_at?: string
-  deleted_by?: string
-  deleted_at?: string
+  off_shelf_by?: string | undefined
+  off_shelf_at?: string | undefined
+  deleted_by?: string | undefined
+  deleted_at?: string | undefined
 }
 
 export interface ItemOperationLogRecord {
@@ -70,6 +72,8 @@ export interface CreateItemInput {
   description: string
   quantityMode: QuantityMode
   quantity: number
+  ownerId?: string
+  donorId?: string
   categoryId?: string
   newCategoryName?: string
   commitSummary: string
@@ -83,6 +87,8 @@ export interface UpdateItemInput {
   description?: string
   quantityMode?: QuantityMode
   quantity?: number
+  ownerId?: string | null
+  donorId?: string | null
   categoryId?: string
   commitSummary: string
 }
@@ -98,6 +104,8 @@ export interface ListItemsInput {
   cursor?: ItemListCursor
   limit?: number
   status?: ItemStatus
+  ownership?: ItemOwnershipFilter
+  ownershipUserId?: string
 }
 
 export interface ItemListQuery {
@@ -106,7 +114,11 @@ export interface ItemListQuery {
   cursor?: ItemListCursor
   limit: number
   status?: ItemStatus
+  ownership?: ItemOwnershipFilter
+  ownershipUserId?: string
 }
+
+export type ItemOwnershipFilter = 'PUBLIC' | 'PRIVATE'
 
 export interface PublicItem {
   id: string
@@ -119,6 +131,8 @@ export interface PublicItem {
   categoryId: string
   status: ItemStatus
   version: number
+  ownerId?: string
+  donorId?: string
   registeredBy: string
   registeredAt: string
   updatedBy: string
@@ -149,6 +163,8 @@ export interface PublicItemSummary {
   category: PublicItemCategory
   status: ItemStatus
   version: number
+  owner?: PublicItemActor
+  donor?: PublicItemActor
   updatedAt: string
 }
 

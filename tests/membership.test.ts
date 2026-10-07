@@ -100,6 +100,23 @@ class InMemoryUnitOfWork implements MembershipUnitOfWork {
     return Promise.resolve([...this.users.values()].slice(0, limit))
   }
 
+  searchApprovedMembers(
+    keyword: string | null,
+    limit: number,
+  ): Promise<UserRecord[]> {
+    const trimmed = keyword?.toLowerCase() ?? null
+    return Promise.resolve(
+      [...this.users.values()]
+        .filter(
+          (user) =>
+            user.status === 'APPROVED' &&
+            (trimmed === null ||
+              user.display_name.toLowerCase().includes(trimmed)),
+        )
+        .slice(0, limit),
+    )
+  }
+
 }
 
 function userIdOf(openid: string): string {
@@ -744,5 +761,39 @@ describe('成员身份服务', () => {
       reviewedBy: owner._id,
     })
     expect(repository.users.get(otherManager._id)?.role).toBe('ADMIN')
+  })
+  it('已审核成员可以按昵称搜索候选成员，仅返回已通过审核的账号', async () => {
+    const repository = new InMemoryMembershipRepository()
+    const service = createService(repository)
+    const member = seedUser(repository, 'member-openid', 'MEMBER')
+    const admin = seedUser(repository, 'admin-openid', 'ADMIN')
+    seedUser(repository, 'pending-openid', 'MEMBER', 'PENDING')
+    seedUser(repository, 'disabled-openid', 'MEMBER', 'DISABLED')
+
+    const all = await service.listCandidates(member._id)
+    expect(all.map((item) => item.id).sort()).toEqual(
+      [member._id, admin._id].sort(),
+    )
+
+    const filtered = await service.listCandidates(member._id, 'admin')
+    expect(filtered).toEqual([
+      { id: admin._id, displayName: 'admin-openid' },
+    ])
+  })
+
+  it('未通过审核的账号不能搜索候选成员，并拒绝超长关键词', async () => {
+    const repository = new InMemoryMembershipRepository()
+    const service = createService(repository)
+    seedUser(repository, 'member-openid', 'MEMBER')
+    const pending = seedUser(repository, 'pending-openid', 'MEMBER', 'PENDING')
+
+    await expectApiCode(
+      service.listCandidates(pending._id),
+      'ACCOUNT_NOT_ACTIVE',
+    )
+    await expectApiCode(
+      service.listCandidates(userIdOf('member-openid'), 'a'.repeat(41)),
+      'INVALID_SEARCH_KEYWORD',
+    )
   })
 })

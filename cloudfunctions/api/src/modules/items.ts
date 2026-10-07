@@ -10,6 +10,8 @@ interface CreateItemPayload {
   description?: unknown
   quantityMode?: unknown
   quantity?: unknown
+  ownerId?: unknown
+  donorId?: unknown
   categoryId?: unknown
   newCategoryName?: unknown
   commitSummary?: unknown
@@ -21,6 +23,8 @@ interface ListItemsPayload {
   cursor?: unknown
   limit?: unknown
   status?: unknown
+  ownership?: unknown
+  ownershipUserId?: unknown
 }
 
 interface UpdateItemPayload {
@@ -31,8 +35,36 @@ interface UpdateItemPayload {
   description?: unknown
   quantityMode?: unknown
   quantity?: unknown
+  ownerId?: unknown
+  donorId?: unknown
   categoryId?: unknown
   commitSummary?: unknown
+}
+
+function parseOwnershipId(
+  value: unknown,
+  field: string,
+): string | undefined {
+  if (value === undefined) {
+    return undefined
+  }
+  if (typeof value !== 'string') {
+    throw new ApiException(
+      'INVALID_OWNERSHIP_USER_ID',
+      `${field}必须是字符串成员 ID`,
+    )
+  }
+  return value
+}
+
+function parseOwnershipIdOrNull(
+  value: unknown,
+  field: string,
+): string | null | undefined {
+  if (value === undefined || value === null) {
+    return value
+  }
+  return parseOwnershipId(value, field)
 }
 
 function createService(deps: ApiDependencies): ItemService {
@@ -64,6 +96,11 @@ export function createItemHandlers(
           input.status !== 'ACTIVE' &&
           input.status !== 'OUTBOUND_PENDING' &&
           input.status !== 'OFF_SHELF') ||
+        (input?.ownership !== undefined &&
+          input.ownership !== 'PUBLIC' &&
+          input.ownership !== 'PRIVATE') ||
+        (input?.ownershipUserId !== undefined &&
+          typeof input.ownershipUserId !== 'string') ||
         (input?.cursor !== undefined && !isCursor(input.cursor))
       ) {
         throw new ApiException(
@@ -88,6 +125,12 @@ export function createItemHandlers(
             }
           : {}),
         ...(isCursor(input?.cursor) ? { cursor: input.cursor } : {}),
+        ...(input?.ownership === 'PUBLIC' || input?.ownership === 'PRIVATE'
+          ? { ownership: input.ownership }
+          : {}),
+        ...(typeof input?.ownershipUserId === 'string'
+          ? { ownershipUserId: input.ownershipUserId }
+          : {}),
       })
     },
     detail: async (payload, context) => {
@@ -122,6 +165,12 @@ export function createItemHandlers(
         (input.quantityMode !== undefined &&
           !isQuantityMode(input.quantityMode)) ||
         (input.quantity !== undefined && typeof input.quantity !== 'number') ||
+        (input.ownerId !== undefined &&
+          input.ownerId !== null &&
+          typeof input.ownerId !== 'string') ||
+        (input.donorId !== undefined &&
+          input.donorId !== null &&
+          typeof input.donorId !== 'string') ||
         (input.categoryId !== undefined &&
           typeof input.categoryId !== 'string') ||
         typeof input.commitSummary !== 'string'
@@ -132,6 +181,8 @@ export function createItemHandlers(
         )
       }
 
+      const ownerId = parseOwnershipIdOrNull(input.ownerId, '所有者')
+      const donorId = parseOwnershipIdOrNull(input.donorId, '捐赠者')
       return createService(deps).update(context.userId, {
         itemId: input.itemId,
         expectedVersion: input.expectedVersion,
@@ -149,6 +200,8 @@ export function createItemHandlers(
         ...(input.categoryId !== undefined
           ? { categoryId: input.categoryId }
           : {}),
+        ...(ownerId !== undefined ? { ownerId } : {}),
+        ...(donorId !== undefined ? { donorId } : {}),
         commitSummary: input.commitSummary,
       })
     },
@@ -163,6 +216,8 @@ export function createItemHandlers(
         typeof input.quantity !== 'number' ||
         (input.categoryId !== undefined &&
           typeof input.categoryId !== 'string') ||
+        (input.ownerId !== undefined && typeof input.ownerId !== 'string') ||
+        (input.donorId !== undefined && typeof input.donorId !== 'string') ||
         (input.newCategoryName !== undefined &&
           typeof input.newCategoryName !== 'string') ||
         typeof input.commitSummary !== 'string'
@@ -187,6 +242,8 @@ export function createItemHandlers(
         typeof input.categoryId === 'string'
           ? { categoryId: input.categoryId }
           : { newCategoryName: input.newCategoryName as string }
+      const ownerId = parseOwnershipId(input.ownerId, '所有者')
+      const donorId = parseOwnershipId(input.donorId, '捐赠者')
       return createService(deps).create(context.userId, {
         name: input.name,
         images: input.images ?? [],
@@ -194,6 +251,8 @@ export function createItemHandlers(
         quantityMode: input.quantityMode,
         quantity: input.quantity,
         ...categorySelection,
+        ...(ownerId !== undefined ? { ownerId } : {}),
+        ...(donorId !== undefined ? { donorId } : {}),
         commitSummary: input.commitSummary,
       })
     },

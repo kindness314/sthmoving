@@ -58,6 +58,10 @@
         <text class="info-value">{{item.category.name}}{{item.category.status === 'DISABLED' ? '（已停用）' : ''}}</text>
       </view>
       <view class="info-row">
+        <text class="label">归属</text>
+        <text class="info-value">{{item.ownershipText}}</text>
+      </view>
+      <view class="info-row">
         <text class="label">当前版本</text>
         <text class="info-value">v{{item.version}}</text>
       </view>

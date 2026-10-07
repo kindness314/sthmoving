@@ -454,6 +454,29 @@ class InMemoryMembershipUnitOfWork implements MembershipUnitOfWork {
         .map((user) => structuredClone(user)),
     )
   }
+
+  searchApprovedMembers(
+    keyword: string | null,
+    limit: number,
+  ): Promise<UserRecord[]> {
+    const trimmed = keyword?.toLowerCase() ?? null
+    return Promise.resolve(
+      [...this.store.users.values()]
+        .filter(
+          (user) =>
+            user.status === 'APPROVED' &&
+            (trimmed === null ||
+              user.display_name.toLowerCase().includes(trimmed)),
+        )
+        .sort(
+          (left, right) =>
+            left.display_name.localeCompare(right.display_name) ||
+            left._id.localeCompare(right._id),
+        )
+        .slice(0, limit)
+        .map((user) => structuredClone(user)),
+    )
+  }
 }
 
 class InMemoryMembershipRepository implements MembershipRepository {

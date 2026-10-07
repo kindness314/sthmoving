@@ -334,6 +334,31 @@ export class MembershipService {
     })
   }
 
+  async listCandidates(
+    userId: string,
+    keyword?: string,
+  ): Promise<Array<{ id: string; displayName: string }>> {
+    const trimmed = keyword?.trim()
+    if (trimmed && trimmed.length > 40) {
+      throw new ApiException(
+        'INVALID_SEARCH_KEYWORD',
+        '搜索关键词不能超过 40 个字符',
+      )
+    }
+    return this.repository.runTransaction(async (unitOfWork) => {
+      const actor = await unitOfWork.getUser(userId)
+      requireApprovedIdentity(actor)
+      const users = await unitOfWork.searchApprovedMembers(
+        trimmed || null,
+        20,
+      )
+      return users.map((user) => ({
+        id: user._id,
+        displayName: user.display_name,
+      }))
+    })
+  }
+
   async updateProfile(
     userId: string,
     input: ProfileUpdateInput,

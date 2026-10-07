@@ -12,6 +12,10 @@ export interface MembershipUnitOfWork {
   setJoinRequest(request: JoinRequestRecord): Promise<void>
   listPendingJoinRequests(limit: number): Promise<JoinRequestRecord[]>
   listUsers(limit: number): Promise<UserRecord[]>
+  searchApprovedMembers(
+    keyword: string | null,
+    limit: number,
+  ): Promise<UserRecord[]>
 }
 
 export interface MembershipRepository {

@@ -87,6 +87,32 @@
     </view>
 
     <view class="card section">
+      <view class="field-label">物品归属</view>
+      <radio-group
+        class="radio-group"
+        bindchange="handleOwnershipModeChange"
+      >
+        <label class="radio-option">
+          <radio value="NONE" checked="{{ownershipMode === 'NONE'}}" />
+          公用
+        </label>
+        <label class="radio-option">
+          <radio value="OWNER" checked="{{ownershipMode === 'OWNER'}}" />
+          指定所有者
+        </label>
+        <label class="radio-option">
+          <radio value="DONOR" checked="{{ownershipMode === 'DONOR'}}" />
+          指定捐赠者
+        </label>
+      </radio-group>
+      <view wx:if="{{ownershipMode !== 'NONE'}}">
+        <view class="picker-input" catchtap="handlePickOwnershipMember">
+          {{ownershipMemberName || '请选择成员'}}
+        </view>
+      </view>
+    </view>
+
+    <view class="card section">
       <view class="field-label">数量模式</view>
       <radio-group class="radio-group" bindchange="handleQuantityModeChange">
         <label class="radio-option">
@@ -172,4 +198,5 @@
       {{submitting ? '正在保存…' : '保存修改'}}
     </button>
   </block>
+  <member-picker-modal id="member-picker-modal" />
 </view>

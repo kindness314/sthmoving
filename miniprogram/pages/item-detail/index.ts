@@ -18,6 +18,7 @@ import type { ItemDetail, UserRole } from '../../types/domain'
 interface ItemDetailView extends ItemDetail {
   displayImages: string[]
   quantityText: string
+  ownershipText: string
   statusText: string
   registeredAtText: string
   updatedAtText: string
@@ -414,6 +415,11 @@ function toItemDetailView(item: ItemDetail): ItemDetailView {
     displayImages: item.images,
     quantityText:
       item.quantityMode === 'SINGLE' ? '单件（1 件）' : `${item.quantity} 件`,
+    ownershipText: item.owner
+      ? `所有者：${item.owner.displayName}`
+      : item.donor
+        ? `捐赠者：${item.donor.displayName}`
+        : '公用',
     statusText:
       item.status === 'ACTIVE'
         ? '在库'

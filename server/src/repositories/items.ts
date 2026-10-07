@@ -174,6 +174,10 @@ export class PostgresItemRepository implements ItemRepository {
               OR code ILIKE $3 ESCAPE '\\')
          AND ($4::timestamptz IS NULL
               OR (updated_at, id) < ($4::timestamptz, $5::text))
+         AND ($7::text IS NULL
+              OR ($7 = 'PUBLIC' AND owner_id IS NULL)
+              OR ($7 = 'PRIVATE' AND owner_id IS NOT NULL))
+         AND ($8::text IS NULL OR owner_id = $8 OR donor_id = $8)
        ORDER BY updated_at DESC, id DESC
        LIMIT $6`,
       [
@@ -183,6 +187,8 @@ export class PostgresItemRepository implements ItemRepository {
         query.cursor?.updatedAt ?? null,
         query.cursor?.id ?? null,
         query.limit,
+        query.ownership ?? null,
+        query.ownershipUserId ?? null,
       ],
     )
     return result.rows.map(itemRow)

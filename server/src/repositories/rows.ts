@@ -211,6 +211,8 @@ export function itemRow(row: Row): ItemRecord {
     status: read<ItemRecord['status']>(row, 'status'),
     version: read<number>(row, 'version'),
     registered_by: read<string>(row, 'registered_by'),
+    ...optional('owner_id', read<string | null>(row, 'owner_id')),
+    ...optional('donor_id', read<string | null>(row, 'donor_id')),
     registered_at: toIso(read<Date>(row, 'registered_at')),
     updated_by: read<string>(row, 'updated_by'),
     updated_at: toIso(read<Date>(row, 'updated_at')),
@@ -227,11 +229,12 @@ export async function upsertItem(
 ): Promise<void> {
   await db.query(
     `INSERT INTO items (id, code, name, images, description, quantity_mode,
-                        quantity, category_id, status, version, registered_by,
-                        registered_at, updated_by, updated_at, off_shelf_by,
-                        off_shelf_at, deleted_by, deleted_at)
+                        quantity, category_id, status, version, owner_id,
+                        donor_id, registered_by, registered_at, updated_by,
+                        updated_at, off_shelf_by, off_shelf_at, deleted_by,
+                        deleted_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-             $15, $16, $17, $18)
+             $15, $16, $17, $18, $19, $20)
      ON CONFLICT (id) DO UPDATE SET
        code = EXCLUDED.code,
        name = EXCLUDED.name,
@@ -242,6 +245,8 @@ export async function upsertItem(
        category_id = EXCLUDED.category_id,
        status = EXCLUDED.status,
        version = EXCLUDED.version,
+       owner_id = EXCLUDED.owner_id,
+       donor_id = EXCLUDED.donor_id,
        registered_by = EXCLUDED.registered_by,
        registered_at = EXCLUDED.registered_at,
        updated_by = EXCLUDED.updated_by,
@@ -261,6 +266,8 @@ export async function upsertItem(
       item.category_id,
       item.status,
       item.version,
+      item.owner_id ?? null,
+      item.donor_id ?? null,
       item.registered_by,
       item.registered_at,
       item.updated_by,

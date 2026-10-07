@@ -8,6 +8,8 @@ import type {
 } from '../types/domain'
 import { callApi } from './cloud-api'
 
+export type ItemOwnershipFilter = 'PUBLIC' | 'PRIVATE'
+
 export interface CreateItemInput {
   name: string
   images: string[]
@@ -16,6 +18,8 @@ export interface CreateItemInput {
   quantity: number
   categoryId?: string
   newCategoryName?: string
+  ownerId?: string
+  donorId?: string
   commitSummary: string
 }
 
@@ -47,6 +51,8 @@ export function createItem(input: CreateItemInput): Promise<CreatedItem> {
 export interface ListItemsInput {
   keyword?: string
   categoryId?: string
+  ownership?: ItemOwnershipFilter
+  ownershipUserId?: string
   cursor?: ItemListCursor
   limit?: number
   status?: ItemStatus
@@ -89,6 +95,8 @@ export interface UpdateItemInput {
   quantityMode?: QuantityMode
   quantity?: number
   categoryId?: string
+  ownerId?: string | null
+  donorId?: string | null
   commitSummary: string
 }
 

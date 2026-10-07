@@ -13,6 +13,24 @@
   padding: 24rpx;
 }
 
+.filter-card {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 28rpx;
+  padding: 24rpx;
+}
+
+.filter-card .category-picker {
+  flex: 1;
+  margin-top: 0;
+}
+
+.filter-clear {
+  color: #b91c1c;
+  font-size: 26rpx;
+}
+
 .search-field {
   display: flex;
   align-items: center;

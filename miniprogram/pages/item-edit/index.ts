@@ -19,6 +19,7 @@ import {
   updateItem,
 } from '../../services/items'
 import { listManageableCategories } from '../../services/categories'
+import type { MemberPickerModalInstance } from '../../components/member-picker-modal/types'
 import type {
   Category,
   ItemDetail,
@@ -78,6 +79,9 @@ Page({ data: {
   categoryIndex: -1,
   selectedCategoryId: '',
   canEditCategory: false,
+  ownershipMode: 'NONE' as 'NONE' | 'OWNER' | 'DONOR',
+  ownershipMemberId: '',
+  ownershipMemberName: '',
   loadingCategories: false,
   selectedImages: [] as EditImage[],
   baseVersion: 0,
@@ -176,6 +180,48 @@ Page({ data: {
     this.setData({ commitSummary: event.detail.value, errorMessage: '' })
   },
 
+  handleOwnershipModeChange(
+    event: WechatMiniprogram.RadioGroupChange,
+  ) {
+    if (this.data.submitting || this.data.item?.status === 'OFF_SHELF') {
+      return
+    }
+    const mode = event.detail.value as 'NONE' | 'OWNER' | 'DONOR'
+    if (mode === 'NONE') {
+      this.setData({
+        ownershipMode: mode,
+        ownershipMemberId: '',
+        ownershipMemberName: '',
+        errorMessage: '',
+      })
+      return
+    }
+    this.setData({ ownershipMode: mode, errorMessage: '' })
+  },
+
+  async handlePickOwnershipMember() {
+    if (this.data.submitting || this.data.item?.status === 'OFF_SHELF') {
+      return
+    }
+    const modal = this.selectComponent(
+      '#member-picker-modal',
+    ) as unknown as MemberPickerModalInstance | null
+    if (!modal) {
+      return
+    }
+    const member = await modal.open({
+      title:
+        this.data.ownershipMode === 'OWNER' ? '选择所有者' : '选择捐赠者',
+    })
+    if (member) {
+      this.setData({
+        ownershipMemberId: member.id,
+        ownershipMemberName: member.displayName,
+        errorMessage: '',
+      })
+    }
+  },
+
   async handleChooseImages() {
     if (this.data.processingImages || this.data.submitting) {
       return
@@ -264,6 +310,11 @@ Page({ data: {
         this.data.selectedCategoryId !== this.data.item.category.id
           ? { categoryId: this.data.selectedCategoryId }
           : {}),
+        ...(this.data.ownershipMode === 'OWNER'
+          ? { ownerId: this.data.ownershipMemberId, donorId: null }
+          : this.data.ownershipMode === 'DONOR'
+            ? { donorId: this.data.ownershipMemberId, ownerId: null }
+            : { ownerId: null, donorId: null }),
         commitSummary: this.data.commitSummary,
       })
       updateSucceeded = true
@@ -298,6 +349,11 @@ Page({ data: {
         this.data.selectedImages.map(({ tempFilePath }) => tempFilePath),
       ) ??
       validateQuantity(this.data.quantityMode, quantity) ??
+      (this.data.ownershipMode !== 'NONE' && !this.data.ownershipMemberId
+        ? this.data.ownershipMode === 'OWNER'
+          ? '请选择所有者'
+          : '请选择捐赠者'
+        : null) ??
       validateCommitSummary(this.data.commitSummary)
     )
   },
@@ -438,6 +494,10 @@ Page({ data: {
       categoryIndex: this.data.categories.findIndex(
         (category) => category.id === item.category.id,
       ),
+      ownershipMode: item.owner ? 'OWNER' : item.donor ? 'DONOR' : 'NONE',
+      ownershipMemberId: item.owner?.id ?? item.donor?.id ?? '',
+      ownershipMemberName:
+        item.owner?.displayName ?? item.donor?.displayName ?? '',
       baseVersion: item.version,
       baseFields: toDraftFields(item),
       baseImageFileIds: [...item.imageFileIds],

@@ -42,6 +42,7 @@ interface TransactionDatabase {
 interface DatabaseCommand {
   in(values: unknown[]): object
   lt(value: unknown): object
+  exists(value: boolean): object
   and(...conditions: object[]): object
   or(...conditions: object[]): object
 }
@@ -194,6 +195,20 @@ export class CloudItemRepository implements ItemRepository {
             { updated_at: query.cursor.updatedAt },
             { _id: command.lt(query.cursor.id) },
           ),
+        ),
+      )
+    }
+    if (query.ownership === 'PUBLIC') {
+      conditions.push({ owner_id: command.exists(false) })
+    }
+    if (query.ownership === 'PRIVATE') {
+      conditions.push({ owner_id: command.exists(true) })
+    }
+    if (query.ownershipUserId) {
+      conditions.push(
+        command.or(
+          { owner_id: query.ownershipUserId },
+          { donor_id: query.ownershipUserId },
         ),
       )
     }

@@ -1,5 +1,8 @@
 {
   "enablePullDownRefresh": true,
   "onReachBottomDistance": 120,
-  "navigationStyle": "custom"
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "member-picker-modal": "../../components/member-picker-modal/index"
+  }
 }

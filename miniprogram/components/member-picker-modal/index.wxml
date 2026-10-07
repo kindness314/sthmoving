@@ -1,0 +1,40 @@
+<view wx:if="{{visible}}" class="modal-root">
+  <view class="modal-mask" catchtap="handleCancel"></view>
+  <view class="modal-card" catchtap="stopPropagation">
+    <view class="modal-title">{{title}}</view>
+    <input
+      class="modal-input"
+      value="{{keyword}}"
+      placeholder="{{placeholder}}"
+      maxlength="40"
+      focus="{{visible}}"
+      bindinput="handleInput"
+    />
+    <view class="picker-body">
+      <view wx:if="{{loading}}" class="picker-hint">查询中…</view>
+      <view wx:elif="{{errorMessage}}" class="picker-hint picker-error">
+        {{errorMessage}}
+        <text class="picker-retry" catchtap="handleRetry">重试</text>
+      </view>
+      <view wx:elif="{{candidates.length === 0}}" class="picker-hint">
+        没有匹配的成员
+      </view>
+      <scroll-view wx:else scroll-y class="picker-list">
+        <view
+          wx:for="{{candidates}}"
+          wx:key="id"
+          class="picker-item"
+          data-index="{{index}}"
+          catchtap="handleSelect"
+        >
+          {{item.displayName}}
+        </view>
+      </scroll-view>
+    </view>
+    <view class="modal-actions">
+      <button class="modal-cancel" size="mini" bindtap="handleCancel">
+        取消
+      </button>
+    </view>
+  </view>
+</view>

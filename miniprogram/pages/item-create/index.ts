@@ -9,6 +9,7 @@ import {
   validateQuantity,
 } from '../../domain/validation'
 import { listCategories } from '../../services/categories'
+import type { MemberPickerModalInstance } from '../../components/member-picker-modal/types'
 import {
   chooseAndPrepareItemImages,
   deleteUploadedItemImages,
@@ -34,6 +35,9 @@ Page({ data: {
   selectedCategoryId: '',
   selectedCategoryName: '',
   newCategoryName: '',
+  ownershipMode: 'NONE' as 'NONE' | 'OWNER' | 'DONOR',
+  ownershipMemberId: '',
+  ownershipMemberName: '',
   selectedImages: [] as PreparedItemImage[],
   loadingCategories: true,
   processingImages: false,
@@ -130,6 +134,43 @@ Page({ data: {
     })
   },
 
+  handleOwnershipModeChange(
+    event: WechatMiniprogram.RadioGroupChange,
+  ) {
+    const mode = event.detail.value as 'NONE' | 'OWNER' | 'DONOR'
+    if (mode === 'NONE') {
+      this.setData({
+        ownershipMode: mode,
+        ownershipMemberId: '',
+        ownershipMemberName: '',
+        errorMessage: '',
+      })
+      return
+    }
+    this.setData({ ownershipMode: mode, errorMessage: '' })
+  },
+
+  async handlePickOwnershipMember() {
+    const modal = this.selectComponent(
+      '#member-picker-modal',
+    ) as unknown as MemberPickerModalInstance | null
+    if (!modal) {
+      return
+    }
+    const member = await modal.open({
+      title:
+        this.data.ownershipMode === 'OWNER' ? '选择所有者' : '选择捐赠者',
+    })
+    if (member) {
+      this.setData({
+        ownershipMemberId: member.id,
+        ownershipMemberName: member.displayName,
+        errorMessage: '',
+      })
+    }
+  },
+
+
   async handleChooseImages() {
     if (this.data.processingImages) {
       return
@@ -198,6 +239,12 @@ Page({ data: {
         this.data.categoryMode === 'EXISTING'
           ? { categoryId: this.data.selectedCategoryId }
           : { newCategoryName: this.data.newCategoryName }
+      const ownershipSelection =
+        this.data.ownershipMode === 'OWNER'
+          ? { ownerId: this.data.ownershipMemberId }
+          : this.data.ownershipMode === 'DONOR'
+            ? { donorId: this.data.ownershipMemberId }
+            : {}
       createdItem = await createItem({
         name: this.data.name,
         images: uploadedFileIds,
@@ -205,6 +252,7 @@ Page({ data: {
         quantityMode: this.data.quantityMode,
         quantity,
         ...categorySelection,
+        ...ownershipSelection,
         commitSummary: this.data.commitSummary,
       })
     } catch (error) {
@@ -248,6 +296,11 @@ Page({ data: {
           ? '请选择物品分类'
           : null
         : validateCategoryName(this.data.newCategoryName)) ??
+      (this.data.ownershipMode !== 'NONE' && !this.data.ownershipMemberId
+        ? this.data.ownershipMode === 'OWNER'
+          ? '请选择所有者'
+          : '请选择捐赠者'
+        : null) ??
       validateCommitSummary(this.data.commitSummary)
     )
   }, })
