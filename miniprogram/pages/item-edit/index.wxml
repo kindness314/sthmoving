@@ -93,22 +93,19 @@
         bindchange="handleOwnershipModeChange"
       >
         <label class="radio-option">
-          <radio value="NONE" checked="{{ownershipMode === 'NONE'}}" />
-          公用
+          <radio value="PUBLIC" checked="{{ownershipMode === 'PUBLIC'}}" />
+          公有
         </label>
         <label class="radio-option">
-          <radio value="OWNER" checked="{{ownershipMode === 'OWNER'}}" />
-          指定所有者
-        </label>
-        <label class="radio-option">
-          <radio value="DONOR" checked="{{ownershipMode === 'DONOR'}}" />
-          指定捐赠者
+          <radio value="PRIVATE" checked="{{ownershipMode === 'PRIVATE'}}" />
+          私有
         </label>
       </radio-group>
-      <view wx:if="{{ownershipMode !== 'NONE'}}">
-        <view class="picker-input" catchtap="handlePickOwnershipMember">
-          {{ownershipMemberName || '请选择成员'}}
-        </view>
+      <view class="field-label spaced-label">
+        {{ownershipMode === 'PRIVATE' ? '所有者（必选）' : '捐赠者（可选）'}}
+      </view>
+      <view class="picker-input" catchtap="handlePickOwnershipMember">
+        {{ownershipMemberName || (ownershipMode === 'PRIVATE' ? '请选择所有者' : '请选择捐赠者')}}
       </view>
     </view>
 

@@ -23,6 +23,8 @@
 
 .filter-card .category-picker {
   flex: 1;
+  justify-content: flex-start;
+  gap: 16rpx;
   margin-top: 0;
 }
 

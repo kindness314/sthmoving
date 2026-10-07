@@ -79,7 +79,7 @@ Page({ data: {
   categoryIndex: -1,
   selectedCategoryId: '',
   canEditCategory: false,
-  ownershipMode: 'NONE' as 'NONE' | 'OWNER' | 'DONOR',
+  ownershipMode: 'PUBLIC' as 'PUBLIC' | 'PRIVATE',
   ownershipMemberId: '',
   ownershipMemberName: '',
   loadingCategories: false,
@@ -186,17 +186,13 @@ Page({ data: {
     if (this.data.submitting || this.data.item?.status === 'OFF_SHELF') {
       return
     }
-    const mode = event.detail.value as 'NONE' | 'OWNER' | 'DONOR'
-    if (mode === 'NONE') {
-      this.setData({
-        ownershipMode: mode,
-        ownershipMemberId: '',
-        ownershipMemberName: '',
-        errorMessage: '',
-      })
-      return
-    }
-    this.setData({ ownershipMode: mode, errorMessage: '' })
+    const mode = event.detail.value as 'PUBLIC' | 'PRIVATE'
+    this.setData({
+      ownershipMode: mode,
+      ownershipMemberId: '',
+      ownershipMemberName: '',
+      errorMessage: '',
+    })
   },
 
   async handlePickOwnershipMember() {
@@ -211,7 +207,7 @@ Page({ data: {
     }
     const member = await modal.open({
       title:
-        this.data.ownershipMode === 'OWNER' ? '选择所有者' : '选择捐赠者',
+        this.data.ownershipMode === 'PRIVATE' ? '选择所有者' : '选择捐赠者',
     })
     if (member) {
       this.setData({
@@ -310,11 +306,12 @@ Page({ data: {
         this.data.selectedCategoryId !== this.data.item.category.id
           ? { categoryId: this.data.selectedCategoryId }
           : {}),
-        ...(this.data.ownershipMode === 'OWNER'
+        ...(this.data.ownershipMode === 'PRIVATE'
           ? { ownerId: this.data.ownershipMemberId, donorId: null }
-          : this.data.ownershipMode === 'DONOR'
-            ? { donorId: this.data.ownershipMemberId, ownerId: null }
-            : { ownerId: null, donorId: null }),
+          : {
+              ownerId: null,
+              donorId: this.data.ownershipMemberId || null,
+            }),
         commitSummary: this.data.commitSummary,
       })
       updateSucceeded = true
@@ -349,10 +346,8 @@ Page({ data: {
         this.data.selectedImages.map(({ tempFilePath }) => tempFilePath),
       ) ??
       validateQuantity(this.data.quantityMode, quantity) ??
-      (this.data.ownershipMode !== 'NONE' && !this.data.ownershipMemberId
-        ? this.data.ownershipMode === 'OWNER'
-          ? '请选择所有者'
-          : '请选择捐赠者'
+      (this.data.ownershipMode === 'PRIVATE' && !this.data.ownershipMemberId
+        ? '请选择所有者'
         : null) ??
       validateCommitSummary(this.data.commitSummary)
     )
@@ -494,7 +489,7 @@ Page({ data: {
       categoryIndex: this.data.categories.findIndex(
         (category) => category.id === item.category.id,
       ),
-      ownershipMode: item.owner ? 'OWNER' : item.donor ? 'DONOR' : 'NONE',
+      ownershipMode: item.owner ? 'PRIVATE' : 'PUBLIC',
       ownershipMemberId: item.owner?.id ?? item.donor?.id ?? '',
       ownershipMemberName:
         item.owner?.displayName ?? item.donor?.displayName ?? '',

@@ -12,7 +12,7 @@
     />
     <view class="picker-body">
       <view wx:if="{{loading}}" class="picker-hint">查询中…</view>
-      <view wx:elif="{{errorMessage}}" class="picker-hint picker-error">
+      <view wx:elif="{{errorMessage && candidates.length === 0}}" class="picker-hint picker-error">
         {{errorMessage}}
         <text class="picker-retry" catchtap="handleRetry">重试</text>
       </view>

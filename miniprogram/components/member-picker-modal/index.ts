@@ -6,6 +6,7 @@ type ResolvePick = (value: MemberCandidate | null) => void
 const SEARCH_DEBOUNCE_MS = 300
 
 let resolvePending: ResolvePick | null = null
+let cachedCandidates: MemberCandidate[] = []
 
 Component({
   data: {
@@ -34,8 +35,8 @@ Component({
           title: options.title,
           placeholder: options.placeholder ?? '搜索成员昵称',
           keyword: '',
-          candidates: [],
-          loading: true,
+          candidates: cachedCandidates,
+          loading: cachedCandidates.length === 0,
           errorMessage: '',
         })
         void this.search('', 0)
@@ -55,10 +56,16 @@ Component({
 
     async search(keyword: string, searchSeq: number) {
       if (searchSeq === this.data.searchSeq) {
-        this.setData({ loading: true, errorMessage: '' })
+        this.setData({
+          loading: this.data.candidates.length === 0,
+          errorMessage: '',
+        })
       }
       try {
         const candidates = await listMemberCandidates(keyword || undefined)
+        if (!keyword) {
+          cachedCandidates = candidates
+        }
         if (searchSeq !== this.data.searchSeq) {
           return
         }
@@ -68,7 +75,6 @@ Component({
           return
         }
         this.setData({
-          candidates: [],
           loading: false,
           errorMessage:
             error instanceof Error ? error.message : '成员查询失败，请重试',

@@ -30,7 +30,7 @@ Page({ data: {
   categories: [] as Category[],
   categoryNames: ['全部分类'],
   categoryIndex: 0,
-  ownershipNames: ['全部归属', '公用', '私用'],
+  ownershipNames: ['公有', '私有'],
   ownershipIndex: 0,
   ownershipUserId: '',
   ownershipUserName: '',
@@ -142,7 +142,10 @@ Page({ data: {
       if (!modal) {
         return
       }
-      const member = await modal.open({ title: '按归属成员筛选' })
+      const member = await modal.open({
+        title:
+          this.data.ownershipIndex === 1 ? '选择所有者' : '选择捐赠者',
+      })
       if (member) {
         this.setData({
           ownershipUserId: member.id,
@@ -373,10 +376,8 @@ Page({ data: {
         ...(keyword ? { keyword } : {}),
         ...(category ? { categoryId: category.id } : {}),
         ...(this.data.ownershipIndex === 1
-          ? { ownership: 'PUBLIC' as const }
-          : this.data.ownershipIndex === 2
-            ? { ownership: 'PRIVATE' as const }
-            : {}),
+          ? { ownership: 'PRIVATE' as const }
+          : { ownership: 'PUBLIC' as const }),
         ...(ownershipUserId ? { ownershipUserId } : {}),
         ...(cursor ? { cursor } : {}),
         limit: 10,

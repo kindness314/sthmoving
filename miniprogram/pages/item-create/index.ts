@@ -35,7 +35,7 @@ Page({ data: {
   selectedCategoryId: '',
   selectedCategoryName: '',
   newCategoryName: '',
-  ownershipMode: 'NONE' as 'NONE' | 'OWNER' | 'DONOR',
+  ownershipMode: 'PUBLIC' as 'PUBLIC' | 'PRIVATE',
   ownershipMemberId: '',
   ownershipMemberName: '',
   selectedImages: [] as PreparedItemImage[],
@@ -137,17 +137,13 @@ Page({ data: {
   handleOwnershipModeChange(
     event: WechatMiniprogram.RadioGroupChange,
   ) {
-    const mode = event.detail.value as 'NONE' | 'OWNER' | 'DONOR'
-    if (mode === 'NONE') {
-      this.setData({
-        ownershipMode: mode,
-        ownershipMemberId: '',
-        ownershipMemberName: '',
-        errorMessage: '',
-      })
-      return
-    }
-    this.setData({ ownershipMode: mode, errorMessage: '' })
+    const mode = event.detail.value as 'PUBLIC' | 'PRIVATE'
+    this.setData({
+      ownershipMode: mode,
+      ownershipMemberId: '',
+      ownershipMemberName: '',
+      errorMessage: '',
+    })
   },
 
   async handlePickOwnershipMember() {
@@ -159,7 +155,7 @@ Page({ data: {
     }
     const member = await modal.open({
       title:
-        this.data.ownershipMode === 'OWNER' ? '选择所有者' : '选择捐赠者',
+        this.data.ownershipMode === 'PRIVATE' ? '选择所有者' : '选择捐赠者',
     })
     if (member) {
       this.setData({
@@ -240,9 +236,9 @@ Page({ data: {
           ? { categoryId: this.data.selectedCategoryId }
           : { newCategoryName: this.data.newCategoryName }
       const ownershipSelection =
-        this.data.ownershipMode === 'OWNER'
+        this.data.ownershipMode === 'PRIVATE'
           ? { ownerId: this.data.ownershipMemberId }
-          : this.data.ownershipMode === 'DONOR'
+          : this.data.ownershipMemberId
             ? { donorId: this.data.ownershipMemberId }
             : {}
       createdItem = await createItem({
@@ -296,10 +292,8 @@ Page({ data: {
           ? '请选择物品分类'
           : null
         : validateCategoryName(this.data.newCategoryName)) ??
-      (this.data.ownershipMode !== 'NONE' && !this.data.ownershipMemberId
-        ? this.data.ownershipMode === 'OWNER'
-          ? '请选择所有者'
-          : '请选择捐赠者'
+      (this.data.ownershipMode === 'PRIVATE' && !this.data.ownershipMemberId
+        ? '请选择所有者'
         : null) ??
       validateCommitSummary(this.data.commitSummary)
     )
