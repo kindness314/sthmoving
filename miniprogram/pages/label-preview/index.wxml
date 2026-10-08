@@ -127,7 +127,7 @@
       <view wx:for="{{printerDevices}}" wx:key="id" class="device-row">
         <view class="device-name">{{item.name}}</view>
         <button
-          class="primary-button button-sm device-connect"
+          class="mini-action device-connect"
           data-device-id="{{item.id}}"
           loading="{{connectingDeviceId === item.id}}"
           disabled="{{connectingDeviceId}}"
