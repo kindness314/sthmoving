@@ -53,13 +53,12 @@
 .actions {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 16rpx;
   margin-top: 24rpx;
 }
 
 .actions button {
-  flex: 1 1 220rpx;
+  flex: 1 1 0;
   min-width: 0;
 }
 
