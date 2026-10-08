@@ -460,7 +460,15 @@ describe('物品登记服务', () => {
     await expectApiCode(
       service.create(
         'user-member',
-        createInput({ images: ['1', '2', '3'] }),
+        createInput({
+          images: [
+            'cloud://env/1.jpg',
+            'cloud://env/2.jpg',
+            'cloud://env/3.jpg',
+            'cloud://env/4.jpg',
+            'cloud://env/5.jpg',
+          ],
+        }),
       ),
       'INVALID_ITEM_IMAGES',
     )

@@ -701,7 +701,7 @@ function validateCreateInput(input: CreateItemInput): CreateItemInput {
   }
 
   if (
-    input.images.length > 2 ||
+    input.images.length > 4 ||
     input.images.some(
       (fileId) =>
         typeof fileId !== 'string' ||
@@ -710,7 +710,7 @@ function validateCreateInput(input: CreateItemInput): CreateItemInput {
   ) {
     throw new ApiException(
       'INVALID_ITEM_IMAGES',
-      '物品图片必须是最多两个有效的云文件 ID',
+      '物品图片必须是最多四张有效的云文件 ID',
     )
   }
 
@@ -824,7 +824,7 @@ function validateUpdateInput(input: UpdateItemInput): UpdateItemInput {
   }
   if (input.images !== undefined) {
     if (
-      input.images.length > 2 ||
+      input.images.length > 4 ||
       input.images.some(
         (fileId) =>
           typeof fileId !== 'string' ||
@@ -833,7 +833,7 @@ function validateUpdateInput(input: UpdateItemInput): UpdateItemInput {
     ) {
       throw new ApiException(
         'INVALID_ITEM_IMAGES',
-        '物品图片必须是最多两个有效的云文件 ID',
+        '物品图片必须是最多四张有效的云文件 ID',
       )
     }
     validated.images = input.images.map((fileId) => fileId.trim())

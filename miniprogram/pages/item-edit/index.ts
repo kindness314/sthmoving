@@ -235,7 +235,7 @@ Page({ data: {
     }
     const remaining = MAX_ITEM_IMAGES - this.data.selectedImages.length
     if (remaining < 1) {
-      await wx.showToast({ title: '最多选择两张图片', icon: 'none' })
+      await wx.showToast({ title: '最多选择四张图片', icon: 'none' })
       return
     }
 

@@ -10,9 +10,11 @@ import {
 } from '../miniprogram/domain/validation'
 
 describe('物品输入校验', () => {
-  it('限制最多两张图片', () => {
-    expect(validateImageCount(['a', 'b'])).toBeNull()
-    expect(validateImageCount(['a', 'b', 'c'])).toContain('最多上传 2 张')
+  it('限制最多四张图片', () => {
+    expect(validateImageCount(['a', 'b', 'c', 'd'])).toBeNull()
+    expect(validateImageCount(['a', 'b', 'c', 'd', 'e'])).toContain(
+      '最多上传 4 张',
+    )
   })
 
   it('要求提交梗概有实际内容', () => {

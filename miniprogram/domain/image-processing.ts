@@ -1,4 +1,4 @@
-export const MAX_ORIGINAL_IMAGE_BYTES = 10 * 1024 * 1024
+export const MAX_ORIGINAL_IMAGE_BYTES = 20 * 1024 * 1024
 export const MAX_PROCESSED_IMAGE_BYTES = 2 * 1024 * 1024
 export const MAX_IMAGE_EDGE = 2048
 
@@ -29,7 +29,7 @@ export function getCompressionTargets(
 
 export function validateOriginalImageSize(size: number): string | null {
   if (size > MAX_ORIGINAL_IMAGE_BYTES) {
-    return '单张原图不能超过 10 MB'
+    return '单张原图不能超过 20 MB'
   }
   return null
 }

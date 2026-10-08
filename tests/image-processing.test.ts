@@ -20,10 +20,10 @@ describe('物品图片处理参数', () => {
     })
   })
 
-  it('拒绝大于 10 MB 的原图', () => {
+  it('拒绝大于 20 MB 的原图', () => {
     expect(validateOriginalImageSize(MAX_ORIGINAL_IMAGE_BYTES)).toBeNull()
     expect(
       validateOriginalImageSize(MAX_ORIGINAL_IMAGE_BYTES + 1),
-    ).toBe('单张原图不能超过 10 MB')
+    ).toBe('单张原图不能超过 20 MB')
   })
 })

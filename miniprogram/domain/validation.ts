@@ -1,6 +1,6 @@
 import type { QuantityMode } from '../types/domain'
 
-export const MAX_ITEM_IMAGES = 2
+export const MAX_ITEM_IMAGES = 4
 export const MIN_COMMIT_SUMMARY_LENGTH = 1
 export const MAX_COMMIT_SUMMARY_LENGTH = 250
 export const MAX_ITEM_NAME_LENGTH = 100
