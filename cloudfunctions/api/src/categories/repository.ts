@@ -8,6 +8,7 @@ export interface CategoryUnitOfWork {
     normalizedName: string,
   ): Promise<CategoryRecord | null>
   hasItemReference(categoryId: string): Promise<boolean>
+  countItemsByCategory(): Promise<Map<string, number>>
   setCategory(category: CategoryRecord): Promise<void>
   listActiveCategories(): Promise<CategoryRecord[]>
   listAllCategories(): Promise<CategoryRecord[]>

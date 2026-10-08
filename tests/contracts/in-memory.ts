@@ -285,6 +285,17 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
     )
   }
 
+  countItemsByCategory(): Promise<Map<string, number>> {
+    const counts = new Map<string, number>()
+    for (const item of this.store.items.values()) {
+      if (item.status === 'OFF_SHELF' || item.deleted_at) {
+        continue
+      }
+      counts.set(item.category_id, (counts.get(item.category_id) ?? 0) + 1)
+    }
+    return Promise.resolve(counts)
+  }
+
   setCategory(category: CategoryRecord): Promise<void> {
     this.store.categories.set(category._id, structuredClone(category))
     return Promise.resolve()

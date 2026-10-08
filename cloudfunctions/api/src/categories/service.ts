@@ -34,9 +34,16 @@ export class CategoryService {
     return this.repository.runTransaction(async (unitOfWork) => {
       requireApprovedUser(await unitOfWork.getUser(userId))
       await this.ensurePresetCategories(unitOfWork)
-      const categories = await unitOfWork.listActiveCategories()
+      const [categories, counts] = await Promise.all([
+        unitOfWork.listActiveCategories(),
+        unitOfWork.countItemsByCategory(),
+      ])
       return categories
-        .sort(compareCategories)
+        .sort((left, right) => {
+          const diff =
+            (counts.get(right._id) ?? 0) - (counts.get(left._id) ?? 0)
+          return diff !== 0 ? diff : compareCategories(left, right)
+        })
         .map(toPublicCategory)
     })
   }
@@ -81,8 +88,16 @@ export class CategoryService {
     return this.repository.runTransaction(async (unitOfWork) => {
       requireCategoryManager(await unitOfWork.getUser(userId))
       await this.ensurePresetCategories(unitOfWork)
-      return (await unitOfWork.listAllCategories())
-        .sort(compareCategories)
+      const [categories, counts] = await Promise.all([
+        unitOfWork.listAllCategories(),
+        unitOfWork.countItemsByCategory(),
+      ])
+      return categories
+        .sort((left, right) => {
+          const diff =
+            (counts.get(right._id) ?? 0) - (counts.get(left._id) ?? 0)
+          return diff !== 0 ? diff : compareCategories(left, right)
+        })
         .map(toPublicCategory)
     })
   }
@@ -266,6 +281,7 @@ function compareCategories(
   }
   return left.name.localeCompare(right.name, 'zh-CN')
 }
+
 
 function toPublicCategory(category: CategoryRecord): PublicCategory {
   return {

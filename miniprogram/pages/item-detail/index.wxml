@@ -110,9 +110,6 @@
       </view>
     </view>
 
-    <button class="secondary-button logs-button" bindtap="handleViewLogs">
-      查看操作日志
-    </button>
     <button
       wx:if="{{item.status !== 'OFF_SHELF'}}"
       class="secondary-button edit-button"
@@ -120,12 +117,18 @@
     >
       编辑物品
     </button>
+    <button wx:if="{{item.status !== 'OFF_SHELF'}}" class="primary-button label-button" bindtap="handleViewLabel">
+      查看小程序码
+    </button>
     <button
       wx:if="{{item.status === 'ACTIVE'}}"
       class="secondary-button outbound-button"
       bindtap="handleRequestOutbound"
     >
       申请离库
+    </button>
+    <button class="secondary-button logs-button" bindtap="handleViewLogs">
+      查看操作日志
     </button>
     <button
       wx:if="{{item.status === 'ACTIVE' && (userRole === 'ADMIN' || userRole === 'MANAGER' || userRole === 'OWNER')}}"
@@ -138,9 +141,6 @@
       <button class="secondary-button action-button" bindtap="handleRestoreInbound">重新入库</button>
       <button class="danger-button action-button" bindtap="handleDeleteOffShelf">删除物品</button>
     </view>
-    <button wx:if="{{item.status !== 'OFF_SHELF'}}" class="primary-button label-button" bindtap="handleViewLabel">
-      查看小程序码
-    </button>
   </block>
   <text-entry-modal id="text-entry-modal" />
 </view>

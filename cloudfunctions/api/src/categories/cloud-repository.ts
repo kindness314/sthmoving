@@ -14,9 +14,9 @@ interface QueryResult {
 interface DocumentReference {
   set(options: { data: object }): Promise<unknown>
 }
-
 interface Query {
   where(condition: object): Query
+  field(fields: Record<string, boolean>): Query
   limit(max: number): Query
   skip(offset: number): Query
   get(): Promise<QueryResult>
@@ -28,6 +28,7 @@ interface Collection extends Query {
 
 interface DatabaseCommand {
   in(values: unknown[]): object
+  neq(value: unknown): object
 }
 
 interface TransactionDatabase {
@@ -92,6 +93,25 @@ class CloudCategoryUnitOfWork implements CategoryUnitOfWork {
   async listAllCategories(): Promise<CategoryRecord[]> {
     const categories = await this.listCategories()
     return categories.filter((category) => category.status !== 'DELETED')
+  }
+
+  async countItemsByCategory(): Promise<Map<string, number>> {
+    const result = await this.database
+      .collection('items')
+      .where({ status: this.database.command.neq('OFF_SHELF') })
+      .field({ category_id: true })
+      .limit(1000)
+      .get()
+    const counts = new Map<string, number>()
+    for (const raw of result.data) {
+      if (raw !== null && typeof raw === 'object' && 'category_id' in raw) {
+        const categoryId = raw.category_id
+        if (typeof categoryId === 'string') {
+          counts.set(categoryId, (counts.get(categoryId) ?? 0) + 1)
+        }
+      }
+    }
+    return counts
   }
 
   private async listCategories(

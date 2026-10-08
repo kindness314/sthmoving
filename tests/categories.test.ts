@@ -13,7 +13,7 @@ import type { UserRecord } from '../cloudfunctions/api/src/membership/types'
 
 class InMemoryCategoryRepository implements CategoryRepository {
   categories = new Map<string, CategoryRecord>()
-  itemCategoryIds = new Set<string>()
+  itemCounts = new Map<string, number>()
   users = new Map<string, UserRecord>()
 
   async runTransaction<T>(
@@ -24,7 +24,7 @@ class InMemoryCategoryRepository implements CategoryRepository {
       new InMemoryCategoryUnitOfWork(
         this.users,
         categories,
-        this.itemCategoryIds,
+        this.itemCounts,
       ),
     )
     this.categories = categories
@@ -36,7 +36,7 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
   constructor(
     private readonly users: Map<string, UserRecord>,
     private readonly categories: Map<string, CategoryRecord>,
-    private readonly itemCategoryIds: Set<string>,
+    private readonly itemCounts: Map<string, number>,
   ) {}
 
   getUser(userId: string): Promise<UserRecord | null> {
@@ -66,7 +66,11 @@ class InMemoryCategoryUnitOfWork implements CategoryUnitOfWork {
   }
 
   hasItemReference(categoryId: string): Promise<boolean> {
-    return Promise.resolve(this.itemCategoryIds.has(categoryId))
+    return Promise.resolve(this.itemCounts.has(categoryId))
+  }
+
+  countItemsByCategory(): Promise<Map<string, number>> {
+    return Promise.resolve(new Map(this.itemCounts))
   }
 
   setCategory(category: CategoryRecord): Promise<void> {
@@ -147,6 +151,30 @@ describe('分类服务', () => {
     expect(second).toEqual(first)
     expect(repository.categories.size).toBe(presetCategoryNames.length)
     expect(first.every((category) => category.isPreset)).toBe(true)
+  })
+
+  it('分类按物品引用数量降序排列，数量相同保持预设与名称顺序', async () => {
+    const repository = new InMemoryCategoryRepository()
+    repository.users.set('approved-user', createUser('approved-openid'))
+    const service = createService(repository)
+
+    const first = await service.list('user-approved-openid')
+    expect(first.map((category) => category.name)).toEqual(
+      presetCategoryNames,
+    )
+
+    // 预设分类按 sort_order 依次是 presetCategoryNames 的顺序
+    const byName = new Map(first.map((category) => [category.name, category]))
+    repository.itemCounts.set(byName.get('清洁用品')!.id, 3)
+    repository.itemCounts.set(byName.get('技术设备')!.id, 5)
+    repository.itemCounts.set(byName.get('日常用品')!.id, 5)
+
+    const sorted = await service.list('user-approved-openid')
+    expect(sorted.slice(0, 3).map((category) => category.name)).toEqual([
+      '日常用品',
+      '技术设备',
+      '清洁用品',
+    ])
   })
 
   it('成员可以创建分类，名称会去除首尾空格且不能重复', async () => {
@@ -292,7 +320,7 @@ describe('分类服务', () => {
       'user-member-openid',
       '已使用分类',
     )
-    repository.itemCategoryIds.add(referenced.id)
+    repository.itemCounts.set(referenced.id, 1)
     await expectApiCode(
       service.delete('user-admin-openid', referenced.id),
       'CATEGORY_IN_USE',
@@ -301,7 +329,7 @@ describe('分类服务', () => {
       'DELETED',
     )
 
-    repository.itemCategoryIds.delete(referenced.id)
+    repository.itemCounts.delete(referenced.id)
     repository.categories.set(referenced.id, {
       ...repository.categories.get(referenced.id)!,
       item_reference_count: 1,

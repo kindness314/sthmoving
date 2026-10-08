@@ -280,6 +280,37 @@ export function describeCategoryRepositoryContract(
       )
     })
 
+    it('按分类统计在库物品数量，已离库与软删除不计入', async () => {
+      const repository = await harness.create({
+        categories: [createCategory('category-1'), createCategory('category-2')],
+        items: [
+          createItem('item-1', { category_id: 'category-1' }),
+          createItem('item-2', {
+            category_id: 'category-1',
+            status: 'OUTBOUND_PENDING',
+          }),
+          createItem('item-off', {
+            category_id: 'category-1',
+            status: 'OFF_SHELF',
+          }),
+          createItem('item-gone', {
+            category_id: 'category-1',
+            status: 'DELETED',
+            deleted_at: '2026-07-30T05:00:00.000Z',
+          }),
+          createItem('item-3', { category_id: 'category-2' }),
+        ],
+      })
+
+      const counts = await repository.runTransaction((unitOfWork) =>
+        unitOfWork.countItemsByCategory(),
+      )
+
+      expect(counts.get('category-1')).toBe(2)
+      expect(counts.get('category-2')).toBe(1)
+      expect(counts.has('category-unknown')).toBe(false)
+    })
+
     it('只列出启用中的分类', async () => {
       const repository = await harness.create({
         categories: [

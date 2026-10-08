@@ -49,6 +49,21 @@ class PostgresCategoryUnitOfWork implements CategoryUnitOfWork {
     return result.rows[0]?.has_reference ?? false
   }
 
+  async countItemsByCategory(): Promise<Map<string, number>> {
+    const result = await this.client.query<{
+      category_id: string
+      count: string
+    }>(
+      `SELECT category_id, COUNT(*)::text AS count
+       FROM items
+       WHERE status <> 'OFF_SHELF' AND deleted_at IS NULL
+       GROUP BY category_id`,
+    )
+    return new Map(
+      result.rows.map((row) => [row.category_id, Number(row.count)]),
+    )
+  }
+
   async setCategory(category: CategoryRecord): Promise<void> {
     await upsertCategory(this.client, category)
   }
