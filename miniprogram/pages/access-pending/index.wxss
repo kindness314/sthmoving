@@ -44,9 +44,7 @@
 }
 
 .submit-button {
-  min-height: 88rpx;
   margin: 32rpx 0 0;
-  line-height: 88rpx;
 }
 
 .role-label {

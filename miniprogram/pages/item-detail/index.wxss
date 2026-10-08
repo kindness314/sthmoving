@@ -172,20 +172,12 @@
 
 .review-actions .action-button,
 .off-shelf-actions .action-button {
-  height: 80rpx;
   margin: 0;
-  border-radius: 14rpx;
-  line-height: 80rpx;
 }
 
 .action-button {
-  box-sizing: border-box;
   flex: 1;
   min-width: 0;
-  height: 80rpx;
-  margin: 0;
-  padding: 0 20rpx;
-  line-height: 80rpx;
 }
 
 .state {
@@ -205,12 +197,6 @@
   margin-top: 32rpx;
 }
 
-.secondary-button {
-  border: 1rpx solid var(--brand-color, #17365d);
-  border-radius: 16rpx;
-  background: #ffffff;
-  color: var(--brand-color, #17365d);
-}
 
 .logs-button {
   margin-top: 32rpx;
@@ -226,7 +212,4 @@
 
 .danger-button {
   margin-top: 20rpx;
-  border-radius: 16rpx;
-  background: #b91c1c;
-  color: #ffffff;
 }

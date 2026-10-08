@@ -186,9 +186,7 @@
 
 .continue-button,
 .submit-button {
-  min-height: 88rpx;
   margin: 28rpx 0 0;
-  line-height: 88rpx;
 }
 
 .error {

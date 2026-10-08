@@ -24,14 +24,14 @@
   <view wx:if="{{selectedIds.length}}" class="card batch-bar">
     <text>已选 {{selectedIds.length}} 件</text>
     <button
-      class="restore-button"
+      class="secondary-button button-md"
       disabled="{{processing}}"
       bindtap="handleRestore"
     >
       {{selectedIds.length > 1 ? '批量重新入库' : '重新入库'}}
     </button>
     <button
-      class="danger-button"
+      class="danger-button button-md"
       disabled="{{processing}}"
       bindtap="handleBatchDelete"
     >

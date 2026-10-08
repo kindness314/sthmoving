@@ -59,26 +59,8 @@
 }
 
 .actions button {
-  box-sizing: border-box;
   flex: 1 1 220rpx;
   min-width: 0;
-  height: 76rpx;
-  margin: 0;
-  padding: 0 20rpx;
-  border-radius: 14rpx;
-  font-size: 27rpx;
-  line-height: 76rpx;
-}
-
-.secondary-button {
-  border: 1rpx solid var(--brand-color, #17365d);
-  color: var(--brand-color, #17365d);
-}
-
-.danger-button {
-  border: 1rpx solid #b91c1c;
-  background: #fff7f7;
-  color: #b91c1c;
 }
 
 .state {

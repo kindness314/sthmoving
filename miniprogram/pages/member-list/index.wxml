@@ -25,12 +25,12 @@
       wx:if="{{item.status === 'APPROVED' && ((item.role === 'MEMBER' && (currentRole === 'ADMIN' || currentRole === 'MANAGER' || currentRole === 'OWNER')) || (item.role === 'ADMIN' && (currentRole === 'MANAGER' || currentRole === 'OWNER')) || (item.role === 'MANAGER' && currentRole === 'OWNER'))}}"
       class="actions"
     >
-      <button wx:if="{{item.role === 'MEMBER' && (currentRole === 'MANAGER' || currentRole === 'OWNER')}}" class="secondary-button" data-id="{{item.id}}" data-role="ADMIN" disabled="{{processingId}}" bindtap="handleRole">设为管理员</button>
-      <button wx:if="{{item.role === 'ADMIN' && (currentRole === 'MANAGER' || currentRole === 'OWNER')}}" class="secondary-button" data-id="{{item.id}}" data-role="MEMBER" disabled="{{processingId}}" bindtap="handleRole">取消管理员</button>
-      <button wx:if="{{item.role === 'ADMIN' && currentRole === 'OWNER'}}" class="secondary-button" data-id="{{item.id}}" disabled="{{processingId}}" bindtap="handleAppoint">任命实际管理者</button>
-      <button wx:if="{{item.role === 'MANAGER' && currentRole === 'OWNER'}}" class="secondary-button" data-id="{{item.id}}" disabled="{{processingId}}" bindtap="handleRemoveManager">免去实际管理者</button>
-      <button wx:if="{{item.role === 'ADMIN' && currentRole === 'MANAGER'}}" class="secondary-button" data-id="{{item.id}}" disabled="{{processingId}}" bindtap="handleTransfer">传位给此管理员</button>
-      <button wx:if="{{(currentRole === 'ADMIN' && item.role === 'MEMBER') || ((currentRole === 'MANAGER' || currentRole === 'OWNER') && item.role !== 'OWNER' && item.role !== 'MANAGER')}}" class="danger-button" data-id="{{item.id}}" loading="{{processingId === item.id}}" disabled="{{processingId}}" bindtap="handleDisable">移除成员</button>
+      <button wx:if="{{item.role === 'MEMBER' && (currentRole === 'MANAGER' || currentRole === 'OWNER')}}" class="secondary-button button-md" data-id="{{item.id}}" data-role="ADMIN" disabled="{{processingId}}" bindtap="handleRole">设为管理员</button>
+      <button wx:if="{{item.role === 'ADMIN' && (currentRole === 'MANAGER' || currentRole === 'OWNER')}}" class="secondary-button button-md" data-id="{{item.id}}" data-role="MEMBER" disabled="{{processingId}}" bindtap="handleRole">取消管理员</button>
+      <button wx:if="{{item.role === 'ADMIN' && currentRole === 'OWNER'}}" class="secondary-button button-md" data-id="{{item.id}}" disabled="{{processingId}}" bindtap="handleAppoint">任命实际管理者</button>
+      <button wx:if="{{item.role === 'MANAGER' && currentRole === 'OWNER'}}" class="secondary-button button-md" data-id="{{item.id}}" disabled="{{processingId}}" bindtap="handleRemoveManager">免去实际管理者</button>
+      <button wx:if="{{item.role === 'ADMIN' && currentRole === 'MANAGER'}}" class="secondary-button button-md" data-id="{{item.id}}" disabled="{{processingId}}" bindtap="handleTransfer">传位给此管理员</button>
+      <button wx:if="{{(currentRole === 'ADMIN' && item.role === 'MEMBER') || ((currentRole === 'MANAGER' || currentRole === 'OWNER') && item.role !== 'OWNER' && item.role !== 'MANAGER')}}" class="danger-outline-button button-md" data-id="{{item.id}}" loading="{{processingId === item.id}}" disabled="{{processingId}}" bindtap="handleDisable">移除成员</button>
     </view>
   </view>
   <view wx:if="{{errorMessage && members.length}}" class="error">{{errorMessage}}</view>

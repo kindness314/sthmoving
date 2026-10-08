@@ -54,26 +54,8 @@
 }
 
 .actions button {
-  box-sizing: border-box;
   flex: 1;
   min-width: 0;
-  height: 80rpx;
-  margin: 0;
-  padding: 0 20rpx;
-  border-radius: 14rpx;
-  font-weight: 600;
-  line-height: 80rpx;
-}
-
-.approve-button {
-  background: var(--brand-color, #17365d) !important;
-  color: #ffffff !important;
-}
-
-.reject-button {
-  border: 1rpx solid #b91c1c;
-  background: #fff7f7 !important;
-  color: #b91c1c !important;
 }
 
 .error {

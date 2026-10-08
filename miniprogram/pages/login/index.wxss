@@ -27,9 +27,7 @@
 }
 
 .login-button {
-  min-height: 88rpx;
   margin: 0;
-  line-height: 88rpx;
 }
 
 .error {

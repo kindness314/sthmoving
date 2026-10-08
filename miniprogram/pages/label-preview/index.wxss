@@ -186,17 +186,6 @@
 
 .printer-action {
   flex: 1;
-  min-height: 84rpx;
-  margin: 0;
-  font-size: 28rpx;
-  border-radius: 14rpx;
-  line-height: 84rpx;
-}
-
-.secondary-action {
-  border: 1rpx solid var(--brand-color, #17365d);
-  background: #ffffff;
-  color: var(--brand-color, #17365d);
 }
 
 .device-list {
@@ -217,19 +206,7 @@
 }
 
 .device-connect {
-  box-sizing: border-box;
-  flex: 0 0 120rpx;
-  min-height: 56rpx;
-  margin: 0;
-  padding: 0;
-  font-size: 24rpx;
-  border: none;
-  border-radius: 10rpx;
-  background: var(--brand-color, #17365d);
-  color: #ffffff;
-  line-height: 56rpx;
-  text-align: center;
-  white-space: nowrap;
+  flex: none;
 }
 
 .search-hint,
@@ -240,9 +217,7 @@
 }
 
 .print-button {
-  min-height: 88rpx;
   margin: 28rpx 0 0;
-  line-height: 88rpx;
 }
 
 .sdk-canvas-host {

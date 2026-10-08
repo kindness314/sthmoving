@@ -204,15 +204,7 @@
 }
 
 .management-button {
-  box-sizing: border-box;
   width: 100%;
-  height: 72rpx;
-  margin: 0;
-  padding: 0 24rpx;
-  border: 1rpx solid var(--brand-color, #17365d);
-  border-radius: 16rpx;
-  color: var(--brand-color, #17365d);
-  line-height: 72rpx;
 }
 
 .management-hint {
@@ -236,14 +228,8 @@
 }
 
 .batch-bar button {
-  box-sizing: border-box;
   flex: 1;
   min-width: 0;
-  height: 72rpx;
-  margin: 0;
-  padding: 0 16rpx;
-  border-radius: 16rpx;
-  line-height: 72rpx;
 }
 
 .refreshing {
@@ -252,8 +238,3 @@
   text-align: right;
 }
 
-.danger-button {
-  margin: 0;
-  background: #b91c1c !important;
-  color: #ffffff !important;
-}

@@ -101,7 +101,7 @@
     <view class="printer-actions">
       <button
         wx:if="{{!discovering && printerStatus !== 'READY' && printerStatus !== 'PRINTING'}}"
-        class="printer-action secondary-action"
+        class="secondary-button button-md printer-action"
         disabled="{{connectingDeviceId}}"
         bindtap="handleStartPrinterDiscovery"
       >
@@ -109,14 +109,14 @@
       </button>
       <button
         wx:if="{{discovering}}"
-        class="printer-action secondary-action"
+        class="secondary-button button-md printer-action"
         bindtap="handleStopPrinterDiscovery"
       >
         停止搜索
       </button>
       <button
         wx:if="{{printerStatus === 'READY'}}"
-        class="printer-action secondary-action"
+        class="secondary-button button-md printer-action"
         bindtap="handleDisconnectPrinter"
       >
         断开连接
@@ -127,7 +127,7 @@
       <view wx:for="{{printerDevices}}" wx:key="id" class="device-row">
         <view class="device-name">{{item.name}}</view>
         <button
-          class="device-connect"
+          class="primary-button button-sm device-connect"
           data-device-id="{{item.id}}"
           loading="{{connectingDeviceId === item.id}}"
           disabled="{{connectingDeviceId}}"

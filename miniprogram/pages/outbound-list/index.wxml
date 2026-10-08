@@ -29,15 +29,14 @@
     <view class="muted meta">申请人：{{item.applicant.displayName}}</view>
     <view class="reason">{{item.reason}}</view>
     <button
-      class="secondary-button detail-button"
-      size="mini"
+      class="secondary-button button-md detail-button"
       data-item-id="{{item.item.id}}"
       catchtap="handleViewItem"
     >查看物品详情</button>
     <view class="muted request-time">申请时间：{{item.createdAtText}}</view>
     <view class="actions">
       <button
-        class="reject-button"
+        class="danger-outline-button button-md"
         data-id="{{item.id}}"
         data-decision="REJECT"
         disabled="{{processingId}}"
@@ -46,7 +45,7 @@
         拒绝
       </button>
       <button
-        class="approve-button"
+        class="primary-button button-md"
         data-id="{{item.id}}"
         data-decision="APPROVE"
         loading="{{processingId === item.id}}"

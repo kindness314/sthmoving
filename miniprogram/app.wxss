@@ -36,17 +36,83 @@ button::after {
   box-shadow: 0 8rpx 28rpx rgba(23, 54, 93, 0.065);
 }
 
-.primary-button {
+/* ===== 按钮规范 =====
+ * 级别：.primary-button 实心主按钮（每屏至多一个）；.secondary-button 描边次按钮；
+ * .danger-button 实心红，仅用于不可逆操作；.danger-outline-button 浅红描边，用于可逆警告操作。
+ * 尺寸：默认通栏 88rpx；.button-md 行内 72rpx；.button-sm 行内小按钮 56rpx。
+ * 文字一律横排居中：padding 归零 + nowrap + text-align center，禁用默认内边距导致竖排。 */
+.primary-button,
+.secondary-button,
+.danger-button,
+.danger-outline-button {
   box-sizing: border-box;
+  min-height: 88rpx;
+  margin: 0;
+  padding: 0;
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 88rpx;
+  text-align: center;
+  white-space: nowrap;
+  border: none;
   border-radius: 14rpx;
+}
+
+.primary-button {
   background: var(--brand-color, #17365d) !important;
   color: #ffffff !important;
-  font-weight: 600;
 }
 
 .primary-button[disabled] {
   background: #b6c2d2 !important;
   color: #f1f5f9 !important;
+}
+
+.secondary-button {
+  border: 1rpx solid var(--brand-color, #17365d);
+  background: #ffffff;
+  color: var(--brand-color, #17365d);
+  font-weight: 500;
+}
+
+.secondary-button[disabled] {
+  border-color: #c7d2e0;
+  color: #94a3b8;
+}
+
+.danger-button {
+  background: #b91c1c !important;
+  color: #ffffff !important;
+}
+
+.danger-button[disabled] {
+  background: #d6a3a3 !important;
+  color: #fbe9e9 !important;
+}
+
+.danger-outline-button {
+  border: 1rpx solid #b91c1c;
+  background: #fff7f7;
+  color: #b91c1c;
+  font-weight: 500;
+}
+
+.button-md {
+  min-height: 72rpx;
+  font-size: 28rpx;
+  line-height: 72rpx;
+  border-radius: 12rpx;
+}
+
+.button-sm {
+  display: inline-block;
+  width: auto;
+  min-height: 56rpx;
+  padding: 0 24rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  line-height: 56rpx;
+  border-radius: 10rpx;
 }
 
 .muted {
