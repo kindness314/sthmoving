@@ -207,11 +207,7 @@
 
 .device-connect {
   flex: none;
-  min-height: 48rpx;
-  padding: 0 16rpx;
-  font-size: 24rpx;
-  line-height: 48rpx;
-  border-radius: 8rpx;
+  padding: 0 8rpx;
 }
 
 .search-hint,
