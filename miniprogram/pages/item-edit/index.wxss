@@ -93,7 +93,6 @@
 .remove-image {
   width: 100%;
   margin: 12rpx 0 0;
-  color: #b91c1c !important;
 }
 
 .add-image {

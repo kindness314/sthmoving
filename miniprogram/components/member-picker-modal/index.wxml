@@ -33,7 +33,7 @@
       </scroll-view>
     </view>
     <view class="modal-actions">
-      <button class="modal-cancel" size="mini" bindtap="handleCancel">
+      <button class="secondary-button button-md modal-cancel" bindtap="handleCancel">
         取消
       </button>
     </view>

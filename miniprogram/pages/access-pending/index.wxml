@@ -34,7 +34,7 @@
     </view>
     <button
       wx:else
-      class="retry-button"
+      class="secondary-button button-sm retry-button"
       loading="{{loading}}"
       disabled="{{loading}}"
       bindtap="handleRetry"

@@ -47,7 +47,7 @@
   </view>
   <view wx:elif="{{errorMessage && !items.length}}" class="card state">
     <view class="error">{{errorMessage}}</view>
-    <button class="retry-button" size="mini" bindtap="handleRetry">
+    <button class="secondary-button button-sm retry-button" bindtap="handleRetry">
       重新加载
     </button>
   </view>

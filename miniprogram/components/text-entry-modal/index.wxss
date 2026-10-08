@@ -84,23 +84,7 @@
 }
 
 .modal-actions button {
-  box-sizing: border-box;
   flex: 1;
   min-width: 0;
-  height: 80rpx;
   margin: 0;
-  padding: 0 20rpx;
-  border-radius: 14rpx;
-  font-weight: 600;
-  line-height: 80rpx;
-}
-
-.modal-cancel {
-  border: 1rpx solid #d7dee8;
-  background: #ffffff;
-  color: #374151;
-}
-
-.modal-confirm {
-  border: none;
 }

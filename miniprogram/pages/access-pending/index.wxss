@@ -17,7 +17,6 @@
 
 .retry-button {
   margin-top: 40rpx;
-  border-radius: 16rpx;
 }
 
 .application-form {

@@ -120,16 +120,8 @@ button::after {
 }
 
 .retry-button {
-  box-sizing: border-box;
+  display: block;
   min-width: 184rpx;
-  height: 72rpx;
   margin-right: auto;
   margin-left: auto;
-  padding: 0 24rpx;
-  border: 1rpx solid #c7d2e0;
-  border-radius: 12rpx;
-  background: #ffffff;
-  color: var(--brand-color, #17365d);
-  font-size: 26rpx;
-  line-height: 72rpx;
 }

@@ -7,7 +7,7 @@
   <view wx:if="{{loading && !members.length}}" class="state muted">正在加载成员…</view>
   <view wx:elif="{{errorMessage && !members.length}}" class="card state">
     <view class="error">{{errorMessage}}</view>
-    <button size="mini" class="retry-button" bindtap="loadMembers">重新加载</button>
+    <button class="secondary-button button-sm retry-button" bindtap="loadMembers">重新加载</button>
   </view>
   <view wx:elif="{{!members.length}}" class="card state muted">暂无成员</view>
 

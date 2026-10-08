@@ -3,7 +3,7 @@
   <view wx:if="{{loading}}" class="card state muted">正在加载物品…</view>
   <view wx:elif="{{!item}}" class="card state">
     <view class="error">{{errorMessage || '物品不存在'}}</view>
-    <button class="retry-button" size="mini" bindtap="loadItem">
+    <button class="secondary-button button-sm retry-button" bindtap="loadItem">
       重新加载
     </button>
   </view>
@@ -30,8 +30,7 @@
             bindtap="handlePreviewImage"
           />
           <button
-            class="remove-image"
-            size="mini"
+            class="danger-outline-button button-sm remove-image"
             data-index="{{index}}"
             disabled="{{submitting}}"
             bindtap="handleRemoveImage"

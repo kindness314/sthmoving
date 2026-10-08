@@ -18,8 +18,7 @@
         bindinput="handleNameInput"
       />
       <button
-        class="primary-button create-button"
-        size="mini"
+        class="primary-button button-md create-button"
         loading="{{creating}}"
         disabled="{{creating || !categoryName}}"
         bindtap="handleCreate"

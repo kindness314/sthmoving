@@ -23,8 +23,7 @@
           bindtap="handlePreviewImage"
         />
         <button
-          class="remove-image"
-          size="mini"
+          class="danger-outline-button button-sm remove-image"
           data-index="{{index}}"
           disabled="{{submitting}}"
           bindtap="handleRemoveImage"

@@ -39,10 +39,7 @@
 .create-button {
   flex: none;
   min-width: 132rpx;
-  height: 80rpx;
   margin: 0;
-  padding: 0 22rpx;
-  line-height: 80rpx;
 }
 
 .section-title {

@@ -17,7 +17,7 @@
   <view wx:if="{{loading}}" class="state muted">正在加载物品详情…</view>
   <view wx:elif="{{errorMessage}}" class="card state">
     <view class="error">{{errorMessage}}</view>
-    <button class="retry-button" size="mini" bindtap="handleRetry">
+    <button class="secondary-button button-sm retry-button" bindtap="handleRetry">
       重新加载
     </button>
   </view>
@@ -78,13 +78,11 @@
       <view class="review-reason">{{pendingOutbound.reason}}</view>
       <view class="actions review-actions">
         <button
-          class="danger-button action-button"
-          size="mini"
+          class="danger-outline-button button-md action-button"
           bindtap="handleRejectOutbound"
         >拒绝</button>
         <button
-          class="primary-button action-button"
-          size="mini"
+          class="primary-button button-md action-button"
           bindtap="handleApproveOutbound"
         >同意</button>
       </view>
@@ -138,8 +136,8 @@
       直接离库
     </button>
     <view wx:if="{{item.status === 'OFF_SHELF' && (userRole === 'ADMIN' || userRole === 'MANAGER' || userRole === 'OWNER')}}" class="off-shelf-actions">
-      <button class="secondary-button action-button" bindtap="handleRestoreInbound">重新入库</button>
-      <button class="danger-button action-button" bindtap="handleDeleteOffShelf">删除物品</button>
+      <button class="secondary-button button-md action-button" bindtap="handleRestoreInbound">重新入库</button>
+      <button class="danger-button button-md action-button" bindtap="handleDeleteOffShelf">删除物品</button>
     </view>
   </block>
   <text-entry-modal id="text-entry-modal" />
