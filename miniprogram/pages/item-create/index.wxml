@@ -2,13 +2,12 @@
   <nav-bar title="登记物品" />
   <view class="heading">
     <view class="title">登记物品</view>
-    <view class="muted">填写物品信息并上传最多四张照片</view>
   </view>
 
   <view class="card section">
     <view class="field-label">物品照片（可选）</view>
     <view class="muted field-help">
-      最多 2 张；原图单张不超过 10 MB，处理后不超过 2 MB
+      最多 4 张；原图单张不超过 20 MB，处理后不超过 2 MB
     </view>
     <view class="image-list">
       <view

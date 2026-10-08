@@ -19,7 +19,7 @@
 
     <view class="card section">
       <view class="field-label">物品照片（可选）</view>
-      <view class="muted field-help">最多 2 张；移除图片会在保存成功后删除旧文件</view>
+      <view class="muted field-help">最多 4 张；移除图片会在保存成功后删除旧文件</view>
       <view class="image-list">
         <view wx:for="{{selectedImages}}" wx:key="tempFilePath" class="image-item">
           <image
