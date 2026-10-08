@@ -4,113 +4,181 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>YUNA个物终端</title>
+  <link rel="icon" href="/avatar.png" type="image/png" />
   <style>
+    :root {
+      --red: #e03131;
+      --red-dark: #b3202c;
+      --ink: #141416;
+      --muted: #6b7280;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      background: #f6f8fb;
-      color: #1f2937;
+      background: #f7f5f4;
+      color: var(--ink);
       font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
     }
+
+    /* ===== Hero ===== */
     .hero {
+      position: relative;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 64px 24px 72px;
-      background: linear-gradient(160deg, #17365d 0%, #1f4e79 55%, #2a6ea5 100%);
+      padding: 84px 24px 96px;
+      background:
+        radial-gradient(560px 320px at 82% -60px, rgba(224, 49, 49, 0.35), transparent 70%),
+        radial-gradient(480px 300px at 8% 110%, rgba(224, 49, 49, 0.22), transparent 70%),
+        linear-gradient(165deg, #17171a 0%, #1e1e22 60%, #26262b 100%);
       color: #ffffff;
       text-align: center;
     }
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 16px;
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(70% 60% at 50% 30%, #000 0%, transparent 100%);
+      pointer-events: none;
     }
-    .brand-mark {
-      width: 72px;
-      height: 72px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 34px;
-      font-weight: 700;
-      letter-spacing: 2px;
+    .avatar-ring {
+      position: relative;
+      width: 148px;
+      height: 148px;
+      border-radius: 50%;
+      padding: 6px;
+      background: conic-gradient(from 210deg, var(--red), #ffffff22, var(--red));
+      box-shadow: 0 18px 48px rgba(224, 49, 49, 0.35);
+      z-index: 1;
     }
-    h1 { font-size: 34px; letter-spacing: 2px; }
+    .avatar-ring img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      display: block;
+      border: 3px solid #17171a;
+    }
+    h1 {
+      margin-top: 30px;
+      font-size: 38px;
+      letter-spacing: 3px;
+      z-index: 1;
+    }
+    h1 .accent { color: #ff6b5e; }
     .slogan {
-      margin-top: 18px;
-      max-width: 520px;
+      margin-top: 16px;
+      max-width: 540px;
       font-size: 15px;
       line-height: 2;
-      color: rgba(255, 255, 255, 0.82);
+      color: rgba(255, 255, 255, 0.75);
+      z-index: 1;
     }
     .status {
-      margin-top: 26px;
+      margin-top: 28px;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 20px;
+      padding: 9px 22px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.14);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(224, 49, 49, 0.14);
+      border: 1px solid rgba(224, 49, 49, 0.45);
       font-size: 13px;
-      color: rgba(255, 255, 255, 0.92);
+      color: #ffb3ad;
+      z-index: 1;
     }
     .status-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
       background: #4ade80;
+      box-shadow: 0 0 8px #4ade80;
     }
 
+    /* ===== Sections ===== */
     .section-title {
-      margin: 56px auto 28px;
+      margin: 60px auto 30px;
       padding: 0 24px;
       max-width: 960px;
-      font-size: 22px;
-      color: #17365d;
+      font-size: 24px;
+      letter-spacing: 2px;
       text-align: center;
     }
+    .section-title::after {
+      content: "";
+      display: block;
+      width: 44px;
+      height: 4px;
+      margin: 12px auto 0;
+      border-radius: 2px;
+      background: var(--red);
+    }
+
     .features {
       width: 100%;
       max-width: 960px;
       margin: 0 auto;
       padding: 0 24px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px;
     }
     .feature {
-      padding: 24px 20px;
-      border-radius: 14px;
+      position: relative;
+      padding: 26px 22px;
+      border-radius: 16px;
       background: #ffffff;
-      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+      border: 1px solid #efe9e6;
+      box-shadow: 0 8px 26px rgba(20, 20, 22, 0.05);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
-    .feature h2 { font-size: 16px; color: #17365d; }
-    .feature p { margin-top: 8px; font-size: 13px; color: #6b7280; line-height: 1.8; }
+    .feature:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 36px rgba(179, 32, 44, 0.12);
+    }
+    .feature::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 22px;
+      width: 34px;
+      height: 4px;
+      border-radius: 0 0 4px 4px;
+      background: var(--red);
+    }
+    .feature h2 { font-size: 17px; }
+    .feature p { margin-top: 10px; font-size: 13px; color: var(--muted); line-height: 1.9; }
 
+    /* ===== Demo phones ===== */
     .demo {
       width: 100%;
-      max-width: 960px;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 0 24px;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 28px;
+      gap: 32px;
     }
+    .demo-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.18s ease;
+    }
+    .demo-item:hover { transform: translateY(-6px); }
     .phone {
-      width: 220px;
-      border-radius: 28px;
+      width: 224px;
+      border-radius: 30px;
       background: #ffffff;
-      box-shadow: 0 12px 36px rgba(15, 23, 42, 0.14);
-      border: 6px solid #1f2937;
+      border: 6px solid var(--ink);
+      box-shadow: 0 18px 44px rgba(20, 20, 22, 0.22);
       overflow: hidden;
     }
     .phone-notch {
@@ -124,24 +192,24 @@
       width: 64px;
       height: 8px;
       border-radius: 4px;
-      background: #1f2937;
+      background: var(--ink);
     }
     .screen {
       margin: 0 10px 10px;
       border-radius: 18px;
-      background: #f6f8fb;
+      background: #f7f5f4;
       padding: 14px 12px;
-      min-height: 360px;
+      min-height: 364px;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
-    .screen-title { font-size: 14px; font-weight: 700; color: #111827; }
+    .screen-title { font-size: 14px; font-weight: 700; }
     .screen-search {
       height: 26px;
       border-radius: 8px;
       background: #ffffff;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #eadfdd;
       font-size: 10px;
       color: #9ca3af;
       display: flex;
@@ -155,36 +223,37 @@
       display: flex;
       gap: 10px;
       align-items: center;
+      box-shadow: 0 2px 8px rgba(20, 20, 22, 0.05);
     }
     .item-thumb {
       width: 40px;
       height: 40px;
       border-radius: 8px;
-      background: linear-gradient(135deg, #dbe7f3, #b8cfe6);
+      background: linear-gradient(135deg, #f6d9d7, #eeb3ae);
       flex-shrink: 0;
     }
     .item-lines { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-    .line { height: 8px; border-radius: 4px; background: #e2e8f0; }
-    .line-strong { background: #c7d6e8; width: 60%; }
+    .line { height: 8px; border-radius: 4px; background: #eee4e2; }
+    .line-strong { background: #ecc9c5; width: 60%; }
     .line-short { width: 40%; }
     .tag {
       align-self: flex-start;
       padding: 2px 8px;
       border-radius: 999px;
       font-size: 9px;
-      background: #e8f0fa;
-      color: #17365d;
+      background: rgba(224, 49, 49, 0.1);
+      color: var(--red-dark);
     }
     .qr-box {
       margin: 6px auto;
-      width: 120px;
-      height: 120px;
+      width: 118px;
+      height: 118px;
       border-radius: 12px;
       background:
-        conic-gradient(from 0deg, #17365d 0 25%, #ffffff 0 50%, #17365d 0 75%, #ffffff 0)
-        0 0 / 24px 24px;
+        conic-gradient(from 0deg, var(--ink) 0 25%, #ffffff 0 50%, var(--ink) 0 75%, #ffffff 0)
+        0 0 / 23.6px 23.6px;
       border: 6px solid #ffffff;
-      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+      box-shadow: 0 4px 14px rgba(20, 20, 22, 0.16);
     }
     .info-row {
       display: flex;
@@ -200,7 +269,7 @@
       margin-top: auto;
       height: 30px;
       border-radius: 999px;
-      background: #17365d;
+      background: linear-gradient(90deg, var(--red), var(--red-dark));
       color: #ffffff;
       font-size: 11px;
       display: flex;
@@ -208,16 +277,14 @@
       justify-content: center;
     }
     .demo-caption {
-      margin-top: 10px;
-      width: 220px;
-      text-align: center;
+      margin-top: 14px;
       font-size: 12px;
-      color: #6b7280;
+      color: var(--muted);
+      letter-spacing: 1px;
     }
-    .demo-item { display: flex; flex-direction: column; align-items: center; }
 
     .note {
-      margin: 48px auto 0;
+      margin: 56px auto 0;
       padding: 0 24px;
       max-width: 880px;
       font-size: 13px;
@@ -226,23 +293,24 @@
       text-align: center;
     }
     footer {
-      margin-top: 48px;
-      padding: 24px;
+      margin-top: 44px;
+      padding: 22px 24px 28px;
+      border-top: 1px solid #eee4e2;
       text-align: center;
       font-size: 12px;
       color: #9ca3af;
       line-height: 2;
     }
     footer a { color: #9ca3af; text-decoration: none; }
-    footer a:hover { color: #17365d; }
+    footer a:hover { color: var(--red); }
   </style>
 </head>
 <body>
   <section class="hero">
-    <div class="brand">
-      <div class="brand-mark">Y</div>
-      <h1>YUNA个物终端</h1>
+    <div class="avatar-ring">
+      <img src="/avatar.png" alt="YUNA个物终端小程序头像" width="148" height="148" />
     </div>
+    <h1>YUNA<span class="accent">个物终端</span></h1>
     <p class="slogan">
       个人物品资产管理工具：登记、查询、离库审批与标签打印，一站式完成。
     </p>
