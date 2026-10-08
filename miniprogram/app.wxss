@@ -5,6 +5,10 @@ page {
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
 }
 
+button::after {
+  border: none;
+}
+
 .page {
   --brand-color: #17365d;
   --brand-soft-color: #e8eef6;

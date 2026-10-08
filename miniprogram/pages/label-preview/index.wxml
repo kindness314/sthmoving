@@ -144,8 +144,8 @@
       disabled="{{printerStatus !== 'READY' || printing}}"
       bindtap="handlePrintLabel"
     >
-      <block wx:if="{{printing}}">正在打印</block>
-      <block wx:else>打印 {{selectedLabelSize}} × {{selectedLabelSize}} mm 标签</block>
+      <block wx:if="{{printing}}">正在打印…</block>
+      <block wx:else>打印标签</block>
     </button>
   </view>
 
