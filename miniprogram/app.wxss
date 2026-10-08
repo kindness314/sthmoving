@@ -126,7 +126,7 @@ button::after {
   min-width: 72rpx;
   min-height: 48rpx;
   margin: 0;
-  padding: 0 20rpx;
+  padding: 0 10rpx;
   border: 1rpx solid var(--brand-color, #17365d);
   border-radius: 8rpx;
   background: transparent;
