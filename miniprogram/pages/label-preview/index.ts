@@ -9,7 +9,7 @@ import type {
   PrinterDevice,
   PrinterStatus,
 } from '../../services/printer/types'
-import type { ItemDetail, ItemLabel } from '../../types/domain'
+import type { ItemDetail, ItemLabel, UserRole } from '../../types/domain'
 
 type LabelSizeMillimetres = 20 | 30
 
@@ -38,6 +38,7 @@ Page({ data: {
   connectingDeviceId: '',
   printing: false,
   copiesInput: '1',
+  maxCopies: 15,
   labelSizeOptions,
   selectedLabelSize: 30 as LabelSizeMillimetres,
   printerErrorMessage: '',
@@ -53,6 +54,9 @@ Page({ data: {
     this.setData({ themeStyle: getThemeStyle() })
   }, onLoad(options: Record<string, string | undefined>) {
     this.setData({ themeStyle: getThemeStyle() })
+    const role: UserRole | '' =
+      getApp<IAppOption>().globalData.currentUser?.role ?? ''
+    this.setData({ maxCopies: role === 'MEMBER' || role === '' ? 15 : 99 })
     const itemId = safeDecode(options['itemId'])
     this.setData({ itemId })
     void this.loadPage()
@@ -207,8 +211,11 @@ Page({ data: {
       return
     }
     const copies = Number(this.data.copiesInput)
-    if (!Number.isInteger(copies) || copies < 1 || copies > 99) {
-      this.setData({ printerErrorMessage: '打印份数必须是 1-99 的整数' })
+    const maxCopies = this.data.maxCopies
+    if (!Number.isInteger(copies) || copies < 1 || copies > maxCopies) {
+      this.setData({
+        printerErrorMessage: `打印份数必须是 1-${maxCopies} 的整数`,
+      })
       return
     }
     const labelSize = this.data.selectedLabelSize

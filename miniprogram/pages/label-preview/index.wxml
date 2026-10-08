@@ -79,7 +79,7 @@
     <view class="copies-row">
       <view>
         <view class="control-label">打印份数</view>
-        <view class="muted control-hint">每次可打印 1-99 张</view>
+        <view class="muted control-hint">每次可打印 1-{{maxCopies}} 张</view>
       </view>
       <input
         class="copies-input"
