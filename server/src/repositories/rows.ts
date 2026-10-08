@@ -207,6 +207,7 @@ export function itemRow(row: Row): ItemRecord {
     description: read<string>(row, 'description'),
     quantity_mode: read<ItemRecord['quantity_mode']>(row, 'quantity_mode'),
     quantity: read<number>(row, 'quantity'),
+    office: read<ItemRecord['office']>(row, 'office'),
     category_id: read<string>(row, 'category_id'),
     status: read<ItemRecord['status']>(row, 'status'),
     version: read<number>(row, 'version'),
@@ -229,12 +230,12 @@ export async function upsertItem(
 ): Promise<void> {
   await db.query(
     `INSERT INTO items (id, code, name, images, description, quantity_mode,
-                        quantity, category_id, status, version, owner_id,
+                        quantity, office, category_id, status, version, owner_id,
                         donor_id, registered_by, registered_at, updated_by,
                         updated_at, off_shelf_by, off_shelf_at, deleted_by,
                         deleted_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-             $15, $16, $17, $18, $19, $20)
+             $15, $16, $17, $18, $19, $20, $21)
      ON CONFLICT (id) DO UPDATE SET
        code = EXCLUDED.code,
        name = EXCLUDED.name,
@@ -244,6 +245,7 @@ export async function upsertItem(
        quantity = EXCLUDED.quantity,
        category_id = EXCLUDED.category_id,
        status = EXCLUDED.status,
+       office = EXCLUDED.office,
        version = EXCLUDED.version,
        owner_id = EXCLUDED.owner_id,
        donor_id = EXCLUDED.donor_id,
@@ -263,6 +265,7 @@ export async function upsertItem(
       item.description,
       item.quantity_mode,
       item.quantity,
+      item.office,
       item.category_id,
       item.status,
       item.version,

@@ -5,6 +5,10 @@ export type ItemStatus =
   | 'OFF_SHELF'
   | 'DELETED'
 
+export type OfficeCode = '503' | '102' | '103'
+
+export const OFFICE_CODES: readonly OfficeCode[] = ['503', '102', '103']
+
 export interface ItemRecord {
   _id: string
   code: string
@@ -13,6 +17,7 @@ export interface ItemRecord {
   description: string
   quantity_mode: QuantityMode
   quantity: number
+  office: OfficeCode
   category_id: string
   status: ItemStatus
   version: number
@@ -72,6 +77,7 @@ export interface CreateItemInput {
   description: string
   quantityMode: QuantityMode
   quantity: number
+  office: OfficeCode
   ownerId?: string
   donorId?: string
   categoryId?: string
@@ -87,6 +93,7 @@ export interface UpdateItemInput {
   description?: string
   quantityMode?: QuantityMode
   quantity?: number
+  office?: OfficeCode
   ownerId?: string | null
   donorId?: string | null
   categoryId?: string
@@ -131,6 +138,7 @@ export interface PublicItem {
   categoryId: string
   status: ItemStatus
   version: number
+  office: OfficeCode
   ownerId?: string
   donorId?: string
   registeredBy: string
@@ -163,6 +171,7 @@ export interface PublicItemSummary {
   category: PublicItemCategory
   status: ItemStatus
   version: number
+  office: OfficeCode
   owner?: PublicItemActor
   donor?: PublicItemActor
   updatedAt: string

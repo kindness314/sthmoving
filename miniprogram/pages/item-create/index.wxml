@@ -92,6 +92,22 @@
         bindinput="handleQuantityInput"
       />
     </view>
+
+    <view class="field-label spaced-label">办公室</view>
+    <radio-group class="radio-group" bindchange="handleOfficeChange">
+      <label class="radio-option">
+        <radio value="503" checked="{{office === '503'}}" />
+        503
+      </label>
+      <label class="radio-option">
+        <radio value="102" checked="{{office === '102'}}" />
+        102
+      </label>
+      <label class="radio-option">
+        <radio value="103" checked="{{office === '103'}}" />
+        103
+      </label>
+    </radio-group>
   </view>
 
   <view class="card section">

@@ -80,6 +80,7 @@ export function createItem(
     description: '',
     quantity_mode: 'SINGLE',
     quantity: 1,
+    office: '503',
     category_id: 'category-1',
     status: 'ACTIVE',
     version: 1,

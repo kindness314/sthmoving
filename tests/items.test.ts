@@ -256,6 +256,7 @@ function createInput(
     description: '活动使用',
     quantityMode: 'SINGLE',
     quantity: 1,
+    office: '503',
     categoryId: 'category-daily',
     commitSummary: '首次登记物品',
     ...overrides,
@@ -299,6 +300,7 @@ function createItemRecord(
     description: '活动使用',
     quantity_mode: 'SINGLE',
     quantity: 1,
+    office: '503',
     category_id: 'category-daily',
     status: 'ACTIVE',
     version: 1,
@@ -346,6 +348,7 @@ describe('物品登记服务', () => {
       description: '活动使用',
       quantityMode: 'SINGLE',
       quantity: 1,
+      office: '503',
       categoryId: 'category-daily',
       status: 'ACTIVE',
       version: 1,
@@ -1139,5 +1142,56 @@ describe('物品归属', () => {
       ownershipUserId: 'user-donor',
     })
     expect(donorList.items.map((item) => item.id)).toEqual(['item-donated'])
+  })
+})
+
+describe('物品办公室', () => {
+  it('登记必须选择 503/102/103 之一', async () => {
+    const repository = prepareRepository()
+    const service = createService(repository)
+
+    const missing: CreateItemInput = createInput()
+    Reflect.deleteProperty(missing, 'office')
+    await expectApiCode(
+      service.create('user-member', missing),
+      'INVALID_OFFICE',
+    )
+    await expectApiCode(
+      service.create('user-member', createInput({ office: '504' as never })),
+      'INVALID_OFFICE',
+    )
+    expect(repository.items.size).toBe(0)
+
+    const created = await service.create(
+      'user-member',
+      createInput({ office: '102' }),
+    )
+    expect(created.office).toBe('102')
+    expect(repository.items.get(created.id)?.office).toBe('102')
+  })
+
+  it('更新可以修改办公室并拒绝非法值', async () => {
+    const repository = prepareRepository()
+    repository.items.set('item-1', createItemRecord('item-1'))
+    const service = createService(repository)
+
+    const updated = await service.update('user-member', {
+      itemId: 'item-1',
+      expectedVersion: 1,
+      office: '103',
+      commitSummary: '调整办公室',
+    })
+    expect(updated.office).toBe('103')
+    expect(repository.items.get('item-1')?.office).toBe('103')
+
+    await expectApiCode(
+      service.update('user-member', {
+        itemId: 'item-1',
+        expectedVersion: 2,
+        office: '504' as never,
+        commitSummary: '调整办公室',
+      }),
+      'INVALID_OFFICE',
+    )
   })
 })

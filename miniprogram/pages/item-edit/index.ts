@@ -23,6 +23,7 @@ import type { MemberPickerModalInstance } from '../../components/member-picker-m
 import type {
   Category,
   ItemDetail,
+  OfficeCode,
   QuantityMode,
 } from '../../types/domain'
 
@@ -35,6 +36,7 @@ interface DraftFields {
   description: string
   quantityMode: QuantityMode
   quantity: number
+  office: OfficeCode
   imageCount: number
   imageKey: string
   categoryId: string
@@ -46,6 +48,7 @@ type ConflictFieldKey =
   | 'description'
   | 'images'
   | 'quantity'
+  | 'office'
   | 'category'
 
 interface ConflictField {
@@ -73,6 +76,7 @@ Page({ data: {
   description: '',
   quantityMode: 'SINGLE' as QuantityMode,
   quantityInput: '1',
+  office: '503' as OfficeCode,
   commitSummary: '',
   categories: [] as Category[],
   categoryNames: [] as string[],
@@ -174,6 +178,13 @@ Page({ data: {
 
   handleQuantityInput(event: WechatMiniprogram.Input) {
     this.setData({ quantityInput: event.detail.value, errorMessage: '' })
+  },
+
+  handleOfficeChange(event: WechatMiniprogram.RadioGroupChange) {
+    this.setData({
+      office: event.detail.value as OfficeCode,
+      errorMessage: '',
+    })
   },
 
   handleCommitSummaryInput(event: WechatMiniprogram.TextareaInput) {
@@ -301,6 +312,7 @@ Page({ data: {
         description: this.data.description,
         quantityMode: this.data.quantityMode,
         quantity,
+        office: this.data.office,
         ...(this.data.canEditCategory &&
         this.data.selectedCategoryId &&
         this.data.selectedCategoryId !== this.data.item.category.id
@@ -449,6 +461,8 @@ Page({ data: {
         quantityMode: latest.quantityMode,
         quantityInput: String(latest.quantity),
       })
+    } else if (field === 'office') {
+      this.setData({ office: latest.office })
     } else if (field === 'category') {
       this.applyCategorySelection(latest.category.id)
     } else {
@@ -470,6 +484,8 @@ Page({ data: {
         quantityMode: conflict.local.quantityMode,
         quantityInput: String(conflict.local.quantity),
       })
+    } else if (field === 'office') {
+      this.setData({ office: conflict.local.office })
     } else if (field === 'category') {
       this.applyCategorySelection(conflict.local.categoryId)
     } else {
@@ -484,6 +500,7 @@ Page({ data: {
       description: item.description,
       quantityMode: item.quantityMode,
       quantityInput: String(item.quantity),
+      office: item.office,
       selectedImages: toEditImages(item),
       selectedCategoryId: item.category.id,
       categoryIndex: this.data.categories.findIndex(
@@ -507,6 +524,7 @@ Page({ data: {
       description: this.data.description.trim(),
       quantityMode: this.data.quantityMode,
       quantity: Number(this.data.quantityInput),
+      office: this.data.office,
       imageCount: this.data.selectedImages.length,
       imageKey: this.data.selectedImages
         .map((image) => image.fileId ?? image.tempFilePath)
@@ -573,6 +591,7 @@ function toDraftFields(item: ItemDetail): DraftFields {
     description: item.description,
     quantityMode: item.quantityMode,
     quantity: item.quantity,
+    office: item.office,
     imageCount: item.images.length,
     imageKey: item.imageFileIds.join('\u0000'),
     categoryId: item.category.id,
@@ -629,6 +648,15 @@ function buildConflictFields(
       localValue: `${local.quantityMode}:${local.quantity}`,
       latestValue: `${latest.quantityMode}:${latest.quantity}`,
       baseValue: `${base.quantityMode}:${base.quantity}`,
+    },
+    {
+      key: 'office',
+      label: '办公室',
+      localText: local.office,
+      latestText: latest.office,
+      localValue: local.office,
+      latestValue: latest.office,
+      baseValue: base.office,
     },
     {
       key: 'category',

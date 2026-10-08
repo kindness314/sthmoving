@@ -27,6 +27,8 @@ export type AccessState =
 
 export type QuantityMode = 'SINGLE' | 'MULTIPLE'
 
+export type OfficeCode = '503' | '102' | '103'
+
 export type ItemStatus = 'ACTIVE' | 'OUTBOUND_PENDING' | 'OFF_SHELF'
 
 export type OutboundRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
@@ -82,6 +84,7 @@ export interface Item {
   imageFileIds: string[]
   quantityMode: QuantityMode
   quantity: number
+  office: OfficeCode
   categoryId: string
   status: ItemStatus
   labelCode: string
@@ -111,6 +114,7 @@ export interface ItemSummary {
   description: string
   quantityMode: QuantityMode
   quantity: number
+  office: OfficeCode
   category: ItemCategorySummary
   status: ItemStatus
   version: number
@@ -197,6 +201,7 @@ export interface ItemUpdateInput {
   imageFileIds?: string[]
   quantityMode?: QuantityMode
   quantity?: number
+  office?: OfficeCode
   summary: string
 }
 

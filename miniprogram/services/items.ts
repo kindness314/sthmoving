@@ -4,6 +4,7 @@ import type {
   ItemListResult,
   ItemOperationLog,
   ItemStatus,
+  OfficeCode,
   QuantityMode,
 } from '../types/domain'
 import { callApi } from './cloud-api'
@@ -16,6 +17,7 @@ export interface CreateItemInput {
   description: string
   quantityMode: QuantityMode
   quantity: number
+  office: OfficeCode
   categoryId?: string
   newCategoryName?: string
   ownerId?: string
@@ -31,6 +33,7 @@ export interface CreatedItem {
   description: string
   quantityMode: QuantityMode
   quantity: number
+  office: OfficeCode
   categoryId: string
   status: ItemStatus
   version: number
@@ -96,6 +99,7 @@ export interface UpdateItemInput {
   quantity?: number
   categoryId?: string
   ownerId?: string | null
+  office?: OfficeCode
   donorId?: string | null
   commitSummary: string
 }

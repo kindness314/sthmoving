@@ -1,7 +1,7 @@
 import type { ApiDependencies } from '../dependencies'
 import { ApiException } from '../errors'
 import { ItemService } from '../items/service'
-import type { QuantityMode } from '../items/types'
+import type { OfficeCode, QuantityMode } from '../items/types'
 import type { ApiHandler } from '../types'
 
 interface CreateItemPayload {
@@ -10,6 +10,7 @@ interface CreateItemPayload {
   description?: unknown
   quantityMode?: unknown
   quantity?: unknown
+  office?: unknown
   ownerId?: unknown
   donorId?: unknown
   categoryId?: unknown
@@ -35,6 +36,7 @@ interface UpdateItemPayload {
   description?: unknown
   quantityMode?: unknown
   quantity?: unknown
+  office?: unknown
   ownerId?: unknown
   donorId?: unknown
   categoryId?: unknown
@@ -173,7 +175,8 @@ export function createItemHandlers(
           typeof input.donorId !== 'string') ||
         (input.categoryId !== undefined &&
           typeof input.categoryId !== 'string') ||
-        typeof input.commitSummary !== 'string'
+        typeof input.commitSummary !== 'string' ||
+        (input.office !== undefined && typeof input.office !== 'string')
       ) {
         throw new ApiException(
           'INVALID_REQUEST',
@@ -202,6 +205,7 @@ export function createItemHandlers(
           : {}),
         ...(ownerId !== undefined ? { ownerId } : {}),
         ...(donorId !== undefined ? { donorId } : {}),
+        ...(input.office !== undefined ? { office: input.office as OfficeCode } : {}),
         commitSummary: input.commitSummary,
       })
     },
@@ -220,6 +224,7 @@ export function createItemHandlers(
         (input.donorId !== undefined && typeof input.donorId !== 'string') ||
         (input.newCategoryName !== undefined &&
           typeof input.newCategoryName !== 'string') ||
+        typeof input.office !== 'string' ||
         typeof input.commitSummary !== 'string'
       ) {
         throw new ApiException(
@@ -253,6 +258,7 @@ export function createItemHandlers(
         ...categorySelection,
         ...(ownerId !== undefined ? { ownerId } : {}),
         ...(donorId !== undefined ? { donorId } : {}),
+        office: input.office as OfficeCode,
         commitSummary: input.commitSummary,
       })
     },

@@ -19,6 +19,7 @@ import {
 import { createItem } from '../../services/items'
 import type {
   Category,
+  OfficeCode,
   QuantityMode,
 } from '../../types/domain'
 
@@ -28,6 +29,7 @@ Page({ data: {
   description: '',
   quantityMode: 'SINGLE' as QuantityMode,
   quantityInput: '1',
+  office: '503' as OfficeCode,
   commitSummary: '首次登记物品',
   categories: [] as Category[],
   categoryMode: 'EXISTING' as 'EXISTING' | 'NEW',
@@ -94,6 +96,13 @@ Page({ data: {
 
   handleQuantityInput(event: WechatMiniprogram.Input) {
     this.setData({ quantityInput: event.detail.value, errorMessage: '' })
+  },
+
+  handleOfficeChange(event: WechatMiniprogram.RadioGroupChange) {
+    this.setData({
+      office: event.detail.value as OfficeCode,
+      errorMessage: '',
+    })
   },
 
   handleCommitSummaryInput(event: WechatMiniprogram.TextareaInput) {
@@ -247,6 +256,7 @@ Page({ data: {
         description: this.data.description,
         quantityMode: this.data.quantityMode,
         quantity,
+        office: this.data.office,
         ...categorySelection,
         ...ownershipSelection,
         commitSummary: this.data.commitSummary,

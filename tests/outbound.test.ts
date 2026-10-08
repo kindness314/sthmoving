@@ -183,6 +183,7 @@ function createItem(
     description: '活动使用',
     quantity_mode: 'SINGLE',
     quantity: 1,
+    office: '503',
     category_id: 'category-daily',
     status,
     version: 3,

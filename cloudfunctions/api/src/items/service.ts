@@ -17,10 +17,12 @@ import type {
   ItemRepository,
   ItemUnitOfWork,
 } from './repository'
+import { OFFICE_CODES } from './types'
 import type {
   CreateItemInput,
   ItemRecord,
   ListItemsInput,
+  OfficeCode,
   PublicItem,
   PublicItemDetail,
   PublicItemList,
@@ -88,6 +90,7 @@ export class ItemService {
         description: validated.description,
         quantity_mode: validated.quantityMode,
         quantity: validated.quantity,
+        office: validated.office,
         category_id: category._id,
         ...ownership,
         status: 'ACTIVE',
@@ -200,6 +203,7 @@ export class ItemService {
           validated.description !== item.description) ||
         quantityMode !== item.quantity_mode ||
         quantity !== item.quantity ||
+        (validated.office !== undefined && validated.office !== item.office) ||
         ownership.owner_id !== item.owner_id ||
         ownership.donor_id !== item.donor_id ||
         categoryChanged
@@ -221,6 +225,7 @@ export class ItemService {
           : {}),
         quantity_mode: quantityMode,
         quantity,
+        office: validated.office ?? item.office,
         category_id: category._id,
         ...ownership,
         version: item.version + 1,
@@ -543,6 +548,7 @@ export class ItemService {
         description: item.description,
         quantityMode: item.quantity_mode,
         quantity: item.quantity,
+        office: item.office,
         category: {
           id: category._id,
           name: category.name,
@@ -750,6 +756,7 @@ function validateCreateInput(input: CreateItemInput): CreateItemInput {
     description,
     quantityMode: input.quantityMode,
     quantity: input.quantity,
+    office: requireOfficeCode(input.office),
     commitSummary,
   }
   if (categoryId) {
@@ -793,6 +800,7 @@ function validateUpdateInput(input: UpdateItemInput): UpdateItemInput {
     input.quantity !== undefined ||
     input.ownerId !== undefined ||
     input.donorId !== undefined ||
+    input.office !== undefined ||
     input.categoryId !== undefined
   if (!hasChanges) {
     throw new ApiException('NO_ITEM_CHANGES', '至少修改一个物品字段')
@@ -867,6 +875,9 @@ function validateUpdateInput(input: UpdateItemInput): UpdateItemInput {
     validated.donorId =
       input.donorId === null ? null : requireOwnershipUserId(input.donorId)
   }
+  if (input.office !== undefined) {
+    validated.office = requireOfficeCode(input.office)
+  }
   if (validated.ownerId && validated.donorId) {
     throw new ApiException(
       'OWNER_DONOR_CONFLICT',
@@ -886,6 +897,16 @@ function requireOwnershipUserId(value: string): string {
     )
   }
   return userId
+}
+
+function requireOfficeCode(value: unknown): OfficeCode {
+  if (
+    typeof value !== 'string' ||
+    !OFFICE_CODES.includes(value as OfficeCode)
+  ) {
+    throw new ApiException('INVALID_OFFICE', '办公室必须是 503、102 或 103')
+  }
+  return value as OfficeCode
 }
 
 function validateCommitSummary(value: string): string {
@@ -943,6 +964,7 @@ function toPublicItem(item: ItemRecord): PublicItem {
     description: item.description,
     quantityMode: item.quantity_mode,
     quantity: item.quantity,
+    office: item.office,
     categoryId: item.category_id,
     status: item.status,
     version: item.version,

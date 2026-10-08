@@ -54,6 +54,10 @@
         <text class="info-value">{{item.quantityText}}</text>
       </view>
       <view class="info-row">
+        <text class="label">办公室</text>
+        <text class="info-value">{{item.office || '—'}}</text>
+      </view>
+      <view class="info-row">
         <text class="label">分类</text>
         <text class="info-value">{{item.category.name}}{{item.category.status === 'DISABLED' ? '（已停用）' : ''}}</text>
       </view>

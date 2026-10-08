@@ -56,6 +56,7 @@ describe('云函数 API 路由', () => {
           description: '',
           quantityMode: 'SINGLE',
           quantity: 1,
+          office: '503',
           categoryId: 'category-existing',
           newCategoryName: '活动器材',
           commitSummary: '首次登记物品',
