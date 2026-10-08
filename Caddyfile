@@ -11,7 +11,15 @@
 		-Server
 	}
 
-	reverse_proxy api:8080 {
-		header_up X-Forwarded-For {http.request.remote.host}
+	@landing path /
+	handle @landing {
+		root * /srv
+		file_server
+	}
+
+	handle {
+		reverse_proxy api:8080 {
+			header_up X-Forwarded-For {http.request.remote.host}
+		}
 	}
 }
