@@ -39,7 +39,7 @@ Page({ data: {
   printing: false,
   copiesInput: '1',
   maxCopies: 15,
-  labelSizeOptions,
+  centerOnLargerPaper: false,
   selectedLabelSize: 30 as LabelSizeMillimetres,
   printerErrorMessage: '',
   templateWidth: 240,
@@ -206,6 +206,10 @@ Page({ data: {
     })
   },
 
+  handleCenterToggle(event: WechatMiniprogram.SwitchChange) {
+    this.setData({ centerOnLargerPaper: event.detail.value })
+  },
+
   async handlePrintLabel() {
     if (this.data.printing || !this.data.labelImageUrl) {
       return
@@ -227,13 +231,17 @@ Page({ data: {
         id: `label-${this.data.itemId}-${Date.now()}`,
         copies,
         imageUrl: this.data.labelImageUrl,
-        widthMillimetres: labelSize,
-        heightMillimetres: labelSize,
+        widthMillimetres:
+          labelSize === 20 && this.data.centerOnLargerPaper ? 30 : labelSize,
+        heightMillimetres:
+          labelSize === 20 && this.data.centerOnLargerPaper ? 30 : labelSize,
         imageWidthMillimetres: labelSize,
         imageHeightMillimetres: labelSize,
         density: 4,
-        horizontalOffsetMillimetres: 0,
-        verticalOffsetMillimetres: 0,
+        horizontalOffsetMillimetres:
+          labelSize === 20 && this.data.centerOnLargerPaper ? 5 : 0,
+        verticalOffsetMillimetres:
+          labelSize === 20 && this.data.centerOnLargerPaper ? 5 : 0,
         paperType: 1,
         gapMillimetres: 3,
         speedMillimetresPerSecond: 30,

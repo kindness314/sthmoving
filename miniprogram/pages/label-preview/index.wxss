@@ -94,6 +94,18 @@
   font-size: 24rpx;
 }
 
+
+.center-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-top: 16rpx;
+}
+
+.center-row switch {
+  transform: scale(0.8);
+}
 .label-size-control {
   margin-top: 28rpx;
   padding-top: 28rpx;
@@ -181,8 +193,7 @@
   line-height: 84rpx;
 }
 
-.secondary-action,
-.device-connect {
+.secondary-action {
   border: 1rpx solid var(--brand-color, #17365d);
   background: #ffffff;
   color: var(--brand-color, #17365d);
@@ -210,7 +221,10 @@
   min-height: 68rpx;
   margin: 0;
   font-size: 26rpx;
+  border: none;
   border-radius: 12rpx;
+  background: var(--brand-color, #17365d);
+  color: #ffffff;
   line-height: 68rpx;
 }
 

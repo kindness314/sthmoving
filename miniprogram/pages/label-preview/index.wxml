@@ -74,6 +74,14 @@
         >{{item.label}}</view>
       </view>
       <view class="muted control-hint">默认 30 × 30 mm，请选择与已安装标签纸一致的尺寸</view>
+      <view wx:if="{{selectedLabelSize === 20}}" class="center-row">
+        <text class="muted control-hint">在 30 × 30 mm 纸上居中打印</text>
+        <switch
+          checked="{{centerOnLargerPaper}}"
+          color="#17365d"
+          bindchange="handleCenterToggle"
+        />
+      </view>
     </view>
 
     <view class="copies-row">
