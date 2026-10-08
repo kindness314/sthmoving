@@ -40,6 +40,7 @@ Page({ data: {
   copiesInput: '1',
   maxCopies: 15,
   centerOnLargerPaper: false,
+  labelSizeOptions,
   selectedLabelSize: 30 as LabelSizeMillimetres,
   printerErrorMessage: '',
   templateWidth: 240,
