@@ -39,8 +39,8 @@
         <view class="editable-value info-content">
           <view class="info-value editable-text">{{displayNameInput || '微信用户'}}</view>
           <view
-            class="inline-edit-button {{savingNickname ? 'inline-edit-button-disabled' : ''}}"
-            hover-class="inline-edit-button-hover"
+            class="mini-action {{savingNickname ? 'mini-action-disabled' : ''}}"
+            hover-class="mini-action-hover"
             bindtap="handleEditDisplayName"
           >编辑</view>
         </view>
@@ -50,7 +50,7 @@
         <view class="editable-value info-content">
           <view class="info-value editable-text">{{genderLabels[genderIndex]}}</view>
           <picker class="inline-picker" range="{{genderLabels}}" value="{{genderIndex}}" bindchange="handleGenderChange">
-            <view class="inline-edit-button" hover-class="inline-edit-button-hover">编辑</view>
+            <view class="mini-action" hover-class="mini-action-hover">编辑</view>
           </picker>
         </view>
       </view>

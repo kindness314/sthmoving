@@ -162,8 +162,7 @@
   border-top: 1rpx solid #e5e7eb;
 }
 
-.control-label,
-.device-name {
+.control-label {
   font-weight: 600;
 }
 
@@ -194,21 +193,20 @@
 }
 
 .device-row {
-  min-height: 104rpx;
+  min-height: 96rpx;
   border-bottom: 1rpx solid #e5e7eb;
 }
 
 .device-name {
+  flex: 1;
   min-width: 0;
   overflow: hidden;
+  font-size: 28rpx;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.device-connect {
-  flex: none;
-  padding: 0 8rpx;
-}
 
 .search-hint,
 .printer-error {
