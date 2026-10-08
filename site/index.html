@@ -15,12 +15,11 @@
       font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
     }
     .hero {
-      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 64px 24px 48px;
+      padding: 64px 24px 72px;
       background: linear-gradient(160deg, #17365d 0%, #1f4e79 55%, #2a6ea5 100%);
       color: #ffffff;
       text-align: center;
@@ -69,10 +68,19 @@
       border-radius: 50%;
       background: #4ade80;
     }
+
+    .section-title {
+      margin: 56px auto 28px;
+      padding: 0 24px;
+      max-width: 960px;
+      font-size: 22px;
+      color: #17365d;
+      text-align: center;
+    }
     .features {
       width: 100%;
-      max-width: 880px;
-      margin: -40px auto 0;
+      max-width: 960px;
+      margin: 0 auto;
       padding: 0 24px;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -86,8 +94,130 @@
     }
     .feature h2 { font-size: 16px; color: #17365d; }
     .feature p { margin-top: 8px; font-size: 13px; color: #6b7280; line-height: 1.8; }
+
+    .demo {
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 28px;
+    }
+    .phone {
+      width: 220px;
+      border-radius: 28px;
+      background: #ffffff;
+      box-shadow: 0 12px 36px rgba(15, 23, 42, 0.14);
+      border: 6px solid #1f2937;
+      overflow: hidden;
+    }
+    .phone-notch {
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .phone-notch::before {
+      content: "";
+      width: 64px;
+      height: 8px;
+      border-radius: 4px;
+      background: #1f2937;
+    }
+    .screen {
+      margin: 0 10px 10px;
+      border-radius: 18px;
+      background: #f6f8fb;
+      padding: 14px 12px;
+      min-height: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .screen-title { font-size: 14px; font-weight: 700; color: #111827; }
+    .screen-search {
+      height: 26px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      font-size: 10px;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+    }
+    .item-card {
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .item-thumb {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #dbe7f3, #b8cfe6);
+      flex-shrink: 0;
+    }
+    .item-lines { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .line { height: 8px; border-radius: 4px; background: #e2e8f0; }
+    .line-strong { background: #c7d6e8; width: 60%; }
+    .line-short { width: 40%; }
+    .tag {
+      align-self: flex-start;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 9px;
+      background: #e8f0fa;
+      color: #17365d;
+    }
+    .qr-box {
+      margin: 6px auto;
+      width: 120px;
+      height: 120px;
+      border-radius: 12px;
+      background:
+        conic-gradient(from 0deg, #17365d 0 25%, #ffffff 0 50%, #17365d 0 75%, #ffffff 0)
+        0 0 / 24px 24px;
+      border: 6px solid #ffffff;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #374151;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .info-row .k { color: #9ca3af; }
+    .print-bar {
+      margin-top: auto;
+      height: 30px;
+      border-radius: 999px;
+      background: #17365d;
+      color: #ffffff;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .demo-caption {
+      margin-top: 10px;
+      width: 220px;
+      text-align: center;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .demo-item { display: flex; flex-direction: column; align-items: center; }
+
     .note {
-      margin: 40px auto 0;
+      margin: 48px auto 0;
       padding: 0 24px;
       max-width: 880px;
       font-size: 13px;
@@ -114,7 +244,7 @@
       <h1>YUNA个物终端</h1>
     </div>
     <p class="slogan">
-      面向团队的物品资产管理工具：登记、查询、离库审批与标签打印，一站式完成。
+      个人物品资产管理工具：登记、查询、离库审批与标签打印，一站式完成。
     </p>
     <div class="status">
       <span class="status-dot"></span>
@@ -122,6 +252,7 @@
     </div>
   </section>
 
+  <h2 class="section-title">核心功能</h2>
   <section class="features">
     <div class="feature">
       <h2>物品登记</h2>
@@ -138,6 +269,73 @@
     <div class="feature">
       <h2>标签打印</h2>
       <p>蓝牙连接硕方打印机，实体标签随打随贴。</p>
+    </div>
+  </section>
+
+  <h2 class="section-title">界面演示</h2>
+  <section class="demo">
+    <div class="demo-item">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen">
+          <div class="screen-title">查询物品</div>
+          <div class="screen-search">输入物品名称、详情或编码</div>
+          <div class="item-card">
+            <div class="item-thumb"></div>
+            <div class="item-lines">
+              <div class="line line-strong"></div>
+              <div class="line line-short"></div>
+              <span class="tag">在库</span>
+            </div>
+          </div>
+          <div class="item-card">
+            <div class="item-thumb"></div>
+            <div class="item-lines">
+              <div class="line line-strong"></div>
+              <div class="line line-short"></div>
+              <span class="tag">在库</span>
+            </div>
+          </div>
+          <div class="item-card">
+            <div class="item-thumb"></div>
+            <div class="item-lines">
+              <div class="line line-strong"></div>
+              <div class="line line-short"></div>
+              <span class="tag">离库申请中</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="demo-caption">物品列表 · 文字与扫码查询</div>
+    </div>
+
+    <div class="demo-item">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen">
+          <div class="screen-title">物品详情</div>
+          <div class="item-thumb" style="width:100%;height:110px;border-radius:12px;"></div>
+          <div class="info-row"><span class="k">数量</span><span>单件（1 件）</span></div>
+          <div class="info-row"><span class="k">分类</span><span>日常用品</span></div>
+          <div class="info-row"><span class="k">归属</span><span>所有者：绘梦</span></div>
+          <div class="info-row"><span class="k">状态</span><span>在库</span></div>
+        </div>
+      </div>
+      <div class="demo-caption">物品详情 · 归属一目了然</div>
+    </div>
+
+    <div class="demo-item">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen">
+          <div class="screen-title">标签打印</div>
+          <div class="qr-box"></div>
+          <div class="info-row"><span class="k">编码</span><span>A1B2C3D4E5F6</span></div>
+          <div class="info-row"><span class="k">打印机</span><span>硕方 T50 Pro</span></div>
+          <div class="print-bar">蓝牙打印标签</div>
+        </div>
+      </div>
+      <div class="demo-caption">小程序码 · 蓝牙标签打印</div>
     </div>
   </section>
 
