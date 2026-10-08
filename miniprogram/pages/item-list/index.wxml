@@ -44,7 +44,7 @@
       </view>
     </picker>
     <view class="category-picker member-filter" catchtap="handlePickOwnershipUser">
-      <text>{{ownershipUserName || (ownershipIndex === 1 ? '按所有者筛选' : '按捐赠者筛选')}}</text>
+      <text>{{ownershipUserName || (ownershipIndex === 2 ? '按所有者筛选' : ownershipIndex === 1 ? '按捐赠者筛选' : '按成员筛选')}}</text>
       <view class="picker-arrow"></view>
     </view>
     <view
