@@ -17,6 +17,12 @@
 		file_server
 	}
 
+	@assets path *.png *.jpg *.jpeg *.svg *.webp *.ico *.css *.js
+	handle @assets {
+		root * /srv
+		file_server
+	}
+
 	handle {
 		reverse_proxy api:8080 {
 			header_up X-Forwarded-For {http.request.remote.host}
