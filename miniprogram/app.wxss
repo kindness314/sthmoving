@@ -118,7 +118,9 @@ button::after {
 }
 
 /* 尾置小控件：列表/表单行尾的小型操作（编辑、连接等）。
- * 幽灵描边款，低调不抢眼，hover 时提实；内容自适应宽度，两行文字以内。 */
+ * 幽灵描边款，低调不抢眼，hover 时提实；内容自适应宽度，两行文字以内。
+ * 注意：宽度需小于内置下限（约 366rpx）的 <button> 必须带 size="mini"，
+ * 否则微信内置样式会强制撑宽，外层 width/min-width 均无效。 */
 .mini-action {
   box-sizing: border-box;
   display: flex;

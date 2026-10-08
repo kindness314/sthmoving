@@ -32,7 +32,7 @@
         提交加入申请
       </button>
     </view>
-    <button
+    <button size="mini"
       wx:else
       class="secondary-button button-sm retry-button"
       loading="{{loading}}"

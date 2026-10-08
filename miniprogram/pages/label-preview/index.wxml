@@ -32,7 +32,7 @@
     <view class="error">
       {{label.errorMessage || '微信接口暂未生成小程序码'}}
     </view>
-    <button
+    <button size="mini"
       class="primary-button retry-button"
       loading="{{generating}}"
       disabled="{{generating}}"
@@ -126,7 +126,7 @@
     <view wx:if="{{printerDevices.length > 0 && printerStatus !== 'READY'}}" class="device-list">
       <view wx:for="{{printerDevices}}" wx:key="id" class="device-row">
         <view class="device-name">{{item.name}}</view>
-        <button
+        <button size="mini"
           class="mini-action device-connect"
           data-device-id="{{item.id}}"
           loading="{{connectingDeviceId === item.id}}"

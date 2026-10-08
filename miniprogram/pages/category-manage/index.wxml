@@ -17,7 +17,7 @@
         placeholder="例如：活动器材"
         bindinput="handleNameInput"
       />
-      <button
+      <button size="mini"
         class="primary-button button-md create-button"
         loading="{{creating}}"
         disabled="{{creating || !categoryName}}"

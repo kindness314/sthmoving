@@ -21,10 +21,10 @@
       </text>
     </view>
     <view class="modal-actions">
-      <button class="secondary-button button-md modal-cancel" bindtap="handleCancel">
+      <button size="mini" class="secondary-button button-md modal-cancel" bindtap="handleCancel">
         取消
       </button>
-      <button
+      <button size="mini"
         class="primary-button button-md modal-confirm"
         style="background: {{confirmColor}}; color: #ffffff"
         disabled="{{!canConfirm}}"

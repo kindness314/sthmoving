@@ -22,7 +22,7 @@
           data-index="{{index}}"
           bindtap="handlePreviewImage"
         />
-        <button
+        <button size="mini"
           class="danger-outline-button button-sm remove-image"
           data-index="{{index}}"
           disabled="{{submitting}}"

@@ -10,7 +10,7 @@
   </view>
   <view wx:elif="{{errorMessage}}" class="card state">
     <view class="error">{{errorMessage}}</view>
-    <button class="secondary-button button-sm retry-button" bindtap="handleRetry">
+    <button size="mini" class="secondary-button button-sm retry-button" bindtap="handleRetry">
       重新加载
     </button>
   </view>
