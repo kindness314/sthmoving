@@ -207,8 +207,7 @@
 
 .device-connect {
   flex: none;
-  width: 128rpx;
-  padding: 0;
+  padding: 0 20rpx;
 }
 
 .search-hint,

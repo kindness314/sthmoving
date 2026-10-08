@@ -204,7 +204,7 @@
 }
 
 .management-button {
-  width: 100%;
+  width: 280rpx;
 }
 
 .management-hint {
