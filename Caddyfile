@@ -17,7 +17,10 @@
 		file_server
 	}
 
-	@assets path *.png *.jpg *.jpeg *.svg *.webp *.ico *.css *.js
+	@assets {
+		path *.png *.jpg *.jpeg *.svg *.webp *.ico *.css *.js
+		not path /files/*
+	}
 	handle @assets {
 		root * /srv
 		file_server
