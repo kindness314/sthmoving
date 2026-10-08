@@ -7,6 +7,7 @@ const SEARCH_DEBOUNCE_MS = 300
 
 let resolvePending: ResolvePick | null = null
 let cachedCandidates: MemberCandidate[] = []
+let cachedHasMore = false
 
 Component({
   data: {
@@ -17,6 +18,8 @@ Component({
     candidates: [] as MemberCandidate[],
     loading: false,
     errorMessage: '',
+    hasMore: false,
+    loadingMore: false,
     searchSeq: 0,
   },
 
@@ -36,6 +39,7 @@ Component({
           placeholder: options.placeholder ?? '搜索成员昵称',
           keyword: '',
           candidates: cachedCandidates,
+          hasMore: cachedHasMore,
           loading: cachedCandidates.length === 0,
           errorMessage: '',
         })
@@ -62,14 +66,19 @@ Component({
         })
       }
       try {
-        const candidates = await listMemberCandidates(keyword || undefined)
+        const page = await listMemberCandidates(keyword || undefined)
         if (!keyword) {
-          cachedCandidates = candidates
+          cachedCandidates = page.items
+          cachedHasMore = page.hasMore
         }
         if (searchSeq !== this.data.searchSeq) {
           return
         }
-        this.setData({ candidates, loading: false })
+        this.setData({
+          candidates: page.items,
+          hasMore: page.hasMore,
+          loading: false,
+        })
       } catch (error) {
         if (searchSeq !== this.data.searchSeq) {
           return
@@ -78,6 +87,34 @@ Component({
           loading: false,
           errorMessage:
             error instanceof Error ? error.message : '成员查询失败，请重试',
+        })
+      }
+    },
+
+    async handleLoadMore() {
+      if (!this.data.hasMore || this.data.loadingMore) {
+        return
+      }
+      this.setData({ loadingMore: true })
+      try {
+        const page = await listMemberCandidates(
+          this.data.keyword || undefined,
+          this.data.candidates.length,
+        )
+        this.setData({
+          candidates: [...this.data.candidates, ...page.items],
+          hasMore: page.hasMore,
+          loadingMore: false,
+        })
+        if (!this.data.keyword) {
+          cachedCandidates = this.data.candidates
+          cachedHasMore = page.hasMore
+        }
+      } catch (error) {
+        this.setData({ loadingMore: false })
+        wx.showToast({
+          title: error instanceof Error ? error.message : '加载失败，请重试',
+          icon: 'none',
         })
       }
     },

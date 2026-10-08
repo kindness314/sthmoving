@@ -17,6 +17,7 @@ interface DocumentReference {
 interface Query {
   where(condition: object): Query
   orderBy(fieldPath: string, order: string): Query
+  field(fields: Record<string, boolean>): Query
   limit(max: number): Query
   get(): Promise<QueryResult>
 }
@@ -110,14 +111,33 @@ class CloudMembershipUnitOfWork implements MembershipUnitOfWork {
   async searchApprovedMembers(
     keyword: string | null,
     limit: number,
-  ): Promise<UserRecord[]> {
-    const result = await this.database
-      .collection('users')
-      .where({ status: 'APPROVED' })
-      .limit(200)
-      .get()
+    offset: number,
+  ): Promise<{ users: UserRecord[]; hasMore: boolean }> {
+    const [userResult, itemResult] = await Promise.all([
+      this.database
+        .collection('users')
+        .where({ status: 'APPROVED' })
+        .limit(200)
+        .get(),
+      this.database
+        .collection('items')
+        .field({ owner_id: true, donor_id: true })
+        .limit(1000)
+        .get(),
+    ])
+    const frequency = new Map<string, number>()
+    for (const item of itemResult.data as Array<{
+      owner_id?: string
+      donor_id?: string
+    }>) {
+      for (const userId of [item.owner_id, item.donor_id]) {
+        if (userId) {
+          frequency.set(userId, (frequency.get(userId) ?? 0) + 1)
+        }
+      }
+    }
     const normalized = keyword?.toLowerCase() ?? null
-    return (result.data as UserRecord[])
+    const users = (userResult.data as UserRecord[])
       .filter(
         (user) =>
           normalized === null ||
@@ -125,10 +145,14 @@ class CloudMembershipUnitOfWork implements MembershipUnitOfWork {
       )
       .sort(
         (left, right) =>
+          (frequency.get(right._id) ?? 0) - (frequency.get(left._id) ?? 0) ||
           left.display_name.localeCompare(right.display_name) ||
           left._id.localeCompare(right._id),
       )
-      .slice(0, limit)
+    return {
+      users: users.slice(offset, offset + limit),
+      hasMore: users.length > offset + limit,
+    }
   }
 
   private async getFirst<TRecord>(

@@ -94,17 +94,25 @@ class PostgresMembershipUnitOfWork implements MembershipUnitOfWork {
   async searchApprovedMembers(
     keyword: string | null,
     limit: number,
-  ): Promise<UserRecord[]> {
+    offset: number,
+  ): Promise<{ users: UserRecord[]; hasMore: boolean }> {
     const pattern = keyword ? `%${escapeLike(keyword)}%` : null
     const result = await this.client.query(
-      `SELECT * FROM users
-       WHERE status = 'APPROVED'
-         AND ($1::text IS NULL OR display_name ILIKE $1 ESCAPE '\\')
-       ORDER BY display_name ASC, id ASC
-       LIMIT $2`,
-      [pattern, limit],
+      `SELECT u.*,
+              (SELECT count(*) FROM items i
+                WHERE i.owner_id = u.id OR i.donor_id = u.id) AS ownership_count
+       FROM users u
+       WHERE u.status = 'APPROVED'
+         AND ($1::text IS NULL OR u.display_name ILIKE $1 ESCAPE '\\')
+       ORDER BY ownership_count DESC, u.display_name ASC, u.id ASC
+       LIMIT $2 OFFSET $3`,
+      [pattern, limit + 1, offset],
     )
-    return result.rows.map(userRow)
+    const hasMore = result.rows.length > limit
+    return {
+      users: result.rows.slice(0, limit).map(userRow),
+      hasMore,
+    }
   }
 }
 

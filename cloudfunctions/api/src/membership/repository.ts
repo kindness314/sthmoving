@@ -15,7 +15,8 @@ export interface MembershipUnitOfWork {
   searchApprovedMembers(
     keyword: string | null,
     limit: number,
-  ): Promise<UserRecord[]>
+    offset: number,
+  ): Promise<{ users: UserRecord[]; hasMore: boolean }>
 }
 
 export interface MembershipRepository {

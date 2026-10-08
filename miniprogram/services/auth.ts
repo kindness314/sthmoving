@@ -55,13 +55,25 @@ export interface MemberCandidate {
   displayName: string
 }
 
+export interface MemberCandidatePage {
+  items: MemberCandidate[]
+  hasMore: boolean
+}
+
 export function listMemberCandidates(
   keyword?: string,
-): Promise<MemberCandidate[]> {
-  return callApi<{ keyword?: string }, MemberCandidate[]>({
+  offset = 0,
+): Promise<MemberCandidatePage> {
+  return callApi<
+    { keyword?: string; offset?: number },
+    MemberCandidatePage
+  >({
     module: 'membership',
     action: 'listCandidates',
-    payload: keyword ? { keyword } : {},
+    payload: {
+      ...(keyword ? { keyword } : {}),
+      ...(offset > 0 ? { offset } : {}),
+    },
   })
 }
 

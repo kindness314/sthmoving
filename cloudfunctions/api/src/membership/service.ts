@@ -337,7 +337,11 @@ export class MembershipService {
   async listCandidates(
     userId: string,
     keyword?: string,
-  ): Promise<Array<{ id: string; displayName: string }>> {
+    offset = 0,
+  ): Promise<{
+    items: Array<{ id: string; displayName: string }>
+    hasMore: boolean
+  }> {
     const trimmed = keyword?.trim()
     if (trimmed && trimmed.length > 40) {
       throw new ApiException(
@@ -348,14 +352,18 @@ export class MembershipService {
     return this.repository.runTransaction(async (unitOfWork) => {
       const actor = await unitOfWork.getUser(userId)
       requireApprovedIdentity(actor)
-      const users = await unitOfWork.searchApprovedMembers(
+      const { users, hasMore } = await unitOfWork.searchApprovedMembers(
         trimmed || null,
         20,
+        offset,
       )
-      return users.map((user) => ({
-        id: user._id,
-        displayName: user.display_name,
-      }))
+      return {
+        items: users.map((user) => ({
+          id: user._id,
+          displayName: user.display_name,
+        })),
+        hasMore,
+      }
     })
   }
 

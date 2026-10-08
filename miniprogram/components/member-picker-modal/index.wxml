@@ -19,7 +19,7 @@
       <view wx:elif="{{candidates.length === 0}}" class="picker-hint">
         没有匹配的成员
       </view>
-      <scroll-view wx:else scroll-y class="picker-list">
+      <scroll-view wx:else scroll-y class="picker-list" bindscrolltolower="handleLoadMore">
         <view
           wx:for="{{candidates}}"
           wx:key="id"
@@ -29,6 +29,7 @@
         >
           {{item.displayName}}
         </view>
+        <view wx:if="{{loadingMore}}" class="picker-hint">加载中…</view>
       </scroll-view>
     </view>
     <view class="modal-actions">

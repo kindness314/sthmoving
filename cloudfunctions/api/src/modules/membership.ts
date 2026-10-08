@@ -154,16 +154,27 @@ export function createMembershipHandlers(
     listMembers: async (_payload, context) =>
       createService(deps).listMembers(context.userId),
 
-    listCandidates: async (payload, context) => {
-      const keyword = (payload as { keyword?: unknown } | undefined)?.keyword
-      if (keyword !== undefined && typeof keyword !== 'string') {
-        throw new ApiException('INVALID_SEARCH_KEYWORD', '搜索关键词必须是字符串')
-      }
-      return createService(deps).listCandidates(
-        context.userId,
-        typeof keyword === 'string' ? keyword : undefined,
-      )
-    },
+  listCandidates: async (payload, context) => {
+    const input = payload as
+      | { keyword?: unknown; offset?: unknown }
+      | undefined
+    if (input?.keyword !== undefined && typeof input.keyword !== 'string') {
+      throw new ApiException('INVALID_SEARCH_KEYWORD', '搜索关键词必须是字符串')
+    }
+    if (
+      input?.offset !== undefined &&
+      (typeof input.offset !== 'number' ||
+        !Number.isSafeInteger(input.offset) ||
+        input.offset < 0)
+    ) {
+      throw new ApiException('INVALID_CURSOR', '分页偏移无效')
+    }
+    return createService(deps).listCandidates(
+      context.userId,
+      typeof input?.keyword === 'string' ? input.keyword : undefined,
+      typeof input?.offset === 'number' ? input.offset : 0,
+    )
+  },
 
     disableMember: async (payload, context) => {
       const userId = (payload as UserIdPayload | undefined)?.userId

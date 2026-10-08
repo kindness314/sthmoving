@@ -458,24 +458,36 @@ class InMemoryMembershipUnitOfWork implements MembershipUnitOfWork {
   searchApprovedMembers(
     keyword: string | null,
     limit: number,
-  ): Promise<UserRecord[]> {
+    offset: number,
+  ): Promise<{ users: UserRecord[]; hasMore: boolean }> {
     const trimmed = keyword?.toLowerCase() ?? null
-    return Promise.resolve(
-      [...this.store.users.values()]
-        .filter(
-          (user) =>
-            user.status === 'APPROVED' &&
-            (trimmed === null ||
-              user.display_name.toLowerCase().includes(trimmed)),
-        )
-        .sort(
-          (left, right) =>
-            left.display_name.localeCompare(right.display_name) ||
-            left._id.localeCompare(right._id),
-        )
-        .slice(0, limit)
+    const frequency = new Map<string, number>()
+    for (const item of this.store.items.values()) {
+      for (const userId of [item.owner_id, item.donor_id]) {
+        if (userId) {
+          frequency.set(userId, (frequency.get(userId) ?? 0) + 1)
+        }
+      }
+    }
+    const users = [...this.store.users.values()]
+      .filter(
+        (user) =>
+          user.status === 'APPROVED' &&
+          (trimmed === null ||
+            user.display_name.toLowerCase().includes(trimmed)),
+      )
+      .sort(
+        (left, right) =>
+          (frequency.get(right._id) ?? 0) - (frequency.get(left._id) ?? 0) ||
+          left.display_name.localeCompare(right.display_name) ||
+          left._id.localeCompare(right._id),
+      )
+    return Promise.resolve({
+      users: users
+        .slice(offset, offset + limit)
         .map((user) => structuredClone(user)),
-    )
+      hasMore: users.length > offset + limit,
+    })
   }
 }
 

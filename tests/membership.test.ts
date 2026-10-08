@@ -16,6 +16,7 @@ import type {
 class InMemoryMembershipRepository implements MembershipRepository {
   users = new Map<string, UserRecord>()
   requests = new Map<string, JoinRequestRecord>()
+  items = new Map<string, { owner_id?: string; donor_id?: string }>()
 
   async runTransaction<T>(
     operation: (unitOfWork: MembershipUnitOfWork) => Promise<T>,
@@ -23,7 +24,7 @@ class InMemoryMembershipRepository implements MembershipRepository {
     const users = cloneMap(this.users)
     const requests = cloneMap(this.requests)
     const result = await operation(
-      new InMemoryUnitOfWork(users, requests),
+      new InMemoryUnitOfWork(users, requests, this.items),
     )
     this.users = users
     this.requests = requests
@@ -35,6 +36,10 @@ class InMemoryUnitOfWork implements MembershipUnitOfWork {
   constructor(
     private readonly users: Map<string, UserRecord>,
     private readonly requests: Map<string, JoinRequestRecord>,
+    private readonly items: Map<
+      string,
+      { owner_id?: string; donor_id?: string }
+    > = new Map(),
   ) {}
 
   getUser(userId: string): Promise<UserRecord | null> {
@@ -103,18 +108,34 @@ class InMemoryUnitOfWork implements MembershipUnitOfWork {
   searchApprovedMembers(
     keyword: string | null,
     limit: number,
-  ): Promise<UserRecord[]> {
+    offset: number,
+  ): Promise<{ users: UserRecord[]; hasMore: boolean }> {
     const trimmed = keyword?.toLowerCase() ?? null
-    return Promise.resolve(
-      [...this.users.values()]
-        .filter(
-          (user) =>
-            user.status === 'APPROVED' &&
-            (trimmed === null ||
-              user.display_name.toLowerCase().includes(trimmed)),
-        )
-        .slice(0, limit),
-    )
+    const frequency = new Map<string, number>()
+    for (const item of this.items.values()) {
+      for (const userId of [item.owner_id, item.donor_id]) {
+        if (userId) {
+          frequency.set(userId, (frequency.get(userId) ?? 0) + 1)
+        }
+      }
+    }
+    const users = [...this.users.values()]
+      .filter(
+        (user) =>
+          user.status === 'APPROVED' &&
+          (trimmed === null ||
+            user.display_name.toLowerCase().includes(trimmed)),
+      )
+      .sort(
+        (left, right) =>
+          (frequency.get(right._id) ?? 0) - (frequency.get(left._id) ?? 0) ||
+          left.display_name.localeCompare(right.display_name) ||
+          left._id.localeCompare(right._id),
+      )
+    return Promise.resolve({
+      users: users.slice(offset, offset + limit),
+      hasMore: users.length > offset + limit,
+    })
   }
 
 }
@@ -771,14 +792,39 @@ describe('成员身份服务', () => {
     seedUser(repository, 'disabled-openid', 'MEMBER', 'DISABLED')
 
     const all = await service.listCandidates(member._id)
-    expect(all.map((item) => item.id).sort()).toEqual(
+    expect(all.items.map((item) => item.id).sort()).toEqual(
       [member._id, admin._id].sort(),
     )
+    expect(all.hasMore).toBe(false)
 
     const filtered = await service.listCandidates(member._id, 'admin')
-    expect(filtered).toEqual([
+    expect(filtered.items).toEqual([
       { id: admin._id, displayName: 'admin-openid' },
     ])
+    expect(filtered.hasMore).toBe(false)
+  })
+
+  it('候选成员按归属引用频率排序并支持翻页', async () => {
+    const repository = new InMemoryMembershipRepository()
+    const service = createService(repository)
+    const viewer = seedUser(repository, 'viewer-openid', 'MEMBER')
+    const users = Array.from({ length: 25 }, (_, index) =>
+      seedUser(repository, `member-${String(index).padStart(2, '0')}`),
+    )
+    // member-01 被 2 件物品引用，member-02 被 1 件引用，其余为 0
+    repository.items.set('item-1', { owner_id: users[1]!._id })
+    repository.items.set('item-2', { donor_id: users[1]!._id })
+    repository.items.set('item-3', { donor_id: users[2]!._id })
+
+    const page1 = await service.listCandidates(viewer._id, 'member', 0)
+    expect(page1.items).toHaveLength(20)
+    expect(page1.hasMore).toBe(true)
+    expect(page1.items[0]?.id).toBe(users[1]!._id)
+    expect(page1.items[1]?.id).toBe(users[2]!._id)
+
+    const page2 = await service.listCandidates(viewer._id, 'member', 20)
+    expect(page2.items).toHaveLength(5)
+    expect(page2.hasMore).toBe(false)
   })
 
   it('未通过审核的账号不能搜索候选成员，并拒绝超长关键词', async () => {
