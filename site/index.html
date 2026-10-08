@@ -10,52 +10,144 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
       background: #f6f8fb;
       color: #1f2937;
       font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-      padding: 48px 24px;
     }
-    .card {
-      width: 100%;
-      max-width: 560px;
-      padding: 48px 40px;
-      border-radius: 16px;
-      background: #ffffff;
-      box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+    .hero {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 64px 24px 48px;
+      background: linear-gradient(160deg, #17365d 0%, #1f4e79 55%, #2a6ea5 100%);
+      color: #ffffff;
       text-align: center;
     }
-    h1 { font-size: 28px; letter-spacing: 1px; color: #17365d; }
-    .slogan { margin-top: 12px; font-size: 15px; color: #6b7280; line-height: 1.8; }
-    .entry {
-      display: inline-block;
-      margin-top: 28px;
-      padding: 10px 28px;
-      border-radius: 999px;
-      background: #17365d;
-      color: #ffffff;
-      font-size: 14px;
-      text-decoration: none;
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
     }
-    .desc { margin-top: 32px; font-size: 13px; color: #9ca3af; line-height: 2; }
-    footer { margin-top: 40px; font-size: 12px; color: #9ca3af; }
+    .brand-mark {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+    h1 { font-size: 34px; letter-spacing: 2px; }
+    .slogan {
+      margin-top: 18px;
+      max-width: 520px;
+      font-size: 15px;
+      line-height: 2;
+      color: rgba(255, 255, 255, 0.82);
+    }
+    .status {
+      margin-top: 26px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.92);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+    }
+    .features {
+      width: 100%;
+      max-width: 880px;
+      margin: -40px auto 0;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .feature {
+      padding: 24px 20px;
+      border-radius: 14px;
+      background: #ffffff;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+    }
+    .feature h2 { font-size: 16px; color: #17365d; }
+    .feature p { margin-top: 8px; font-size: 13px; color: #6b7280; line-height: 1.8; }
+    .note {
+      margin: 40px auto 0;
+      padding: 0 24px;
+      max-width: 880px;
+      font-size: 13px;
+      color: #9ca3af;
+      line-height: 2;
+      text-align: center;
+    }
+    footer {
+      margin-top: 48px;
+      padding: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+      line-height: 2;
+    }
     footer a { color: #9ca3af; text-decoration: none; }
+    footer a:hover { color: #17365d; }
   </style>
 </head>
 <body>
-  <main class="card">
-    <h1>YUNA个物终端</h1>
-    <p class="slogan">物品登记、查询、离库与标签打印的一体化管理工具</p>
-    <a class="entry" href="https://yunasthmoving.cn/health">服务运行中</a>
-    <p class="desc">
-      本站为「YUNA个物终端」微信小程序的服务端，<br />
-      请在微信中搜索小程序名称使用完整功能。
+  <section class="hero">
+    <div class="brand">
+      <div class="brand-mark">Y</div>
+      <h1>YUNA个物终端</h1>
+    </div>
+    <p class="slogan">
+      面向团队的物品资产管理工具：登记、查询、离库审批与标签打印，一站式完成。
     </p>
-  </main>
+    <div class="status">
+      <span class="status-dot"></span>
+      服务运行中
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="feature">
+      <h2>物品登记</h2>
+      <p>图文登记、分类管理，支持公有与私有归属。</p>
+    </div>
+    <div class="feature">
+      <h2>扫码查询</h2>
+      <p>每件物品生成专属小程序码，扫码即查详情。</p>
+    </div>
+    <div class="feature">
+      <h2>离库审批</h2>
+      <p>成员申请、管理员审批，全程操作日志留痕。</p>
+    </div>
+    <div class="feature">
+      <h2>标签打印</h2>
+      <p>蓝牙连接硕方打印机，实体标签随打随贴。</p>
+    </div>
+  </section>
+
+  <p class="note">
+    本站为「YUNA个物终端」微信小程序的服务端站点，小程序正在筹备上线，敬请期待。
+  </p>
+
   <footer>
-    <!-- TODO: 替换为真实 ICP 备案号 -->
-    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备XXXXXXXX号</a>
+    <!-- TODO: 替换为真实网站备案号 -->
+    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备XXXXXXXX号-1</a>
   </footer>
 </body>
 </html>
