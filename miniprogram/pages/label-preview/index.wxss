@@ -205,7 +205,11 @@
 }
 
 .device-row {
-  min-height: 104rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16rpx;
+  padding: 24rpx 0;
   border-bottom: 1rpx solid #e5e7eb;
 }
 
@@ -217,15 +221,15 @@
 }
 
 .device-connect {
-  flex: 0 0 112rpx;
-  min-height: 56rpx;
+  width: 100%;
+  min-height: 72rpx;
   margin: 0;
-  font-size: 24rpx;
+  font-size: 26rpx;
   border: none;
-  border-radius: 10rpx;
+  border-radius: 12rpx;
   background: var(--brand-color, #17365d);
   color: #ffffff;
-  line-height: 56rpx;
+  line-height: 72rpx;
 }
 
 .search-hint,
