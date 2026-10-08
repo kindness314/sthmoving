@@ -46,6 +46,8 @@ button::after {
 .danger-button,
 .danger-outline-button {
   box-sizing: border-box;
+  display: block;
+  width: 100%;
   min-height: 88rpx;
   margin: 0;
   padding: 0;
@@ -123,6 +125,7 @@ button::after {
   flex: none;
   align-items: center;
   justify-content: center;
+  width: auto;
   min-width: 72rpx;
   min-height: 48rpx;
   margin: 0;
