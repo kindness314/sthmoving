@@ -4,6 +4,7 @@ import type {
   ItemOperationLogRecord,
   ItemRecord,
 } from '../../../cloudfunctions/api/src/items/types'
+import { OFFICE_CODES } from '../../../cloudfunctions/api/src/items/types'
 import type { ItemLabelRecord } from '../../../cloudfunctions/api/src/labels/types'
 import type {
   JoinRequestRecord,
@@ -234,6 +235,12 @@ function checkItem(row: Record<string, unknown>, report: Report): void {
   integer(row, 'quantity', report, 1)
   if (row['quantity_mode'] === 'SINGLE' && row['quantity'] !== 1) {
     report('单件物品的数量必须是 1')
+  }
+  // 云开发遗留数据没有 office 字段；按迁移 0005 的回填口径默认归入 503
+  if (row['office'] === undefined) {
+    row['office'] = '503'
+  } else {
+    oneOf(row, 'office', report, OFFICE_CODES)
   }
   text(row, 'category_id', report, 1, 200)
   oneOf(row, 'status', report, itemStatuses)

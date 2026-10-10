@@ -111,6 +111,8 @@ docker compose -f docker-compose.dev.yml up
 
 导入会把记录里的 `cloud://` 引用重写成 `file://`，与第 3 步的清单一一对应。`files` 表
 决定图片以什么 Content-Type 返回，跳过第 4 步会导致导入失败而不是悄悄给出坏图片。
+遗留导出里没有 `office` 字段的物品按迁移 0005 的回填口径归入 `503`；值存在但不在
+`503` / `102` / `103` 会在第 2 步校验时报出。
 
 `scripts/backup.sh <备份目录>` 打包数据库与文件卷，`scripts/restore.sh <备份目录>` 反向恢复；
 恢复会覆盖现有数据，默认需要交互确认，`FORCE=yes` 可跳过。
