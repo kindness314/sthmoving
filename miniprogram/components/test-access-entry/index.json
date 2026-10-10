@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "text-entry-modal": "/components/text-entry-modal/index"
+  }
+}

@@ -4,9 +4,14 @@ export interface ApiEvent {
   payload?: unknown
 }
 
+/** 数据域：生产为 'prod'，审核沙箱为 'test'。 */
+export type ApiRealm = 'prod' | 'test'
+
 export interface RequestContext {
   userId: string
   openid: string
+  /** 缺省视为生产域（云函数与既有调用方不传）。 */
+  realm?: ApiRealm
 }
 
 export interface ApiError {

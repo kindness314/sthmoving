@@ -97,7 +97,8 @@
 }
 
 .form-card,
-.theme-card {
+.theme-card,
+.account-card {
   margin-top: 20rpx;
 }
 

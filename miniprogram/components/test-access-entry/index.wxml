@@ -1,0 +1,9 @@
+<view
+  wx:if="{{enabled}}"
+  class="test-access-entry {{busy ? 'test-access-entry-busy' : ''}}"
+  hover-class="test-access-entry-hover"
+  hover-stay-time="80"
+  bindtap="handleOpen"
+></view>
+<view wx:if="{{errorMessage}}" class="test-access-error">{{errorMessage}}</view>
+<text-entry-modal id="passwordModal" />

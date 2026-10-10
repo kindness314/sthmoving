@@ -27,6 +27,11 @@ services:
       FILE_SIGNING_SECRET: ${FILE_SIGNING_SECRET:?}
       MINI_PROGRAM_ENVIRONMENT: ${MINI_PROGRAM_ENVIRONMENT:-release}
       OWNER_BOOTSTRAP_TOKEN: ${OWNER_BOOTSTRAP_TOKEN:-}
+      # 审核沙箱：未设置 TEST_DATABASE_URL 时沙箱整体关闭
+      TEST_DATABASE_URL: ${TEST_DATABASE_URL:-}
+      TEST_ACCESS_TTL_HOURS: ${TEST_ACCESS_TTL_HOURS:-168}
+      TEST_STORAGE_ROOT: ${TEST_STORAGE_ROOT:-/var/lib/sthmoving/files/__test}
+      TEST_FILE_SIGNING_SECRET: ${TEST_FILE_SIGNING_SECRET:-}
     volumes:
       - api-files:/var/lib/sthmoving/files
     depends_on:

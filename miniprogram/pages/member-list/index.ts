@@ -8,11 +8,25 @@ import {
   setAdminRole,
   transferManager,
 } from '../../services/auth'
+import {
+  disableTestAccess,
+  enableTestAccess,
+  fetchTestAccessInfo,
+} from '../../services/review'
+import type { TestAccessInfo } from '../../services/review'
 import type { PublicMember, UserRole } from '../../types/domain'
 
 interface MemberView extends PublicMember {
   roleText: string
   statusText: string
+}
+
+interface TestAccessView {
+  enabled: boolean
+  expiresAtText: string
+  createdAtText: string
+  useCount: number
+  lastUsedAtText: string
 }
 
 Page({ data: {
@@ -23,6 +37,9 @@ Page({ data: {
   hasManager: false,
   currentRole: '' as UserRole | '',
   errorMessage: '',
+  testAccessInfo: null as TestAccessView | null,
+  testAccessProcessing: false,
+  generatedPassword: '',
 },
   onLoad() {
     this.setData({ themeStyle: getThemeStyle() })
@@ -33,6 +50,7 @@ Page({ data: {
         currentRole: getApp<IAppOption>().globalData.currentUser?.role ?? '',
       })
       void this.loadMembers()
+      void this.loadTestAccess()
     }, onPullDownRefresh() {
       void this.loadMembers().finally(() => wx.stopPullDownRefresh())
     },
@@ -54,6 +72,74 @@ Page({ data: {
       }
     },
   
+    async loadTestAccess() {
+      const role = this.data.currentRole
+      if (role !== 'MANAGER' && role !== 'OWNER') {
+        this.setData({ testAccessInfo: null })
+        return
+      }
+      try {
+        const info = await fetchTestAccessInfo()
+        this.setData({ testAccessInfo: toTestAccessView(info) })
+      } catch {
+        // 无法读取（例如沙箱环境返回 TEST_ACCESS_UNAVAILABLE）时不渲染卡片。
+        this.setData({ testAccessInfo: null, generatedPassword: '' })
+      }
+    },
+
+    async handleGenerateTestPassword() {
+      if (this.data.testAccessProcessing) {
+        return
+      }
+      this.setData({ testAccessProcessing: true, errorMessage: '' })
+      try {
+        const result = await enableTestAccess()
+        this.setData({
+          generatedPassword: result.password,
+          testAccessInfo: {
+            enabled: true,
+            expiresAtText: formatDateTime(result.expiresAt),
+            createdAtText: '—',
+            useCount: 0,
+            lastUsedAtText: '—',
+          },
+        })
+        await wx.showToast({ title: '口令已生成', icon: 'success' })
+      } catch (error) {
+        this.setData({ errorMessage: getErrorMessage(error, '生成测试口令失败') })
+      } finally {
+        this.setData({ testAccessProcessing: false })
+      }
+    },
+
+    async handleDisableTestAccess() {
+      if (this.data.testAccessProcessing) {
+        return
+      }
+      const confirmation = await wx.showModal({
+        title: '关闭测试入口',
+        content: '关闭后审核员将无法再用测试口令进入沙箱，确认继续吗？',
+        confirmText: '关闭',
+      })
+      if (!confirmation.confirm) {
+        return
+      }
+      this.setData({ testAccessProcessing: true, errorMessage: '' })
+      try {
+        await disableTestAccess()
+        const current = this.data.testAccessInfo
+        this.setData({
+          generatedPassword: '',
+          testAccessInfo: current ? { ...current, enabled: false } : null,
+        })
+        await wx.showToast({ title: '已关闭', icon: 'success' })
+      } catch (error) {
+        this.setData({ errorMessage: getErrorMessage(error, '关闭测试入口失败') })
+      } finally {
+        this.setData({ testAccessProcessing: false })
+      }
+    },
+
     async handleRole(event: WechatMiniprogram.BaseEvent) {
       const userId = event.currentTarget.dataset['id'] as string | undefined
       const role = event.currentTarget.dataset['role'] as 'ADMIN' | 'MEMBER' | undefined
@@ -142,6 +228,25 @@ Page({ data: {
 
 function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback
+}
+
+function toTestAccessView(info: TestAccessInfo): TestAccessView {
+  return {
+    enabled: info.enabled,
+    expiresAtText: info.expiresAt ? formatDateTime(info.expiresAt) : '—',
+    createdAtText: info.createdAt ? formatDateTime(info.createdAt) : '—',
+    useCount: info.useCount,
+    lastUsedAtText: info.lastUsedAt ? formatDateTime(info.lastUsedAt) : '—',
+  }
+}
+
+function formatDateTime(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+  const pad = (part: number) => part.toString().padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
 function toMemberView(member: PublicMember): MemberView {

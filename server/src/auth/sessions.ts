@@ -16,21 +16,34 @@ export interface SessionStore {
   issue(userId: string): Promise<IssuedSession>
   verify(token: string): Promise<SessionIdentity | null>
   revokeUser(userId: string): Promise<void>
+  revoke(token: string): Promise<void>
 }
 
 export function hashSessionToken(token: string): string {
   return createHash('sha256').update(token).digest('hex')
 }
 
+export interface PostgresSessionStoreOptions {
+  readonly now?: () => Date
+  /** 沙箱会话令牌前缀，用于鉴权时判定数据域；生产域为空串。 */
+  readonly tokenPrefix?: string
+}
+
 export class PostgresSessionStore implements SessionStore {
+  private readonly now: () => Date
+  private readonly tokenPrefix: string
+
   constructor(
     private readonly pool: Pool,
     private readonly ttlMilliseconds: number,
-    private readonly now: () => Date = () => new Date(),
-  ) {}
+    options: PostgresSessionStoreOptions = {},
+  ) {
+    this.now = options.now ?? (() => new Date())
+    this.tokenPrefix = options.tokenPrefix ?? ''
+  }
 
   async issue(userId: string): Promise<IssuedSession> {
-    const token = randomBytes(32).toString('base64url')
+    const token = `${this.tokenPrefix}${randomBytes(32).toString('base64url')}`
     const createdAt = this.now()
     const expiresAt = new Date(createdAt.getTime() + this.ttlMilliseconds)
     await this.pool.query('DELETE FROM sessions WHERE expires_at <= $1', [
@@ -58,5 +71,11 @@ export class PostgresSessionStore implements SessionStore {
 
   async revokeUser(userId: string): Promise<void> {
     await this.pool.query('DELETE FROM sessions WHERE user_id = $1', [userId])
+  }
+
+  async revoke(token: string): Promise<void> {
+    await this.pool.query('DELETE FROM sessions WHERE token_hash = $1', [
+      hashSessionToken(token),
+    ])
   }
 }

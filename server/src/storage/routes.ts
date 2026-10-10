@@ -29,12 +29,22 @@ const pngSignature = Buffer.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
 ])
 
-export interface FileRouteOptions {
+/** 单个数据域的存储组合：沙箱与生产各自独立，签名密钥不同。 */
+export interface FileRealmOptions {
   readonly storage: FileStorage
   readonly registry: FileRegistry
   readonly signer: FileUrlSigner
-  readonly authenticate: (request: IncomingMessage) => Promise<RequestContext>
   readonly membership: MembershipRepository
+}
+
+export interface FileRouteRealms {
+  readonly prod: FileRealmOptions
+  readonly test?: FileRealmOptions
+}
+
+export interface FileRouteOptions {
+  readonly realms: FileRouteRealms
+  readonly authenticate: (request: IncomingMessage) => Promise<RequestContext>
   readonly uploadTtlMilliseconds: number
   readonly now?: () => string
 }
@@ -93,6 +103,9 @@ export function createFileRoutes(
   options: FileRouteOptions,
 ): readonly HttpRoute[] {
   const now = options.now ?? (() => new Date().toISOString())
+  const realmCandidates = options.realms.test
+    ? [options.realms.prod, options.realms.test]
+    : [options.realms.prod]
 
   return [
     {
@@ -110,7 +123,14 @@ export function createFileRoutes(
           return
         }
 
-        const uploader = await options.membership.runTransaction(
+        const realm =
+          context.realm === 'test' ? options.realms.test : options.realms.prod
+        if (!realm) {
+          sendApiError(response, 'SERVICE_UNAVAILABLE', '存储域不可用')
+          return
+        }
+
+        const uploader = await realm.membership.runTransaction(
           (unitOfWork) => unitOfWork.getUser(context.userId),
         )
         if (!uploader || uploader.status === 'DISABLED') {
@@ -148,7 +168,7 @@ export function createFileRoutes(
           ok: true,
           data: {
             reference: toSelfHostedReference(path),
-            uploadUrl: options.signer.sign(
+            uploadUrl: realm.signer.sign(
               'upload',
               path,
               options.uploadTtlMilliseconds,
@@ -164,16 +184,14 @@ export function createFileRoutes(
       handle: async (request, response, url) => {
         const path = filePathFromUrl(url.pathname)
         const described = path ? describeFilePath(path) : null
-        if (
-          !path ||
-          !described ||
-          !options.signer.verify(
-            'upload',
-            path,
-            url.searchParams.get('expires'),
-            url.searchParams.get('signature'),
-          )
-        ) {
+        const expires = url.searchParams.get('expires')
+        const signature = url.searchParams.get('signature')
+        const realm = path
+          ? realmCandidates.find((candidate) =>
+              candidate.signer.verify('upload', path, expires, signature),
+            )
+          : undefined
+        if (!path || !described || !realm) {
           sendApiError(response, 'FORBIDDEN', '上传地址无效或已过期')
           return
         }
@@ -195,8 +213,8 @@ export function createFileRoutes(
           return
         }
 
-        await options.storage.write(path, content)
-        await options.registry.record({
+        await realm.storage.write(path, content)
+        await realm.registry.record({
           path,
           purpose: described.purpose,
           ownerId: described.ownerId,
@@ -217,26 +235,25 @@ export function createFileRoutes(
       match: (pathname) => pathname.startsWith(filePrefix),
       handle: async (_request, response, url) => {
         const path = filePathFromUrl(url.pathname)
-        if (
-          !path ||
-          !options.signer.verify(
-            'download',
-            path,
-            url.searchParams.get('expires'),
-            url.searchParams.get('signature'),
-          )
-        ) {
+        const expires = url.searchParams.get('expires')
+        const signature = url.searchParams.get('signature')
+        const realm = path
+          ? realmCandidates.find((candidate) =>
+              candidate.signer.verify('download', path, expires, signature),
+            )
+          : undefined
+        if (!path || !realm) {
           sendApiError(response, 'FORBIDDEN', '文件地址无效或已过期')
           return
         }
 
-        const content = await options.storage.read(path)
+        const content = await realm.storage.read(path)
         if (!content) {
           sendApiError(response, 'NOT_FOUND', '文件不存在')
           return
         }
 
-        const record = await options.registry.get(path)
+        const record = await realm.registry.get(path)
         response.writeHead(200, {
           'Content-Type': record?.contentType ?? 'application/octet-stream',
           'Content-Length': content.length,

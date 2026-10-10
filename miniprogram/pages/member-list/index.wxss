@@ -8,6 +8,55 @@
   font-weight: 700;
 }
 
+.test-access-card {
+  margin-bottom: 24rpx;
+}
+
+.test-access-title {
+  margin-bottom: 16rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.test-access-line {
+  line-height: 1.6;
+  font-size: 25rpx;
+}
+
+.test-access-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.test-access-actions button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.test-password-block {
+  margin-top: 20rpx;
+}
+
+.test-password {
+  display: block;
+  padding: 16rpx 20rpx;
+  border-radius: 12rpx;
+  background: var(--brand-soft-color, #e8eef6);
+  color: var(--brand-color, #17365d);
+  font-size: 26rpx;
+  font-family: monospace;
+  letter-spacing: 2rpx;
+  word-break: break-all;
+}
+
+.test-password-hint {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
 .member-card {
   margin-bottom: 24rpx;
   padding: 28rpx 32rpx;

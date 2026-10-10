@@ -1,0 +1,32 @@
+.test-access-entry {
+  position: fixed;
+  right: 32rpx;
+  bottom: 48rpx;
+  z-index: 30;
+  box-sizing: border-box;
+  width: 72rpx;
+  height: 72rpx;
+  border: 1rpx solid var(--brand-color, #17365d);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.72);
+  opacity: 0.45;
+}
+
+.test-access-entry-hover {
+  opacity: 1;
+}
+
+.test-access-entry-busy {
+  opacity: 0.25;
+}
+
+.test-access-error {
+  position: fixed;
+  right: 32rpx;
+  bottom: 136rpx;
+  z-index: 30;
+  max-width: 62%;
+  color: #b91c1c;
+  font-size: 24rpx;
+  text-align: right;
+}

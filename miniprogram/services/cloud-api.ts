@@ -133,3 +133,32 @@ export function discardFiles(
     payload: { fileIds: [...fileIds] },
   })
 }
+
+export function fetchTestAccessStatus(): Promise<{ enabled: boolean }> {
+  return httpRequest({ path: '/auth/test-access', data: {} }).then(
+    unwrap<{ enabled: boolean }>,
+  )
+}
+
+export async function startTestSession(
+  password: string,
+): Promise<StoredSession> {
+  const issued = unwrap<{ token: string; expiresAt: string }>(
+    await httpRequest({ path: '/auth/test-session', data: { password } }),
+  )
+  const stored: StoredSession = {
+    token: issued.token,
+    expiresAt: Date.parse(issued.expiresAt),
+  }
+  session.adopt(stored)
+  return stored
+}
+
+export async function logout(): Promise<void> {
+  try {
+    await sendAuthorized<{ revoked: true }>('/auth/logout', {})
+  } catch {
+    // 服务端注销失败时仍清除本地会话，避免残留过期凭证。
+  }
+  session.invalidate()
+}

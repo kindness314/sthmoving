@@ -33,6 +33,8 @@ export interface HttpApiOptions {
   readonly rateLimits?: {
     readonly authSessionPerMinute?: number
     readonly apiPerMinute?: number
+    /** 额外端点限额：key 为 pathname，value 为每分钟单 IP 上限。 */
+    readonly extra?: Readonly<Record<string, number>>
   }
 }
 
@@ -134,15 +136,22 @@ export function createApiRequestListener(
     options.rateLimits?.apiPerMinute === undefined
       ? null
       : new RateLimiter(options.rateLimits.apiPerMinute, 60_000)
+  const extraLimiters = new Map<string, RateLimiter>()
+  for (const [path, perMinute] of Object.entries(
+    options.rateLimits?.extra ?? {},
+  )) {
+    extraLimiters.set(path, new RateLimiter(perMinute, 60_000))
+  }
   return (request, response) => {
     const pathname = new URL(request.url ?? '/', 'http://localhost').pathname
     const isPost = request.method === 'POST'
     const limiter =
-      isPost && pathname === '/auth/session'
+      (isPost ? extraLimiters.get(pathname) : undefined) ??
+      (isPost && pathname === '/auth/session'
         ? authSessionLimiter
         : isPost && pathname === '/api'
           ? apiLimiter
-          : null
+          : null)
     if (limiter !== null && !limiter.tryAcquire(clientIp(request))) {
       sendApiError(response, 'RATE_LIMITED', '请求过于频繁，请稍后再试')
       return

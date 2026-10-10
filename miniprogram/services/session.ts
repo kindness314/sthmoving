@@ -30,6 +30,11 @@ export class SessionManager {
     this.deps.save(null)
   }
 
+  adopt(session: StoredSession): void {
+    this.pending = null
+    this.deps.save(session)
+  }
+
   private refresh(): Promise<string> {
     this.pending ??= this.deps
       .acquire()

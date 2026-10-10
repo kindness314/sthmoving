@@ -104,6 +104,7 @@ describePostgres('自建后端的 HTTP 接口', () => {
         fileUrlTtlSeconds: 600,
         uploadUrlTtlSeconds: 300,
         miniProgramEnvironment: 'release',
+        testAccessTtlHours: 168,
       },
       {
         wechat,

@@ -43,4 +43,5 @@
     </button>
     <view wx:if="{{errorMessage}}" class="error">{{errorMessage}}</view>
   </view>
+  <test-access-entry />
 </view>

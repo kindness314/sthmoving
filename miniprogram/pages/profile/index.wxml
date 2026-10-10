@@ -82,6 +82,10 @@
       </view>
     </view>
 
+    <view class="card account-card">
+      <button class="secondary-button" bindtap="handleLogout">退出登录</button>
+    </view>
+
     <view wx:if="{{errorMessage}}" class="error form-error">{{errorMessage}}</view>
   </block>
 

@@ -32,7 +32,8 @@
   },
   "usingComponents": {
     "text-entry-modal": "/components/text-entry-modal/index",
-    "nav-bar": "/components/nav-bar/index"
+    "nav-bar": "/components/nav-bar/index",
+    "test-access-entry": "/components/test-access-entry/index"
   },
   "tabBar": {
     "custom": true,

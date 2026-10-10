@@ -4,6 +4,35 @@
     <view class="title">成员管理</view>
     <view class="muted">管理成员、管理员与实际管理者</view>
   </view>
+  <view wx:if="{{testAccessInfo}}" class="card test-access-card">
+    <view class="test-access-title">测试账号</view>
+    <view class="muted test-access-line">状态：{{testAccessInfo.enabled ? '已开启' : '未开启'}}</view>
+    <block wx:if="{{testAccessInfo.enabled}}">
+      <view class="muted test-access-line">到期时间：{{testAccessInfo.expiresAtText}}</view>
+      <view class="muted test-access-line">已使用次数：{{testAccessInfo.useCount}}</view>
+      <view class="muted test-access-line">上次使用：{{testAccessInfo.lastUsedAtText}}</view>
+    </block>
+    <view wx:if="{{generatedPassword}}" class="test-password-block">
+      <text class="test-password" selectable="{{true}}">{{generatedPassword}}</text>
+      <view class="muted test-password-hint">把该口令填入微信审核的测试账号栏</view>
+    </view>
+    <view class="test-access-actions">
+      <button
+        size="mini"
+        class="secondary-button button-md"
+        loading="{{testAccessProcessing}}"
+        disabled="{{testAccessProcessing}}"
+        bindtap="handleGenerateTestPassword"
+      >生成测试口令</button>
+      <button
+        size="mini"
+        class="danger-outline-button button-md"
+        disabled="{{testAccessProcessing || !testAccessInfo.enabled}}"
+        bindtap="handleDisableTestAccess"
+      >关闭测试入口</button>
+    </view>
+  </view>
+
   <view wx:if="{{loading && !members.length}}" class="state muted">正在加载成员…</view>
   <view wx:elif="{{errorMessage && !members.length}}" class="card state">
     <view class="error">{{errorMessage}}</view>

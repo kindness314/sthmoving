@@ -19,6 +19,7 @@ function storeReturning(identity: SessionIdentity | null): SessionStore {
     issue: async () => ({ token: '令牌', expiresAt: '2026-09-01T00:00:00.000Z' }),
     verify: async () => identity,
     revokeUser: async () => {},
+    revoke: async () => {},
   }
 }
 

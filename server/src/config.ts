@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+
 import type { MiniProgramEnvironment } from '../../cloudfunctions/api/src/labels/environment'
 import { readMiniProgramEnvironment } from '../../cloudfunctions/api/src/labels/environment'
 
@@ -15,6 +17,14 @@ export interface ServerConfig {
   readonly fileUrlTtlSeconds: number
   readonly uploadUrlTtlSeconds: number
   readonly miniProgramEnvironment: MiniProgramEnvironment
+  /** 审核沙箱库；未配置时沙箱整体关闭。 */
+  readonly testDatabaseUrl?: string
+  /** 沙箱文件根目录；独立于生产存储根。 */
+  readonly testStorageRoot?: string
+  /** 沙箱文件签名密钥，与生产不同以保证签名不可跨域使用。 */
+  readonly testFileSigningSecret?: string
+  /** 测试口令有效期（小时）。 */
+  readonly testAccessTtlHours: number
 }
 
 export function requireEnv(
@@ -79,5 +89,43 @@ export function readServerConfig(
       env['MINI_PROGRAM_ENVIRONMENT'],
       'release',
     ),
+    ...readTestRealmConfig(env),
+  }
+}
+
+function readOptional(
+  env: NodeJS.ProcessEnv,
+  name: string,
+): string | undefined {
+  const value = env[name]
+  return value === undefined || value.trim() === '' ? undefined : value
+}
+
+function readTestRealmConfig(
+  env: NodeJS.ProcessEnv,
+): Pick<
+  ServerConfig,
+  | 'testDatabaseUrl'
+  | 'testStorageRoot'
+  | 'testFileSigningSecret'
+  | 'testAccessTtlHours'
+> {
+  const testDatabaseUrl = readOptional(env, 'TEST_DATABASE_URL')
+  const ttlHours = readNumber(env, 'TEST_ACCESS_TTL_HOURS', 168)
+  if (testDatabaseUrl === undefined) {
+    return { testAccessTtlHours: ttlHours }
+  }
+  const storageRoot = env['STORAGE_ROOT'] ?? 'storage'
+  return {
+    testDatabaseUrl,
+    testStorageRoot:
+      readOptional(env, 'TEST_STORAGE_ROOT') ?? `${storageRoot}/__test`,
+    // 未显式配置时由生产密钥派生，保证两域签名密钥必然不同且无需额外运维
+    testFileSigningSecret:
+      readOptional(env, 'TEST_FILE_SIGNING_SECRET') ??
+      createHash('sha256')
+        .update(`${requireEnv(env, 'FILE_SIGNING_SECRET')}:review-test`)
+        .digest('hex'),
+    testAccessTtlHours: ttlHours,
   }
 }

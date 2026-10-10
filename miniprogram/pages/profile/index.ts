@@ -1,4 +1,5 @@
 import { login, updateProfile } from '../../services/auth'
+import { logout } from '../../services/cloud-api'
 import {
   chooseProfileAvatar,
   deleteProfileAvatar,
@@ -201,6 +202,23 @@ Page({ data: {
         statusText: user.status === 'APPROVED' ? '已加入' : '未加入',
         joinedAtText: user.joinedAt ? formatDateTime(user.joinedAt) : '—',
       })
+    },
+
+    async handleLogout() {
+      const confirmation = await wx.showModal({
+        title: '退出登录',
+        content: '退出后需要重新使用微信身份登录，确认继续吗？',
+        confirmText: '退出',
+      })
+      if (!confirmation.confirm) {
+        return
+      }
+      try {
+        await logout()
+      } finally {
+        getApp<IAppOption>().globalData.currentUser = null
+        await wx.reLaunch({ url: '/pages/login/index' })
+      }
     }, })
 
 function getRoleText(role: UserRole): string {
