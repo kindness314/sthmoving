@@ -4,12 +4,22 @@
   bottom: 48rpx;
   z-index: 30;
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 72rpx;
   height: 72rpx;
   border: 1rpx solid var(--brand-color, #17365d);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.72);
   opacity: 0.45;
+}
+
+.test-access-label {
+  color: var(--brand-color, #17365d);
+  font-size: 22rpx;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .test-access-entry-hover {

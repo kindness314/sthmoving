@@ -4,6 +4,8 @@
   hover-class="test-access-entry-hover"
   hover-stay-time="80"
   bindtap="handleOpen"
-></view>
+>
+  <text class="test-access-label">测试</text>
+</view>
 <view wx:if="{{errorMessage}}" class="test-access-error">{{errorMessage}}</view>
 <text-entry-modal id="passwordModal" />
