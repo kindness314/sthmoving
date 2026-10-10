@@ -89,9 +89,10 @@ docker compose -f docker-compose.dev.yml up
 [自建后端部署](./docs/自建后端部署.md)，把线上流量从云开发切过来的维护窗口步骤、
 验收清单和回滚方案见 [切换到自建后端](./docs/切换到自建后端.md)。
 
-只跑数据库时使用 `docker compose -f docker-compose.test.yml up -d`，并把
-`TEST_DATABASE_URL` 指向它，`npm run test` 才会执行真实数据库用例；未配置时这些
-用例自动跳过。
+本机装有 Docker 时直接跑 `npm run test:pg`：脚本起一次性 postgres:17-alpine 容器，
+执行全部 `*.postgres.test.ts` 后自动销毁，无需手工准备数据库。没有 Docker 时可用
+`docker compose -f docker-compose.test.yml up -d` 起库并把 `TEST_DATABASE_URL` 指向它；
+两者都不满足时真实数据库用例自动跳过（不建议长期依赖跳过，问题会到 CI 才暴露）。
 
 ## 从微信云开发迁移数据
 

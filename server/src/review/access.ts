@@ -7,6 +7,7 @@ import { generateTestPassword } from './passwords'
 
 export interface ActiveTestAccess {
   readonly id: string
+  readonly createdBy: string | null
   readonly createdAt: string
   readonly expiresAt: string
   readonly useCount: number
@@ -17,6 +18,7 @@ export interface ActiveTestAccess {
 
 interface TestAccessRow {
   id: string
+  created_by: string | null
   created_at: Date
   expires_at: Date
   use_count: number
@@ -44,7 +46,7 @@ export class TestAccessStore implements TestAccessControl {
 
   async active(): Promise<ActiveTestAccess | null> {
     const result = await this.pool.query<TestAccessRow>(
-      `SELECT id, created_at, expires_at, use_count, last_used_at,
+      `SELECT id, created_by, created_at, expires_at, use_count, last_used_at,
               password_hash, password_salt
          FROM test_access
         WHERE revoked_at IS NULL AND expires_at > $1
@@ -58,6 +60,7 @@ export class TestAccessStore implements TestAccessControl {
     }
     return {
       id: row.id,
+      createdBy: row.created_by,
       createdAt: row.created_at.toISOString(),
       expiresAt: row.expires_at.toISOString(),
       useCount: row.use_count,

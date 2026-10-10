@@ -8,6 +8,7 @@
     <view class="test-access-title">测试账号</view>
     <view class="muted test-access-line">状态：{{testAccessInfo.enabled ? '已开启' : '未开启'}}</view>
     <block wx:if="{{testAccessInfo.enabled}}">
+      <view class="muted test-access-line">最近生成：{{testAccessInfo.creatorText}} · {{testAccessInfo.createdAtText}}</view>
       <view class="muted test-access-line">到期时间：{{testAccessInfo.expiresAtText}}</view>
       <view class="muted test-access-line">已使用次数：{{testAccessInfo.useCount}}</view>
       <view class="muted test-access-line">上次使用：{{testAccessInfo.lastUsedAtText}}</view>

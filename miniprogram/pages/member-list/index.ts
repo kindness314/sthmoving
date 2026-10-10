@@ -25,6 +25,7 @@ interface TestAccessView {
   enabled: boolean
   expiresAtText: string
   createdAtText: string
+  creatorText: string
   useCount: number
   lastUsedAtText: string
 }
@@ -94,16 +95,9 @@ Page({ data: {
       this.setData({ testAccessProcessing: true, errorMessage: '' })
       try {
         const result = await enableTestAccess()
-        this.setData({
-          generatedPassword: result.password,
-          testAccessInfo: {
-            enabled: true,
-            expiresAtText: formatDateTime(result.expiresAt),
-            createdAtText: '—',
-            useCount: 0,
-            lastUsedAtText: '—',
-          },
-        })
+        this.setData({ generatedPassword: result.password })
+        // 重新拉取卡片，拿到创建者、到期时间和归零的使用次数
+        await this.loadTestAccess()
         await wx.showToast({ title: '口令已生成', icon: 'success' })
       } catch (error) {
         this.setData({ errorMessage: getErrorMessage(error, '生成测试口令失败') })
@@ -236,6 +230,7 @@ function toTestAccessView(info: TestAccessInfo): TestAccessView {
     expiresAtText: info.expiresAt ? formatDateTime(info.expiresAt) : '—',
     createdAtText: info.createdAt ? formatDateTime(info.createdAt) : '—',
     useCount: info.useCount,
+    creatorText: info.createdByName ?? '—',
     lastUsedAtText: info.lastUsedAt ? formatDateTime(info.lastUsedAt) : '—',
   }
 }

@@ -4,6 +4,7 @@ export interface TestAccessInfo {
   enabled: boolean
   expiresAt: string | null
   createdAt: string | null
+  createdByName: string | null
   useCount: number
   lastUsedAt: string | null
 }

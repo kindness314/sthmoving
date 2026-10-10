@@ -58,12 +58,22 @@ export function createReviewRouter(
     testAccess: async (_payload, context) => {
       await requireManagerOrOwner(context)
       const active = await options.access.active()
+      const creatorId = active?.createdBy ?? null
+      // 创建者是正式环境成员，昵称从生产库用户表取
+      const creatorName = creatorId
+        ? (
+            await options.membership.runTransaction((unitOfWork) =>
+              unitOfWork.getUser(creatorId),
+            )
+          )?.display_name ?? null
+        : null
       return {
         enabled: active !== null,
         createdAt: active?.createdAt ?? null,
         expiresAt: active?.expiresAt ?? null,
         useCount: active?.useCount ?? 0,
         lastUsedAt: active?.lastUsedAt ?? null,
+        createdByName: creatorName,
       }
     },
 

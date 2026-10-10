@@ -17,6 +17,7 @@
     "typecheck:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:pg": "node scripts/test-pg.mjs",
     "check": "npm run check:secrets && npm run lint && npm run typecheck && npm run test",
     "build:cloud": "tsc -p cloudfunctions/api/tsconfig.json",
     "build:server": "tsc -p tsconfig.server.build.json",

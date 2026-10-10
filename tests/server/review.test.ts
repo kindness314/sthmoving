@@ -218,6 +218,7 @@ describe('测试口令登录', () => {
   const active: ActiveTestAccess = {
     id: 'access-1',
     createdAt: '2026-08-01T00:00:00.000Z',
+    createdBy: 'owner-1',
     expiresAt: '2026-09-01T00:00:00.000Z',
     useCount: 0,
     lastUsedAt: null,
@@ -285,6 +286,7 @@ describe('沙箱会话寿命', () => {
     const soonExpiring: ActiveTestAccess = {
       id: 'access-1',
       createdAt: '2026-08-01T00:00:00.000Z',
+      createdBy: null,
       expiresAt: '2026-08-20T00:00:00.000Z',
       useCount: 0,
       lastUsedAt: null,
@@ -416,6 +418,39 @@ describe('测试入口控制面', () => {
       },
     })
     expect(access.enabled).toEqual(['manager-1'])
+  })
+
+  it('控制面返回口令生成者的昵称', async () => {
+    const generated = generateTestPassword()
+    const access = accessControl({
+      id: 'access-1',
+      createdBy: 'owner-1',
+      createdAt: '2026-08-01T00:00:00.000Z',
+      expiresAt: '2026-09-01T00:00:00.000Z',
+      useCount: 0,
+      lastUsedAt: null,
+      passwordHash: generated.hash,
+      passwordSalt: generated.salt,
+    })
+    const route = createReviewRouter({
+      access,
+      membership: membershipStub([
+        user({ _id: 'manager-1', role: 'MANAGER' }),
+        user({ _id: 'owner-1', display_name: '主人老王' }),
+      ]),
+      testSessions: sessionStore(null),
+      ttlMilliseconds: 60 * 60 * 1000,
+    })
+
+    await expect(
+      route(
+        { module: 'review', action: 'testAccess' },
+        { userId: 'manager-1', openid: 'openid-manager-1' },
+      ),
+    ).resolves.toMatchObject({
+      ok: true,
+      data: { enabled: true, createdByName: '主人老王' },
+    })
   })
 
   it('关闭入口会一并吊销沙箱会话', async () => {

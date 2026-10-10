@@ -246,7 +246,9 @@ describePostgres('审核沙箱与生产隔离', () => {
       fileUrlTtlSeconds: 600,
       uploadUrlTtlSeconds: 300,
       miniProgramEnvironment: 'release',
-      testDatabaseUrl: 'postgres://sthmoving:wrong@postgres:5432/missing_db',
+      // 用回环未监听端口模拟沙箱库不可用：任何平台都立即拒绝；
+      // 不可解析主机名在 Windows 上会走 LLMNR 解析，拖过测试超时
+      testDatabaseUrl: 'postgres://sthmoving:wrong@127.0.0.1:1/missing_db',
       testStorageRoot: sandboxStorage,
       testFileSigningSecret: `${storageSecret}-sandbox`,
       testAccessTtlHours: 168,
@@ -268,6 +270,19 @@ describePostgres('审核沙箱与生产隔离', () => {
       await degraded.close()
     }
   })
+  it('数据库拒绝第二条未吊销口令（并发生成的最后防线）', async () => {
+    const pool = await getTestPool()
+    const insert = (id: string) =>
+      pool.query(
+        `INSERT INTO test_access (id, password_hash, password_salt,
+                                  created_at, expires_at, use_count)
+         VALUES ($1, 'hash', 'salt', now(), now() + interval '1 hour', 0)`,
+        [id],
+      )
+    await insert('pw-first')
+    await expect(insert('pw-second')).rejects.toThrow(/unique/i)
+  })
+
 })
 
 async function seedUser(
