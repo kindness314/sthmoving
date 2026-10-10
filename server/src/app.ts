@@ -28,7 +28,7 @@ import { migrate } from './db/migrate'
 import { createPool } from './db/pool'
 import type { ExternalDependencies } from './dependencies.pg'
 import { createPgDependencies } from './dependencies.pg'
-import type { HttpRoute } from './http/server'
+import type { HttpRateLimits, HttpRoute } from './http/server'
 import { createHttpApi } from './http/server'
 import { TestAccessStore } from './review/access'
 import { createReviewRouter } from './review/handlers'
@@ -46,6 +46,7 @@ export interface ServerOverrides {
   authenticate?: (request: IncomingMessage) => Promise<RequestContext>
   external?: Partial<ExternalDependencies>
   routes?: readonly HttpRoute[]
+  rateLimits?: HttpRateLimits
   wechat?: WeChatAuthClient
 }
 
@@ -111,6 +112,14 @@ export async function startServer(
         max: config.databasePoolMax,
       })
     : null
+  // 空闲连接被服务端或运维中断时（如 pg_terminate_backend、重启），
+  // 未处理的 'error' 事件会让进程崩溃，这里统一降级为日志。
+  pool.on('error', (error) => {
+    console.error('生产数据库连接异常', error)
+  })
+  testPool?.on('error', (error) => {
+    console.error('沙箱数据库连接异常', error)
+  })
 
   try {
     if (config.runMigrations) {
@@ -244,7 +253,7 @@ export async function startServer(
       checkHealth: async () => {
         await pool.query('SELECT 1')
       },
-      rateLimits: {
+      rateLimits: overrides.rateLimits ?? {
         // 登录换取会话：每 IP 每分钟 10 次，限制 code2Session 放大攻击
         authSessionPerMinute: 10,
         // 业务接口整体兜底：每 IP 每分钟 120 次，覆盖 bootstrapOwner 口令爆破

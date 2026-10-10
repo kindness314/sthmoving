@@ -23,6 +23,13 @@ export interface HttpRoute {
   readonly handle: HttpHandler
 }
 
+export interface HttpRateLimits {
+  readonly authSessionPerMinute?: number
+  readonly apiPerMinute?: number
+  /** 额外端点限额：key 为 pathname，value 为每分钟单 IP 上限。 */
+  readonly extra?: Readonly<Record<string, number>>
+}
+
 export interface HttpApiOptions {
   readonly route: ApiRouter
   readonly authenticate: (request: IncomingMessage) => Promise<RequestContext>
@@ -30,12 +37,7 @@ export interface HttpApiOptions {
   readonly routes?: readonly HttpRoute[]
   readonly maxBodyBytes?: number
   // 敏感端点的每分钟单 IP 限额；默认关闭，生产装配处显式开启
-  readonly rateLimits?: {
-    readonly authSessionPerMinute?: number
-    readonly apiPerMinute?: number
-    /** 额外端点限额：key 为 pathname，value 为每分钟单 IP 上限。 */
-    readonly extra?: Readonly<Record<string, number>>
-  }
+  readonly rateLimits?: HttpRateLimits
 }
 
 const defaultMaxBodyBytes = 1024 * 1024

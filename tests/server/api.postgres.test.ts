@@ -109,6 +109,12 @@ describePostgres('自建后端的 HTTP 接口', () => {
       {
         wechat,
         external: { miniProgramCode: { generate: async () => onePixelPng } },
+        // 集成测试在数秒内发出上百次 /api 请求，必须放宽生产限流
+        rateLimits: {
+          authSessionPerMinute: 100000,
+          apiPerMinute: 100000,
+          extra: { '/auth/test-session': 100000, '/auth/test-access': 100000 },
+        },
       },
     )
     baseUrl = `http://127.0.0.1:${started.port}`
