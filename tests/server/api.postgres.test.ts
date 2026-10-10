@@ -209,6 +209,7 @@ describePostgres('自建后端的 HTTP 接口', () => {
       quantityMode: 'MULTIPLE',
       quantity: 2,
       categoryId: category.id,
+      office: '503',
       commitSummary: '首次登记物品',
     })
     const createdItem = expectData<{ id: string; code: string }>(item.body)
@@ -298,6 +299,7 @@ describePostgres('自建后端的 HTTP 接口', () => {
       quantityMode: 'SINGLE',
       quantity: 1,
       newCategoryName: '活动器材',
+      office: '503',
       commitSummary: '首次登记物品',
     })
     const itemId = expectData<{ id: string }>(detail.body).id
@@ -360,6 +362,7 @@ describePostgres('自建后端的 HTTP 接口', () => {
             quantityMode: 'SINGLE',
             quantity: 1,
             newCategoryName: '活动器材',
+            office: '503',
             commitSummary: '首次登记物品',
           })
           const itemId = expectData<{ id: string }>(item.body).id
@@ -448,6 +451,7 @@ describePostgres('自建后端的 HTTP 接口', () => {
       quantityMode: 'SINGLE',
       quantity: 1,
       newCategoryName: '活动器材',
+      office: '503',
       commitSummary: '首次登记物品',
     })
     const itemId = expectData<{ id: string }>(item.body).id
