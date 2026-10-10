@@ -8,6 +8,9 @@
 // 数据经真实接口写入，因此会生成物品编码、操作日志与文件登记，与人工操作完全一致。
 // 重复执行会拒绝（避免堆重复数据）；需要重来时先按 docs/审核测试环境.md 清空沙箱。
 
+import { Buffer } from 'node:buffer'
+import console from 'node:console'
+import process from 'node:process'
 import { deflateSync } from 'node:zlib'
 
 const paletteList = [
@@ -122,7 +125,7 @@ function parseArguments(argv) {
 }
 
 async function loginWithPassword(base, password) {
-  const response = await fetch(`${base}/auth/test-session`, {
+  const response = await globalThis.fetch(`${base}/auth/test-session`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ password }),
@@ -135,7 +138,7 @@ async function loginWithPassword(base, password) {
 }
 
 async function callApi(base, token, module, action, payload) {
-  const response = await fetch(`${base}/api`, {
+  const response = await globalThis.fetch(`${base}/api`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -151,7 +154,7 @@ async function callApi(base, token, module, action, payload) {
 }
 
 async function uploadImage(base, token, bytes) {
-  const ticket = await fetch(`${base}/files/uploads`, {
+  const ticket = await globalThis.fetch(`${base}/files/uploads`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -163,7 +166,7 @@ async function uploadImage(base, token, bytes) {
   if (!body.ok) {
     throw new Error(`申请上传失败 ${body.error.code}: ${body.error.message}`)
   }
-  const uploaded = await fetch(body.data.uploadUrl, {
+  const uploaded = await globalThis.fetch(body.data.uploadUrl, {
     method: 'PUT',
     headers: { 'content-type': 'image/png' },
     body: bytes,
