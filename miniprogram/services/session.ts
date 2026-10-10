@@ -16,6 +16,8 @@ export const sessionStorageKey = 'sthmoving-session'
 export class SessionManager {
   private pending: Promise<string> | null = null
 
+  private generation = 0
+
   constructor(private readonly deps: SessionDependencies) {}
 
   async getToken(): Promise<string> {
@@ -27,24 +29,35 @@ export class SessionManager {
   }
 
   invalidate(): void {
+    // 代际递增使在途刷新失效：其完成回调不得再把新令牌写回本地
+    this.generation += 1
+    this.pending = null
     this.deps.save(null)
   }
 
   adopt(session: StoredSession): void {
+    this.generation += 1
     this.pending = null
     this.deps.save(session)
   }
 
   private refresh(): Promise<string> {
-    this.pending ??= this.deps
-      .acquire()
-      .then((session) => {
-        this.deps.save(session)
-        return session.token
-      })
-      .finally(() => {
-        this.pending = null
-      })
+    if (this.pending === null) {
+      const generation = this.generation
+      this.pending = this.deps
+        .acquire()
+        .then((session) => {
+          if (generation === this.generation) {
+            this.deps.save(session)
+          }
+          return session.token
+        })
+        .finally(() => {
+          if (generation === this.generation) {
+            this.pending = null
+          }
+        })
+    }
     return this.pending
   }
 }

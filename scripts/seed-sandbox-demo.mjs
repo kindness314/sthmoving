@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // 填充审核沙箱的演示数据（只作用于沙箱数据域，生产数据不受影响）。
 //
-// 用法：
-//   node scripts/seed-sandbox-demo.mjs --base https://<域名> --password <测试口令>
-//   node scripts/seed-sandbox-demo.mjs --base https://<域名> --token <沙箱会话令牌>
+// 用法（凭据走环境变量，避免进入 shell history）：
+//   SANDBOX_PASSWORD=<测试口令> node scripts/seed-sandbox-demo.mjs --base https://<域名>
+//   SANDBOX_TOKEN=<沙箱会话令牌> node scripts/seed-sandbox-demo.mjs --base https://<域名>
 //
 // 数据经真实接口写入，因此会生成物品编码、操作日志与文件登记，与人工操作完全一致。
 // 重复执行会拒绝（避免堆重复数据）；需要重来时先按 docs/审核测试环境.md 清空沙箱。
@@ -106,20 +106,26 @@ const itemSeeds = [
   { name: '易拉宝', quantity: 4, office: '103', category: '宣传物料', image: false, description: '含三种画面，可更换' },
 ]
 
+// 口令/令牌只从环境变量读取，避免进入 shell history 与进程列表
+const localBasePattern = /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/
+
 function parseArguments(argv) {
   const options = { base: '', password: '', token: '' }
   for (let index = 0; index < argv.length; index += 1) {
     const key = argv[index]
     const value = argv[index + 1]
     if (key === '--base' && value) options.base = value
-    if (key === '--password' && value) options.password = value
-    if (key === '--token' && value) options.token = value
   }
+  options.password = process.env.SANDBOX_PASSWORD ?? ''
+  options.token = process.env.SANDBOX_TOKEN ?? ''
   if (!options.base) {
     throw new Error('缺少 --base（服务端地址）')
   }
+  if (!options.base.startsWith('https://') && !localBasePattern.test(options.base)) {
+    throw new Error('--base 必须是 https:// 地址（本机联调可用 http://127.0.0.1）')
+  }
   if (!options.password && !options.token) {
-    throw new Error('缺少 --password（测试口令）或 --token（沙箱会话令牌）')
+    throw new Error('缺少 SANDBOX_PASSWORD（测试口令）或 SANDBOX_TOKEN（沙箱会话令牌）环境变量')
   }
   return options
 }

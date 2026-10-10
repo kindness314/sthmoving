@@ -12,8 +12,16 @@ export interface SessionIdentity {
   readonly openid: string
 }
 
+export interface IssueSessionOptions {
+  /** 有效期上限（如口令到期时间），用于缩短特定会话的寿命。 */
+  readonly expiresAtCap?: Date
+}
+
 export interface SessionStore {
-  issue(userId: string): Promise<IssuedSession>
+  issue(
+    userId: string,
+    options?: IssueSessionOptions,
+  ): Promise<IssuedSession>
   verify(token: string): Promise<SessionIdentity | null>
   revokeUser(userId: string): Promise<void>
   revoke(token: string): Promise<void>
@@ -42,10 +50,17 @@ export class PostgresSessionStore implements SessionStore {
     this.tokenPrefix = options.tokenPrefix ?? ''
   }
 
-  async issue(userId: string): Promise<IssuedSession> {
+  async issue(
+    userId: string,
+    options: IssueSessionOptions = {},
+  ): Promise<IssuedSession> {
     const token = `${this.tokenPrefix}${randomBytes(32).toString('base64url')}`
     const createdAt = this.now()
-    const expiresAt = new Date(createdAt.getTime() + this.ttlMilliseconds)
+    const lifetimeEnd = createdAt.getTime() + this.ttlMilliseconds
+    const cap = options.expiresAtCap?.getTime()
+    const expiresAt = new Date(
+      cap === undefined ? lifetimeEnd : Math.min(lifetimeEnd, cap),
+    )
     await this.pool.query('DELETE FROM sessions WHERE expires_at <= $1', [
       createdAt,
     ])

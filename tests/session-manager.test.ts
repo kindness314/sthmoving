@@ -77,6 +77,36 @@ describe('小程序会话令牌', () => {
     expect(acquire).toHaveBeenCalledTimes(1)
   })
 
+  it('退出登录期间的在途刷新不得把新令牌写回存储', async () => {
+    let release: (session: StoredSession) => void = () => {}
+    const acquire = vi.fn(
+      () =>
+        new Promise<StoredSession>((resolve) => {
+          release = resolve
+        }),
+    )
+    const { manager, read } = createManager(acquire, {
+      token: '旧令牌',
+      expiresAt: 1_000_000 - 1,
+    })
+
+    const inFlight = manager.getToken()
+    manager.invalidate()
+    expect(read()).toBeNull()
+
+    release({ token: '在途令牌', expiresAt: 9_000_000 })
+    // 在途请求仍可拿到令牌完成本次调用，但不得落盘
+    await expect(inFlight).resolves.toBe('在途令牌')
+    expect(read()).toBeNull()
+
+    acquire.mockImplementation(async () => ({
+      token: '重新登录令牌',
+      expiresAt: 9_500_000,
+    }))
+    await expect(manager.getToken()).resolves.toBe('重新登录令牌')
+    expect(read()).toEqual({ token: '重新登录令牌', expiresAt: 9_500_000 })
+  })
+
   it('刷新失败后允许重试', async () => {
     const acquire = vi
       .fn<() => Promise<StoredSession>>()

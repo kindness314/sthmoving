@@ -42,9 +42,13 @@ function sessionStore(
   const issued: string[] = []
   return {
     issued,
-    issue: async (userId) => {
+    issue: async (userId, options) => {
       issued.push(userId)
-      return { token: `${testPrefix}sandbox-token`, expiresAt: '2026-09-01T00:00:00.000Z' }
+      return {
+        token: `${testPrefix}sandbox-token`,
+        expiresAt:
+          options?.expiresAtCap?.toISOString() ?? '2026-09-01T00:00:00.000Z',
+      }
     },
     verify: async () => identity,
     revokeUser: async () => {},
@@ -275,6 +279,30 @@ describe('测试口令登录', () => {
   })
 })
 
+describe('沙箱会话寿命', () => {
+  it('签发的会话有效期被截断到口令到期时间', async () => {
+    const generated = generateTestPassword()
+    const soonExpiring: ActiveTestAccess = {
+      id: 'access-1',
+      createdAt: '2026-08-01T00:00:00.000Z',
+      expiresAt: '2026-08-20T00:00:00.000Z',
+      useCount: 0,
+      lastUsedAt: null,
+      passwordHash: generated.hash,
+      passwordSalt: generated.salt,
+    }
+    const service = createTestSessionService({
+      access: accessControl(soonExpiring),
+      membership: membershipStub([]),
+      sessions: sessionStore(null),
+    })
+
+    const issued = await service.start(generated.plaintext)
+
+    expect(issued.expiresAt).toBe('2026-08-20T00:00:00.000Z')
+  })
+})
+
 describe('数据域分发', () => {
   const routerTagging = (tag: string): ApiRouter => async () => ({
     ok: true,
@@ -406,6 +434,25 @@ describe('测试入口控制面', () => {
         { userId: 'owner-1', openid: 'openid-owner-1' },
       ),
     ).resolves.toEqual({ ok: true, data: { enabled: false } })
+    expect(revokeUser).toHaveBeenCalledWith(sandboxUserId)
+  })
+
+  it('轮换口令时一并吊销已签发的沙箱会话', async () => {
+    const testSessions = sessionStore(null)
+    const revokeUser = vi.spyOn(testSessions, 'revokeUser')
+    const route = createReviewRouter({
+      access: accessControl(null),
+      membership: membershipStub([user({ _id: 'owner-1', role: 'OWNER' })]),
+      testSessions,
+      ttlMilliseconds: 60 * 60 * 1000,
+    })
+
+    await expect(
+      route(
+        { module: 'review', action: 'enableTestAccess' },
+        { userId: 'owner-1', openid: 'openid-owner-1' },
+      ),
+    ).resolves.toMatchObject({ ok: true, data: { enabled: true } })
     expect(revokeUser).toHaveBeenCalledWith(sandboxUserId)
   })
 })

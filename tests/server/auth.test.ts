@@ -1,9 +1,13 @@
-import type { IncomingMessage } from 'node:http'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 
 import { describe, expect, it, vi } from 'vitest'
 
 import { ApiException } from '../../cloudfunctions/api/src/errors'
-import { createBearerAuthenticator } from '../../server/src/auth/routes'
+import {
+  createBearerAuthenticator,
+  createLogoutRoute,
+  testSessionTokenPrefix,
+} from '../../server/src/auth/routes'
 import { hashSessionToken } from '../../server/src/auth/sessions'
 import type { SessionIdentity, SessionStore } from '../../server/src/auth/sessions'
 import { HttpWeChatAuthClient } from '../../server/src/auth/wechat'
@@ -113,5 +117,64 @@ describe('微信登录凭证换取', () => {
     expect(url.searchParams.get('js_code')).toBe('code-1')
     expect(url.searchParams.get('grant_type')).toBe('authorization_code')
     expect(url.searchParams.get('appid')).toBe('wxtest')
+  })
+})
+
+describe('退出登录', () => {
+  function responseCapture(): {
+    response: ServerResponse
+    body: () => string
+  } {
+    const chunks: string[] = []
+    return {
+      response: {
+        writeHead: () => undefined,
+        end: (chunk?: Buffer) => {
+          if (chunk) {
+            chunks.push(chunk.toString('utf8'))
+          }
+        },
+      } as unknown as ServerResponse,
+      body: () => chunks.join(''),
+    }
+  }
+
+  it('吊销生产域会话，并对沙箱库执行幂等删除', async () => {
+    const prod = storeReturning(null)
+    const test = storeReturning(null)
+    const prodRevoke = vi.spyOn(prod, 'revoke')
+    const testRevoke = vi.spyOn(test, 'revoke')
+    const route = createLogoutRoute({ prod, test, testPrefix: testSessionTokenPrefix })
+    const { response, body } = responseCapture()
+
+    await route.handle(
+      requestWith('Bearer 生产令牌'),
+      response,
+      new URL('http://localhost/auth/logout'),
+    )
+
+    expect(prodRevoke).toHaveBeenCalledWith('生产令牌')
+    expect(testRevoke).toHaveBeenCalledWith('生产令牌')
+    expect(JSON.parse(body())).toEqual({ ok: true, data: { revoked: true } })
+  })
+
+  it('碰巧带沙箱前缀的生产令牌也会从生产库吊销', async () => {
+    // 鉴权器对前缀碰撞有回落语义，logout 必须对齐，否则吊销静默落空
+    const prod = storeReturning(null)
+    const test = storeReturning(null)
+    const prodRevoke = vi.spyOn(prod, 'revoke')
+    const testRevoke = vi.spyOn(test, 'revoke')
+    const route = createLogoutRoute({ prod, test, testPrefix: testSessionTokenPrefix })
+    const { response } = responseCapture()
+    const colliding = `${testSessionTokenPrefix}prod-collision`
+
+    await route.handle(
+      requestWith(`Bearer ${colliding}`),
+      response,
+      new URL('http://localhost/auth/logout'),
+    )
+
+    expect(prodRevoke).toHaveBeenCalledWith(colliding)
+    expect(testRevoke).toHaveBeenCalledWith(colliding)
   })
 })

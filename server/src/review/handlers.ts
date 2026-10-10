@@ -73,6 +73,8 @@ export function createReviewRouter(
         context.userId,
         options.ttlMilliseconds,
       )
+      // 轮换口令即轮换信任边界：已签发的沙箱会话一并吊销
+      await options.testSessions.revokeUser(sandboxUserId)
       return {
         enabled: true,
         password: formatTestPassword(created.password),

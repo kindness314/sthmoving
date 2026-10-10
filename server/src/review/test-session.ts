@@ -36,7 +36,10 @@ export function createTestSessionService(
       }
 
       await ensureSandboxOwner(options.membership, now().toISOString())
-      const issued = await options.sessions.issue(sandboxUserId)
+      const issued = await options.sessions.issue(sandboxUserId, {
+        // 口令到期则会话同步到期，避免「入口已关、会话仍活」的落差
+        expiresAtCap: new Date(active.expiresAt),
+      })
       await options.access.recordUse(active.id)
       return issued
     },

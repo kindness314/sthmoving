@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { resolve, sep } from 'node:path'
 
 import type { MiniProgramEnvironment } from '../../cloudfunctions/api/src/labels/environment'
 import { readMiniProgramEnvironment } from '../../cloudfunctions/api/src/labels/environment'
@@ -116,16 +117,58 @@ function readTestRealmConfig(
     return { testAccessTtlHours: ttlHours }
   }
   const storageRoot = env['STORAGE_ROOT'] ?? 'storage'
+  const testStorageRoot =
+    readOptional(env, 'TEST_STORAGE_ROOT') ?? `${storageRoot}-test`
+  const fileSigningSecret = requireEnv(env, 'FILE_SIGNING_SECRET')
+  const testFileSigningSecret =
+    readOptional(env, 'TEST_FILE_SIGNING_SECRET') ??
+    // 未显式配置时由生产密钥派生，保证两域签名密钥必然不同且无需额外运维
+    createHash('sha256')
+      .update(`${fileSigningSecret}:review-test`)
+      .digest('hex')
+
+  // 沙箱与生产共用任一资源都会击穿数据域隔离（沙箱 OWNER 直通生产），
+  // 这类误配在启动期直接拒绝。
+  if (sameDatabase(requireEnv(env, 'DATABASE_URL'), testDatabaseUrl)) {
+    throw new Error('TEST_DATABASE_URL 不得指向生产数据库')
+  }
+  if (pathsOverlap(storageRoot, testStorageRoot)) {
+    throw new Error('TEST_STORAGE_ROOT 不得与 STORAGE_ROOT 相同或互相嵌套')
+  }
+  if (testFileSigningSecret === fileSigningSecret) {
+    throw new Error('TEST_FILE_SIGNING_SECRET 不得与 FILE_SIGNING_SECRET 相同')
+  }
+
   return {
     testDatabaseUrl,
-    testStorageRoot:
-      readOptional(env, 'TEST_STORAGE_ROOT') ?? `${storageRoot}/__test`,
-    // 未显式配置时由生产密钥派生，保证两域签名密钥必然不同且无需额外运维
-    testFileSigningSecret:
-      readOptional(env, 'TEST_FILE_SIGNING_SECRET') ??
-      createHash('sha256')
-        .update(`${requireEnv(env, 'FILE_SIGNING_SECRET')}:review-test`)
-        .digest('hex'),
+    testStorageRoot,
+    testFileSigningSecret,
     testAccessTtlHours: ttlHours,
   }
+}
+
+/** 比较两个 postgres 连接串是否指向同一库（主机+端口+库名）。 */
+function sameDatabase(a: string, b: string): boolean {
+  try {
+    const urlA = new URL(a)
+    const urlB = new URL(b)
+    return (
+      urlA.hostname === urlB.hostname &&
+      (urlA.port || '5432') === (urlB.port || '5432') &&
+      urlA.pathname === urlB.pathname
+    )
+  } catch {
+    return a.trim() === b.trim()
+  }
+}
+
+/** 两个目录相同或互相嵌套时视为冲突。 */
+function pathsOverlap(a: string, b: string): boolean {
+  const resolvedA = resolve(a)
+  const resolvedB = resolve(b)
+  return (
+    resolvedA === resolvedB ||
+    resolvedA.startsWith(`${resolvedB}${sep}`) ||
+    resolvedB.startsWith(`${resolvedA}${sep}`)
+  )
 }

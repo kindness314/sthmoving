@@ -189,14 +189,17 @@ export function createLogoutRoute(options: LogoutRouteOptions): HttpRoute {
           ? header.slice(bearerPrefix.length).trim()
           : ''
       if (token !== '') {
-        const store =
-          options.test && token.startsWith(options.testPrefix)
-            ? options.test
-            : options.prod
-        try {
-          await store.revoke(token)
-        } catch (error) {
-          console.error(error)
+        // 与鉴权器的回落语义对齐：两库各删一次（均幂等），
+        // 避免碰巧带 t1_ 前缀的生产令牌吊销落空。
+        const stores = options.test
+          ? [options.prod, options.test]
+          : [options.prod]
+        for (const store of stores) {
+          try {
+            await store.revoke(token)
+          } catch (error) {
+            console.error(error)
+          }
         }
       }
       sendApiResponse(response, { ok: true, data: { revoked: true } })
