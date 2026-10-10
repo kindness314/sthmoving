@@ -230,6 +230,44 @@ describePostgres('审核沙箱与生产隔离', () => {
       error: { code: 'UNAUTHENTICATED' },
     })
   })
+
+  it('沙箱库不可用时降级，生产照常可用', async () => {
+    const degraded = await startServer({
+      port: 0,
+      databaseUrl: process.env['TEST_DATABASE_URL'] as string,
+      databasePoolMax: 2,
+      runMigrations: true,
+      sessionTtlDays: 30,
+      wechatAppId: 'wxreview',
+      wechatAppSecret: 'unused',
+      publicBaseUrl: 'http://127.0.0.1:1',
+      storageRoot: controlStorage,
+      fileSigningSecret: storageSecret,
+      fileUrlTtlSeconds: 600,
+      uploadUrlTtlSeconds: 300,
+      miniProgramEnvironment: 'release',
+      testDatabaseUrl: 'postgres://sthmoving:wrong@postgres:5432/missing_db',
+      testStorageRoot: sandboxStorage,
+      testFileSigningSecret: `${storageSecret}-sandbox`,
+      testAccessTtlHours: 168,
+    })
+    try {
+      const degradedUrl = `http://127.0.0.1:${degraded.port}`
+      const health = await fetch(`${degradedUrl}/health`)
+      expect(health.status).toBe(200)
+
+      const status = (await (
+        await fetch(`${degradedUrl}/auth/test-access`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}',
+        })
+      ).json()) as ApiResponse
+      expect(status).toMatchObject({ ok: true, data: { enabled: false } })
+    } finally {
+      await degraded.close()
+    }
+  })
 })
 
 async function seedUser(

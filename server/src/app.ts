@@ -6,7 +6,6 @@ import type { ApiDependencies } from '../../cloudfunctions/api/src/dependencies'
 import type { ApiRouter } from '../../cloudfunctions/api/src/router'
 import { createRouter } from '../../cloudfunctions/api/src/router'
 import type {
-  ApiEvent,
   ApiResponse,
   RequestContext,
 } from '../../cloudfunctions/api/src/types'
@@ -124,10 +123,6 @@ export async function startServer(
   try {
     if (config.runMigrations) {
       await migrate(pool)
-      if (testPool) {
-        // 沙箱库与生产库同源迁移，schema 永不漂移
-        await migrate(testPool)
-      }
     }
 
     const credentials = {
@@ -184,15 +179,27 @@ export async function startServer(
     })
     const testStorageRoot = config.testStorageRoot
     const testFileSigningSecret = config.testFileSigningSecret
-    const test =
-      testPool && testStorageRoot && testFileSigningSecret && testSessions
-        ? buildRealm({
-            pool: testPool,
-            storageRoot: testStorageRoot,
-            signingSecret: testFileSigningSecret,
-            realmSessions: testSessions,
-          })
-        : null
+    // 沙箱是可选功能：初始化失败只降级为「入口关闭」，
+    // 绝不能让它的配置问题导致生产服务无法启动。
+    let test: RealmAssembly | null = null
+    if (testPool && testStorageRoot && testFileSigningSecret && testSessions) {
+      try {
+        if (config.runMigrations) {
+          // 沙箱库与生产库同源迁移，schema 永不漂移
+          await migrate(testPool)
+        }
+        test = buildRealm({
+          pool: testPool,
+          storageRoot: testStorageRoot,
+          signingSecret: testFileSigningSecret,
+          realmSessions: testSessions,
+        })
+      } catch (error) {
+        console.error('沙箱数据域初始化失败，已按未配置处理', error)
+        test = null
+      }
+    }
+    const activeTestSessions = test ? testSessions : null
 
     const fileRealms: FileRouteRealms = {
       prod: {
@@ -214,31 +221,29 @@ export async function startServer(
     }
 
     const testAccess = new TestAccessStore(pool)
-    const reviewRouter = test
-      ? createReviewRouter({
-          access: testAccess,
-          membership: prod.dependencies.membership,
-          testSessions: testSessions!,
-          ttlMilliseconds: config.testAccessTtlHours * 60 * 60 * 1000,
-        })
-      : async (
-          _event: ApiEvent,
-          _context: RequestContext,
-        ): Promise<ApiResponse> => ({
-          ok: false,
-          error: {
-            code: 'TEST_ACCESS_UNAVAILABLE',
-            message: '服务端未配置测试环境',
-          },
-        })
+    const reviewRouter =
+      test && activeTestSessions
+        ? createReviewRouter({
+            access: testAccess,
+            membership: prod.dependencies.membership,
+            testSessions: activeTestSessions,
+            ttlMilliseconds: config.testAccessTtlHours * 60 * 60 * 1000,
+          })
+        : async (): Promise<ApiResponse> => ({
+            ok: false,
+            error: {
+              code: 'TEST_ACCESS_UNAVAILABLE',
+              message: '服务端未配置测试环境',
+            },
+          })
 
     const wechat = overrides.wechat ?? new HttpWeChatAuthClient(credentials)
     const authenticate =
       overrides.authenticate ??
-      (testSessions
+      (activeTestSessions
         ? createRealmAuthenticator({
             prod: sessions,
-            test: testSessions,
+            test: activeTestSessions,
             testPrefix: testSessionTokenPrefix,
           })
         : createBearerAuthenticator(sessions))
@@ -282,20 +287,20 @@ export async function startServer(
             }
           },
         }),
-        ...(test && testSessions
+        ...(test && activeTestSessions
           ? [
               createTestSessionRoute({
                 service: createTestSessionService({
                   access: testAccess,
                   membership: test.dependencies.membership,
-                  sessions: testSessions,
+                  sessions: activeTestSessions,
                 }),
               }),
             ]
           : []),
         createLogoutRoute({
           prod: sessions,
-          ...(testSessions ? { test: testSessions } : {}),
+          ...(activeTestSessions ? { test: activeTestSessions } : {}),
           testPrefix: testSessionTokenPrefix,
         }),
         ...createFileRoutes({
