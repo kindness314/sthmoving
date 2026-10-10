@@ -223,7 +223,11 @@ async function main() {
   console.log(`待审批离库申请：${pendingTarget.name}`)
 
   const offShelfTarget = createdItems[8]
-  await callApi(base, token, 'outbound', 'direct', { itemId: offShelfTarget.id })
+  await callApi(base, token, 'outbound', 'direct', {
+    itemId: offShelfTarget.id,
+    expectedVersion: offShelfTarget.version,
+    commitSummary: '演示数据初始化',
+  })
   console.log(`已直接离库：${offShelfTarget.name}`)
 
   console.log(
