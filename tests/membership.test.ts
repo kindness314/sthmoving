@@ -394,12 +394,15 @@ describe('成员身份服务', () => {
     const manager = seedUser(repository, 'manager-openid', 'MANAGER')
     const admin = seedUser(repository, 'admin-openid', 'ADMIN')
     const member = seedUser(repository, 'member-openid', 'MEMBER')
-    const pending = seedUser(repository, 'pending-openid', 'MEMBER', 'PENDING')
+    seedUser(repository, 'pending-openid', 'MEMBER', 'PENDING')
+    seedUser(repository, 'rejected-openid', 'MEMBER', 'REJECTED')
+    const disabled = seedUser(repository, 'disabled-openid', 'MEMBER', 'DISABLED')
 
     const members = await service.listMembers(userIdOf('admin-openid'))
 
+    // 只含已加入与软停用;仅打开过小程序的 PENDING 与被拒 REJECTED 不进成员名单
     expect(members.map((item) => item.id).sort()).toEqual(
-      [owner._id, manager._id, admin._id, member._id, pending._id].sort(),
+      [owner._id, manager._id, admin._id, member._id, disabled._id].sort(),
     )
     expect(members.some((item) => 'openid' in item)).toBe(false)
     expect(members.find((item) => item.id === member._id)).toMatchObject({
@@ -409,6 +412,7 @@ describe('成员身份服务', () => {
       gender: 'UNKNOWN',
       theme: 'NAVY',
     })
+    expect(members.find((item) => item.id === disabled._id)?.status).toBe('DISABLED')
 
     await expect(service.listMembers(userIdOf('manager-openid'))).resolves.toHaveLength(5)
     await expect(service.listMembers(userIdOf('owner-openid'))).resolves.toHaveLength(5)

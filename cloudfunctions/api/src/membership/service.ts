@@ -330,7 +330,11 @@ export class MembershipService {
       const actor = await unitOfWork.getUser(userId)
       requireMemberManager(actor)
       const users = await unitOfWork.listUsers(200)
-      return users.map(toPublicMember)
+      // 只展示已加入与软停用成员;PENDING(仅打开过小程序或待审申请)与
+      // REJECTED(被拒)账号不属于成员管理,由申请中心按 join_requests 呈现
+      return users
+        .filter((user) => user.status === 'APPROVED' || user.status === 'DISABLED')
+        .map(toPublicMember)
     })
   }
 
